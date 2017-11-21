@@ -13,10 +13,10 @@ fi
 dcl_config=$1
 wait=wait
 username="$USER"
-cops_dir=/home/sachin/COPS-SNOW
+cops_dir=$HOME/COPS-SNOW
 
-ins1_dir=/home/sachin/COPS-SNOW
-ins2_dir=/home/sachin/COPS-SNOW2
+ins1_dir=$HOME/COPS-SNOW
+ins2_dir=$HOME/COPS-SNOW2
 var_dir=$ins1_dir/cassandra_var
 
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')

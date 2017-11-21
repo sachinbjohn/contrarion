@@ -36,7 +36,7 @@ dcl_config=${nservers}_in_kodiak
 client_config=${nservers}_clients_in_kodiak
 
 #location specific config
-cops_dir="/home/sachin/COPS-SNOW"
+cops_dir="$HOME/COPS-SNOW"
 # vanilla_dir="/users/${username}/vanilla"
 # tools_dir="/users/${username}/vanilla"
 exp_dir="${cops_dir}/experiments"
