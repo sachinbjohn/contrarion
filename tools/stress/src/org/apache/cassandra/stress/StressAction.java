@@ -381,7 +381,8 @@ public class StressAction extends Thread
                     client.getOperation() == Stress.Operations.WRITE_TXN ||
                     client.getOperation() == Stress.Operations.BATCH_MUTATE ||
                     client.getOperation() == Stress.Operations.TWO_ROUND_READ_TXN ||
-                    client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER)
+                    client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER ||
+                    client.getOperation() == Stress.Operations.EXP10)
             {
                 ClientLibrary library = client.getClientLibrary();
 
@@ -483,6 +484,10 @@ public class StressAction extends Thread
             case INSERTCL:
                 return client.isCQL() ? new CqlInserter(client, index) : new Inserter(client, index);
 
+            case EXP10:
+                if (client.isCQL())
+                    throw new RuntimeException("CQL is not supported with Exp10 workload");
+                return new Experiment10(client, index);
 
 	    case WRITE_TXN:
 		if (client.isCQL())

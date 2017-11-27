@@ -13,8 +13,10 @@ fi
 dcl_config=$1
 wait=wait
 
+
 usr_name="$USER"
 cops_dir=$(pwd)
+var_dir=$cops_dir/cassandra_var
 
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')
 ips=($(grep cassandra_ips $dcl_config | awk -F "=" '{ print $2 }'))
@@ -37,31 +39,30 @@ for ip in ${ips[@]}; do
     (ssh -t -t -o StrictHostKeyChecking=no ${usr_name}@$ip "\
 ${cops_dir}/kill_all_cassandra.bash;\
 rm ${cops_dir}/*hprof 2> /dev/null;\
-rm ~/cassandra-vanilla/*hprof 2> /dev/null;\
-rm ${cops_dir}/cassandra_var/cassandra*log 2> /dev/null;\
-rm ${cops_dir}/cassandra_var/cassandra*log* 2> /dev/null;\
-rm -rf ${cops_dir}/cassandra_var/data/* 2> /dev/null;\
-rm -rf ${cops_dir}/cassandra_var/commitlog/* 2> /dev/null;\
-rm -rf ${cops_dir}/cassandra_var/saved_caches/* 2> /dev/null;\
-rm -rf ${cops_dir}/cassandra_var/stdout/* 2> /dev/null;\
-mkdir ${cops_dir}/cassandra_var 2> /dev/null;\
-mkdir ${cops_dir}/cassandra_var/data 2> /dev/null;\
-mkdir ${cops_dir}/cassandra_var/commitlog 2> /dev/null;\
-mkdir ${cops_dir}/cassandra_var/saved_caches 2> /dev/null;\
-mkdir ${cops_dir}/cassandra_var/stdout 2> /dev/null;\
+rm ${var_dir}/cassandra*log 2> /dev/null;\
+rm ${var_dir}/cassandra*log* 2> /dev/null;\
+rm -rf ${var_dir}/data/* 2> /dev/null;\
+rm -rf ${var_dir}/commitlog/* 2> /dev/null;\
+rm -rf ${var_dir}/saved_caches/* 2> /dev/null;\
+rm -rf ${var_dir}/stdout/* 2> /dev/null;\
+mkdir ${var_dir} 2> /dev/null;\
+mkdir ${var_dir}/data 2> /dev/null;\
+mkdir ${var_dir}/commitlog 2> /dev/null;\
+mkdir ${var_dir}/saved_caches 2> /dev/null;\
+mkdir ${var_dir}/stdout 2> /dev/null;\
 " 2>&1 | awk '{ print "'$ip': "$0 }' ) &
 done
 
 wait
 unset ip
 
+sleep 10
 set +m
 
-echo "get to 1"
 
 #create the topo file, we must eventually write this to conf/cassandra-topology.properties
 #because that location is hardcoded into cassandra
-topo_file=conf/vicci/cassandra-topology.properties
+topo_file=$cops_dir/conf/vicci/cassandra-topology.properties
 echo -n "" > $topo_file
 for dc in $(seq 0 $((num_dcs - 1))); do
     for n in $(seq 0 $((nodes_per_dc - 1))); do
@@ -72,21 +73,18 @@ for dc in $(seq 0 $((num_dcs - 1))); do
         echo $local_ip=DC$dc:RAC1 >> $topo_file
     done
 done
-#echo "default=DC0:RAC1" >> $topo_file
+
 unset dc
 unset n
 unset global_node_num
 unset local_ip
 
-echo "get to 2"
 for dc in $(seq 0 $((num_dcs - 1))); do
     for n in $(seq 0 $((nodes_per_dc - 1))); do
         global_node_num=$((dc * nodes_per_dc + n))
 	local_ip=$(echo ${ips[global_node_num]})
         # tokens can't be identical even though we want them to be ... so for now let's get them as close as possible
         token=$(echo "${n}*(2^127)/${nodes_per_dc} + $dc" | bc)
-        # Using tokens for evenly splitting type 4 uuids now
-        #token=$(./uuid_token.py ${dc} ${n} ${nodes_per_dc})
         echo $token" @ "$local_ip
 
         conf_file=${num_dcs}x${nodes_per_dc}_${dc}_${n}.yaml
@@ -99,17 +97,17 @@ for dc in $(seq 0 $((num_dcs - 1))); do
             | sed 's/RPC_ADDRESS/'$local_ip'/g' \
             | sed 's/SEEDS/'"$seeds"'/g' \
 	    | sed 's,VAR_DIR,'$var_dir',g' \
-            > conf/vicci/$conf_file
+            > $cops_dir/conf/vicci/$conf_file
         
 	#| sed 's/NODE_NUM/'$global_node_num'/g' \
 
-	sed 's/LOG_FILE/cassandra_var\/cassandra_system.'$global_node_num'.log/g' conf/log4j-server_BASE.properties > conf/vicci/$log4j_file
+	sed 's+LOG_FILE+'$var_dir'/cassandra_system.'$global_node_num'.log+g' ${cops_dir}/conf/log4j-server_BASE.properties > ${cops_dir}/conf/vicci/$log4j_file
         #set -x
 	#copy over conf files
 	(
 	scp -o StrictHostKeyChecking=no ${topo_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no conf/vicci/${conf_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no conf/vicci/${log4j_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no $cops_dir/conf/vicci/${conf_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no $cops_dir/conf/vicci/${log4j_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
 
         #put this in ssh commands to modify JVM options
         #export JVM_OPTS="-Xms32M -Xmn64M"
@@ -117,8 +115,9 @@ for dc in $(seq 0 $((num_dcs - 1))); do
 	while [ 1 ]; do
             ssh_output=$(ssh -o StrictHostKeyChecking=no ${usr_name}@$local_ip "\
 cd ${cops_dir};\
-${cops_dir}/bin/cassandra -Dcassandra.config=${conf_file} -Dlog4j.configuration=${log4j_file} > ${cops_dir}/cassandra_var/stdout/${dc}_${n}.out;\
+ CASSANDRA_INCLUDE=bin/cassandra.in.sh  bin/cassandra -Dcassandra.config=file:///${cops_dir}/conf/${conf_file} -Dlog4j.configuration=${log4j_file} > ${var_dir}/stdout/${dc}_${n}.out;\
 " 2>&1)
+echo "COMMAND@$local_ip = CASSANDRA_INCLUDE=bin/cassandra.in.sh bin/cassandra -Dcassandra.config=file:///${cops_dir}/conf/${conf_file} -Dlog4j.configuration=${log4j_file} > ${var_dir}/stdout/${dc}_${n}.out"
 	    failure=$(echo $ssh_output | grep "error while loading shared libraries")
 	    if [ "$failure" == "" ]; then
 		break
@@ -130,7 +129,8 @@ ${cops_dir}/bin/cassandra -Dcassandra.config=${conf_file} -Dlog4j.configuration=
         #set +x
     done
 done
-echo "get to 3"
+
+sleep 3
 
 timeout=60
 if [ "$wait" != "" ]; then
@@ -140,8 +140,9 @@ if [ "$wait" != "" ]; then
     wait_time=0
     while [ "${normal_nodes}" -ne "${total_nodes}" ]; do
         sleep 5
+        echo "COMMAND = CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l"
         normal_nodes=$(ssh -o StrictHostKeyChecking=no ${usr_name}@${ips[0]} \
-	    "${cops_dir}"'/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l')
+	    "CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}"'/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l')
         echo "  "$normal_nodes
 	wait_time=$((wait_time+5))
 	if [[ $wait_time -ge 60 ]]; then

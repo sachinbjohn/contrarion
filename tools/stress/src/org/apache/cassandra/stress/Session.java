@@ -124,7 +124,7 @@ public class Session implements Serializable
 
         availableOptions.addOption("",  "server-index",         true,   "Index of the server (out of num-servers) to load for DYNAMIC_ONE_SERVER");
         availableOptions.addOption("", "useZipfian", true, "this stress run uses zipfian workload or not");
-	availableOptions.addOption("", "zipfian-constant", true, "Set the zipfian constant for Zipfian distribution");
+	    availableOptions.addOption("", "zipfian-constant", true, "Set the zipfian constant for Zipfian distribution");
 
     }
 
@@ -198,7 +198,7 @@ public class Session implements Serializable
     private int servers_per_txn = 0;
 
     private int server_index = -1;
-    private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
+    public static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
 
     // RO6: flag for zipfian
     private int useZipfian = 0;
@@ -512,7 +512,7 @@ public class Session implements Serializable
             }
 	    if (cmd.hasOption("zipfian-constant")) {
 		zipfianConstant = Double.parseDouble(cmd.getOptionValue("zipfian-constant"));
-		if (zipfianConstant <= 0 || zipfianConstant >= 1) {
+		if (zipfianConstant < 0 || zipfianConstant >= 1) {
 		    throw new RuntimeException("Invalid --zipfian-constant");
 		}
 	    }
@@ -552,6 +552,15 @@ public class Session implements Serializable
             generateKeysForEachServer(num_servers, numDifferentKeys);
         }
 
+        if(operation == Stress.Operations.EXP10) {
+            if (! (write_fraction >= 0 && keys_per_read != 0 && num_servers >= 0 && keys_per_server >= 0 && columnSize != 34)) {
+                throw new RuntimeException("All Exp10 options must be set");
+            }
+            numDifferentKeys = keys_per_server * num_servers;
+            servers_per_txn = keys_per_read;
+            assert servers_per_txn <= num_servers;
+            dynamicOneServerGenerateKeysForEachServer(num_servers, numDifferentKeys);
+        }
         for (String node : nodes) {
             localServerIPAndPorts.put(node, port);
         }
@@ -642,7 +651,7 @@ public class Session implements Serializable
     public int getTotalKeysLength()
     {
         //return Integer.toString(numDifferentKeys*stressCount).length();
-	return 10;
+	return 8;
     }
 
     public int getNumTotalKeys()
