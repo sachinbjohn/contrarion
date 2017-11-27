@@ -65,6 +65,7 @@ public class Session implements Serializable
     public final ConcurrentLinkedQueue<Long> writelatencies;
     public final AtomicLong  readlatency;
     public final ConcurrentLinkedQueue<Long> readlatencies;
+    public long exptDurationMs;
 
     static
     {
@@ -176,7 +177,7 @@ public class Session implements Serializable
     private int numDependencies = 0;
     private final Set<Dep> pregeneratedDependencies = new HashSet<Dep>();
 
-    private int stressIndex = 0;
+    public int stressIndex = 0;
     private int stressCount = 1;
     private final int keysOffset = 0;
 
@@ -238,7 +239,8 @@ public class Session implements Serializable
 
             if (cmd.hasOption("t"))
                 threads = Integer.parseInt(cmd.getOptionValue("t"));
-
+            if (cmd.hasOption("threads"))
+                threads = Integer.parseInt(cmd.getOptionValue("threads"));
             if (cmd.hasOption("c"))
                 columns = Integer.parseInt(cmd.getOptionValue("c"));
 

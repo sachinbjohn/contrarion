@@ -176,8 +176,8 @@ public class StressAction extends Thread
                 long byteDelta = byteCount - oldByteCount;
                 double latencyDelta = latency - oldLatency;
 
-
-                long currentTimeInSeconds = (System.currentTimeMillis() - testStartTime) / 1000;
+                client.exptDurationMs = System.currentTimeMillis() - testStartTime;
+                long currentTimeInSeconds = client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
                 output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds));
@@ -263,13 +263,13 @@ public class StressAction extends Thread
 
 	if (latencies.length == 0) {
 	    // We aren't recording latencies for this op type probably
-	    System.err.println("No Latencies percentiles to print");
+//	    System.err.println("No Latencies percentiles to print");
 	    return;
 	}
 
-        System.err.println(String.format("Overall Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-                percentile(latencies, 50), percentile(latencies, 90), percentile(latencies, 95),
-                percentile(latencies, 99), percentile(latencies, 99.9)));
+//        System.err.println(String.format("Overall Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+//                percentile(latencies, 50), percentile(latencies, 90), percentile(latencies, 95),
+//                percentile(latencies, 99), percentile(latencies, 99.9)));
 
 
     // RO6 read latency
@@ -288,13 +288,13 @@ public class StressAction extends Thread
 
         if (readlatencies.length == 0) {
             // We aren't recording latencies for this op type probably
-            System.err.println("No ReadLatencies percentiles to print");
+//            System.err.println("No ReadLatencies percentiles to print");
             return;
         }
 
-        System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-                percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
-                percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
+//        System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+//                percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
+//                percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
 
 	// @Khiem: print out all read latencies
 	//System.err.println(String.format("List of Read Latencies: %s", Arrays.toString(readlatencies)));
@@ -316,13 +316,34 @@ public class StressAction extends Thread
 
         if (writelatencies.length == 0) {
             // We aren't recording latencies for this op type probably
-            System.err.println("No WriteLatencies percentiles to print");
+//            System.err.println("No WriteLatencies percentiles to print");
             return;
         }
 
-        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
-                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
+//        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+//                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
+//                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
+        //Exp,clientX,keysperserv,num_serv,valSize,kperread,wfra,z,numT,#ops,#keys,#columns,#bytes,#read,#write
+        int numOps = client.operations.get();
+        int numKeys = client.keys.get();
+        int numColumns = client.columnCount.get();
+        long numBytes = client.bytes.get();
+        int numReads = client.readlatencies.size();
+        int numWrites = client.writelatencies.size();
+        long duration = client.exptDurationMs;
+
+        String header = String.format("COPS-SNOW,%d,%d,%d,%d,%f,%f,%d,Client%d,",client.getKeys_per_server(),client.getNum_servers(),client.getColumnSize(),client.getKeys_per_read(),client.getWrite_fraction(),client.getZipfianConstant(),client.getThreads(),client.stressIndex);
+        System.err.println(header+"NumOps,"+numOps);
+        System.err.println(header+"NumKeys,"+numKeys);
+        System.err.println(header+"NumColumns,"+numColumns);
+        System.err.println(header+"NumBytes,"+numBytes);
+        System.err.println(header+"NumReads,"+numReads);
+        System.err.println(header+"NumWrites,"+numWrites);
+        System.err.println(header+"Duration,"+duration);
+        for(Long r:readlatencies)
+            System.err.println(header+"ReadLatency,"+r);
+        for(Long w: writelatencies)
+            System.err.println(header+"WriteLatency,"+w);
     }
 
     /**
