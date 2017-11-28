@@ -2,7 +2,7 @@
 
 #Using VICCI confs
 set -u
-set -x
+#set -x
 
 
 if [ $# -ne 1 ]; then

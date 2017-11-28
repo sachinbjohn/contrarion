@@ -341,7 +341,7 @@ public class StressAction extends Thread
         long duration = client.exptDurationMs;
 
         ArrayList<String> outputs = new ArrayList<>();
-        outputs.add("Eiger");
+        outputs.add("COPS-SNOW");
         outputs.add(String.valueOf(client.getKeys_per_server()));
         outputs.add(String.valueOf(client.getNum_servers()));
         outputs.add(String.valueOf(client.getColumnSize()));
