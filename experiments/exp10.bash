@@ -2,8 +2,7 @@
 
 #Using VICCI confs
 set -u
-#set -x
-
+set -x
 
 if [ $# -ne 1 ]; then
     echo "$0: [# servers]"
@@ -67,7 +66,12 @@ echo ${clients_by_dc[@]}
 kill_all_cmd="${cops_dir}/vicci_cassandra_killer.bash ${cops_dir}/vicci_dcl_config/${dcl_config}"
 stress_killer="${cops_dir}/kill_stress_vicci.bash"
 
+cleanup() {
+echo "Killing everything"
+${cops_dir}/kill_all.bash $nservers
+}
 
+trap cleanup EXIT
 #get cluster up an running
 internal_cluster_start_cmd() {
     cur_dir=$PWD
@@ -105,12 +109,12 @@ internal_populate_cluster() {
         kill $killall_jck_pid
         sleep 5
     done
-
+    sleep 10
 
     populate_attempts=0
     while [ 1 ]; do
 
-        KILLALL_SSH_TIME=90
+        KILLALL_SSH_TIME=400
         MAX_ATTEMPTS=10
         (sleep $KILLALL_SSH_TIME; killall ssh) &
         killall_ssh_pid=$!
@@ -131,7 +135,7 @@ internal_populate_cluster() {
                 #write to ALL so the cluster is populated everywhere
                 ssh $client -o StrictHostKeyChecking=no "\
                     mkdir -p ${output_dir}; \
-                    $stress_killer; sleep 1; \
+                    $stress_killer; sleep 10; \
                     cd ${src_dir}/tools/stress; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
@@ -239,18 +243,18 @@ gather_results() {
 keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
-for trial in 1 2 3 4 5
+for trial in 1 #2 3 4 5
 do
-    for value_size in 8 128 512
+    for value_size in 8 #128 512
     do
 
-        for keys_per_read in 2 4 16
+        for keys_per_read in 2 #4 16
         do
-            for write_frac in 0.01 0.05 0.1
+            for write_frac in 0.01 #0.05 0.1
             do
-                for zipf_c in 0.0 0.8 0.99
+                for zipf_c in 0.99 #0.0 0.8 0.99
                 do
-                    for numT in 1 4 8 12 16 24 32
+                    for numT in 32 24 16 12 8 4 1 #4 8 12 16 24 32
                     do
                         internal_cluster_start_cmd $cops_dir
                         internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
