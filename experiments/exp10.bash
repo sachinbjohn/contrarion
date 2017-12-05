@@ -66,10 +66,28 @@ echo ${clients_by_dc[@]}
 kill_all_cmd="${cops_dir}/vicci_cassandra_killer.bash ${cops_dir}/vicci_dcl_config/${dcl_config}"
 stress_killer="${cops_dir}/kill_stress_vicci.bash"
 
-cleanup() {
-echo "Killing everything"
-${cops_dir}/kill_all.bash $nservers
+gather_results() {
+    for dc in 0; do
+        for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
+            serv_dir=${output_dir}/server/
+            server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index+1)) | tail -n 1)
+            rsync -az $server:$cops_dir/cassandra_var/cassandra* ${serv_dir}
+        done
+        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
+            client_dir=${output_dir}/client${cli_index}
+            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
+            rsync -az $client:$output_dir/* ${client_dir}
+        done
+    done
 }
+
+
+cleanup() {
+    echo "Killing everything"
+    ${cops_dir}/kill_all.bash $nservers
+    gather_results
+}
+
 
 trap cleanup EXIT
 #get cluster up an running
@@ -109,7 +127,6 @@ internal_populate_cluster() {
         kill $killall_jck_pid
         sleep 5
     done
-    sleep 10
 
     populate_attempts=0
     while [ 1 ]; do
@@ -135,7 +152,7 @@ internal_populate_cluster() {
                 #write to ALL so the cluster is populated everywhere
                 ssh $client -o StrictHostKeyChecking=no "\
                     mkdir -p ${output_dir}; \
-                    $stress_killer; sleep 10; \
+                    $stress_killer; sleep 1; \
                     cd ${src_dir}/tools/stress; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
@@ -154,6 +171,7 @@ internal_populate_cluster() {
                     " 2>&1 | awk '{ print "'$client': "$0 }' &
                                     pop_pid=$!
                                     pop_pids="$pop_pids $pop_pid"
+                sleep 1
             done
         done
 
@@ -222,7 +240,7 @@ run_exp10() {
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 10)); ${src_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 60)); ${src_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -230,15 +248,6 @@ run_exp10() {
     wait
 }
 
-gather_results() {
-    for dc in 0; do
-        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
-            client_dir=${output_dir}/client${cli_index}
-            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
-            rsync -az $client:$output_dir/* ${client_dir}
-        done
-    done
-}
 
 keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
