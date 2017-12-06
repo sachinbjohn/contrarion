@@ -44,7 +44,7 @@ public class StressAction extends Thread
     private final ClientContext clientContext;
 
     private volatile boolean stop = false;
-
+    private volatile boolean terminate = false;
     private final int key_sets_size;   // for pre-generate 1000000 key sets = 5000000 keys
 
     private static Vector< List<ByteBuffer> > read_key_sets, write_key_sets;
@@ -109,7 +109,7 @@ public class StressAction extends Thread
             consumers[i].start();
 
         // initialization of the values
-        boolean terminate = false;
+        terminate = false;
         latency = byteCount = 0;
         epoch = total = keyCount = columnCount = 0;
 
@@ -120,6 +120,8 @@ public class StressAction extends Thread
 	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 	    @Override
 		public void run() {
+                stopAction();
+                while(!terminate);
                 printLatencyPercentiles();
             }
 	    }));

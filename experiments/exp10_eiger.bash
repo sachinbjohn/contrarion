@@ -76,6 +76,7 @@ gather_results() {
     local root_dir=$1
     local exp_name=$2
     local exp_output_dir=${output_dir}/${exp_name}
+    mkdir -p ${exp_output_dir}
     for dc in 0; do
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             serv_dir=${exp_output_dir}/server/
