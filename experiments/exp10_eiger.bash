@@ -226,8 +226,8 @@ run_exp10() {
     local num_threads=$7
     local exp_time=$8
     local trial=$9
-    local root_dir=$10
-    local exp_name=$11
+    local root_dir=${10}
+    local exp_name=${11}
     local cli_output_dir="$output_dir/${exp_name}/trial${trial}/"
     local data_file_name=$1_$2_$3_$4_$5_$6_$7_$8+$9+data
     for dc in 0; do
