@@ -253,6 +253,13 @@ public class StressAction extends Thread
 
     private void printLatencyPercentiles()
     {
+        int numOps = client.operations.get();
+        int numKeys = client.keys.get();
+        int numColumns = client.columnCount.get();
+        long numBytes = client.bytes.get();
+        int numReads = client.readlatencies.size();
+        int numWrites = client.writelatencies.size();
+        long duration = client.exptDurationMs;
 
 	// Trim away the latencies from the start and end of the trial
 	// we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
@@ -331,14 +338,8 @@ public class StressAction extends Thread
 //        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
 //                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
 //                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
-        //Exp,clientX,keysperserv,num_serv,valSize,kperread,wfra,z,numT,#ops,#keys,#columns,#bytes,#read,#write
-        int numOps = client.operations.get();
-        int numKeys = client.keys.get();
-        int numColumns = client.columnCount.get();
-        long numBytes = client.bytes.get();
-        int numReads = client.readlatencies.size();
-        int numWrites = client.writelatencies.size();
-        long duration = client.exptDurationMs;
+        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99
+
 
         //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
         ArrayList<String> outputs = new ArrayList<>();

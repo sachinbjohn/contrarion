@@ -15,19 +15,21 @@ nservers=$1
 dcl_config=${nservers}_in_vicci
 client_config=${nservers}_clients_in_vicci
 
-cops_dir="$HOME/COPS-SNOW"
-exp_dir="${cops_dir}/experiments"
-stress_dir="${cops_dir}/tools/stress"
+cops_root_dir="$HOME/COPS-SNOW"
+eiger_root_dir="$HOME/eiger"
 
-output_dir_base="${exp_dir}/exp10"
+
+exp_dir="${cops_root_dir}/experiments"  #shared with Eiger
+
+output_dir_base="${exp_dir}/exp10" #shared with Eiger
 exp_uid=$(date +%s)
-output_dir="${output_dir_base}/${exp_uid}"
+output_dir="${output_dir_base}/${exp_uid}" #shared with Eiger
 mkdir -p ${output_dir}
 rm $output_dir_base/latest
 ln -s $output_dir $output_dir_base/latest
 
 
-dcl_config_full="${cops_dir}/vicci_dcl_config/${dcl_config}"
+dcl_config_full="${cops_root_dir}/vicci_dcl_config/${dcl_config}" #shared with Eiger
 
 all_servers=($(cat $dcl_config_full | grep cassandra_ips | awk -F"=" '{ print $2 }' | xargs))
 all_servers=$(echo "echo ${all_servers[@]}" | bash)
@@ -49,7 +51,7 @@ echo ${servers_by_dc[@]}
 
 
 
-client_config_full="${cops_dir}/vicci_dcl_config/${client_config}"
+client_config_full="${cops_root_dir}/vicci_dcl_config/${client_config}" #shared with Eiger
 
 all_clients=$(cat $client_config_full | grep cassandra_ips | awk -F"=" '{ print $2 }' | xargs)
 all_clients=$(echo "echo ${all_clients[@]}" | bash)
@@ -63,20 +65,27 @@ for dc in $(seq 0 $((num_dcs-1))); do
 done
 echo ${clients_by_dc[@]}
 
-kill_all_cmd="${cops_dir}/vicci_cassandra_killer.bash ${cops_dir}/vicci_dcl_config/${dcl_config}"
-stress_killer="${cops_dir}/kill_stress_vicci.bash"
+kill_all_cmd="${cops_root_dir}/vicci_cassandra_killer.bash ${cops_root_dir}/vicci_dcl_config/${dcl_config}" #shared
+stress_killer="${cops_root_dir}/kill_stress_vicci.bash" #shared
+
+
+
+
 
 gather_results() {
+    local root_dir=$1
+    local exp_name=$2
+    local exp_output_dir=${output_dir}/${exp_name}
     for dc in 0; do
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
-            serv_dir=${output_dir}/server/
-            server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index+1)) | tail -n 1)
-            rsync -az $server:$cops_dir/cassandra_var/cassandra* ${serv_dir}
+            serv_dir=${exp_output_dir}/server/
+            server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
+            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} #separate log directory for cassandra and eiger
         done
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
-            client_dir=${output_dir}/client${cli_index}
+            client_dir=${exp_output_dir}/client${cli_index}
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
-            rsync -az $client:$output_dir/* ${client_dir}
+            rsync -az $client:${exp_output_dir}/* ${client_dir} #shared output dir
         done
     done
 }
@@ -84,8 +93,9 @@ gather_results() {
 
 cleanup() {
     echo "Killing everything"
-    ${cops_dir}/kill_all.bash $nservers
-    gather_results
+    ${cops_root_dir}/kill_all.bash $nservers #works for both
+    #    gather_results $cops_root_dir cops
+    #    gather_results $eiger_root_dir eiger
 }
 
 
@@ -93,29 +103,30 @@ trap cleanup EXIT
 #get cluster up an running
 internal_cluster_start_cmd() {
     cur_dir=$PWD
-    src_dir=$1
-    cd ${src_dir};
-    $kill_all_cmd;
+    root_dir=$1
+    cd ${root_dir};
+    ${kill_all_cmd};
     sleep 1;
     while [ 1 ]; do
-        ./vicci_dc_launcher.bash ${dcl_config_full}
+        ./vicci_dc_launcher.bash ${dcl_config_full}  #calling respective launcher using COPS config
         return_value=$?
-        if [ $return_value -eq 0 ]; then
+        if [ ${return_value} -eq 0 ]; then
             break
         fi
     done
-    cd $cur_dir;
+    cd ${cur_dir};
 }
 
 
 internal_populate_cluster() {
-    src_dir=$1
-    insert_cmd=$2
-    total_keys=$3
-    max_columns=$4
-    column_size=$5
-    column_per_key_write=$6
-
+    local root_dir=$1
+    local insert_cmd=$2
+    local total_keys=$3
+    local max_columns=$4
+    local column_size=$5
+    local column_per_key_write=$6
+    local exp_name=$7
+    local exp_output_dir=${output_dir}/${exp_name}
     #set the keyspace
     for i in $(seq 3); do
         first_dc_servers_csv=$(echo ${servers_by_dc[0]} | sed 's/ /,/g')
@@ -123,7 +134,7 @@ internal_populate_cluster() {
         # set up a killall for stress in case it hangs
         (sleep 60; killall stress) &
         killall_jck_pid=$!
-        ${src_dir}/tools/stress/bin/stress --nodes=$first_dc_servers_csv --just-create-keyspace --replication-strategy=NetworkTopologyStrategy --strategy-properties=$strategy_properties
+        ${root_dir}/tools/stress/bin/stress --nodes=$first_dc_servers_csv --just-create-keyspace --replication-strategy=NetworkTopologyStrategy --strategy-properties=$strategy_properties
         kill $killall_jck_pid
         sleep 5
     done
@@ -150,10 +161,13 @@ internal_populate_cluster() {
                 first_dc_servers_csv=$(echo ${servers_by_dc[0]} | sed 's/ /,/g')
 
                 #write to ALL so the cluster is populated everywhere
+
+                #output is shared bw COPS and EIGER
+                #stress is called of respective algo
                 ssh $client -o StrictHostKeyChecking=no "\
-                    mkdir -p ${output_dir}; \
+                    mkdir -p ${exp_output_dir}; \
                     $stress_killer; sleep 1; \
-                    cd ${src_dir}/tools/stress; \
+                    cd ${root_dir}/tools/stress; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
                     --columns=$max_columns \
@@ -166,8 +180,8 @@ internal_populate_cluster() {
                     --num-keys=$keys_per_client \
                     --stress-index=$cli_index \
                     --stress-count=$num_clients_per_dc \
-                     > >(tee ${output_dir}/populate.out) \
-                    2> >(tee ${output_dir}/populate.err) \
+                     > >(tee ${exp_output_dir}/populate.out) \
+                    2> >(tee ${exp_output_dir}/populate.err) \
                     " 2>&1 | awk '{ print "'$client': "$0 }' &
                                     pop_pid=$!
                                     pop_pids="$pop_pids $pop_pid"
@@ -201,25 +215,28 @@ internal_populate_cluster() {
 }
 
 run_exp10() {
-    keys_per_serv=$1
-    num_serv=$2
-    column_size=$3
-    keys_per_read=$4
-    write_frac=$5
-    zipf_const=$6
-    num_threads=$7
-    exp_time=$8
-    trial=$9
 
-    cli_output_dir="$output_dir/trial${trial}"
-    data_file_name=$1_$2_$3_$4_$5_$6_$7_$8+$9+data
+    #external vars :: output_dir, servers by dc, num servers, num clients per dc, clients by dc, strategy properties
+    local keys_per_serv=$1
+    local num_serv=$2
+    local column_size=$3
+    local keys_per_read=$4
+    local write_frac=$5
+    local zipf_const=$6
+    local num_threads=$7
+    local exp_time=$8
+    local trial=$9
+    local root_dir=$10
+    local exp_name=$11
+    local cli_output_dir="$output_dir/${exp_name}/trial${trial}/"
+    local data_file_name=$1_$2_$3_$4_$5_$6_$7_$8+$9+data
     for dc in 0; do
-        local_servers_csv=$(echo ${servers_by_dc[$dc]} | sed 's/ /,/g')
+        local local_servers_csv=$(echo ${servers_by_dc[$dc]} | sed 's/ /,/g')
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
-            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index + 1)) | tail -n 1)
+            local client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index + 1)) | tail -n 1)
             ssh $client -o StrictHostKeyChecking=no "\
             mkdir -p $cli_output_dir; \
-            cd ${src_dir}/tools/stress; \
+            cd ${root_dir}/tools/stress; \
             ((bin/stress \
             --progress-interval=1 \
             --nodes=$local_servers_csv \
@@ -240,7 +257,7 @@ run_exp10() {
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 90)); ${src_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 90)); ${root_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -248,7 +265,7 @@ run_exp10() {
     wait
 }
 
-
+rm -f ~/progress
 keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
@@ -256,22 +273,29 @@ for trial in 1 #2 3 4 5
 do
     for value_size in 8 #128 512
     do
-
-        for keys_per_read in 2 #4 16
+        for zipf_c in 0.99 #0.0 0.8 0.99
         do
-            for write_frac in 0.01 #0.05 0.1
+            for keys_per_read in 2 #4 16
             do
-                for zipf_c in 0.99 #0.0 0.8 0.99
+                for write_frac in 0.01 #0.05 0.1
                 do
                     for numT in 32 24 16 12 8 4 1 #4 8 12 16 24 32
                     do
-                        echo "COPS trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT started at $(date)" >> ~/progress
-                        internal_cluster_start_cmd $cops_dir
-                        internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
-                        run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
-                        $kill_all_cmd
-                        gather_results
-                        echo "COPS trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT finished at $(date)" >> ~/progress
+                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+                        internal_cluster_start_cmd ${cops_root_dir}
+                        internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
+                        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
+                        ${kill_all_cmd}
+                        gather_results ${cops_root_dir} cops
+                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+
+                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+                        internal_cluster_start_cmd ${eiger_root_dir}
+                        internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger
+                        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
+                        ${kill_all_cmd}
+                        gather_results ${eiger_root_dir} eiger
+                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
                     done
                 done
             done
