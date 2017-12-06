@@ -260,6 +260,10 @@ public class StressAction extends Thread
         int numReads = client.readlatencies.size();
         int numWrites = client.writelatencies.size();
         long duration = client.exptDurationMs;
+        int num2RoundTxn = 0;
+        int num2RoundKey = 0;
+        int nR = client.numReads.get();
+        int nW = client.numWrites.get();
 
 	// Trim away the latencies from the start and end of the trial
 	// we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
@@ -338,7 +342,10 @@ public class StressAction extends Thread
 //        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
 //                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
 //                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
-        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99
+
+        /*
+        Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#R,#W
+         */
 
 
         //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
@@ -374,6 +381,13 @@ public class StressAction extends Thread
         outputs.add(String.valueOf(percentile(writelatencies,50)));
         outputs.add(String.valueOf(percentile(writelatencies,90)));
         outputs.add(String.valueOf(percentile(writelatencies,99)));
+
+        //#Tx2R,#K2R, #R,#W
+        outputs.add(String.valueOf(num2RoundTxn));
+        outputs.add(String.valueOf(num2RoundKey));
+        outputs.add(String.valueOf(nR));
+        outputs.add(String.valueOf(nW));
+
 
         System.err.println(String.join(",",outputs));
     }
