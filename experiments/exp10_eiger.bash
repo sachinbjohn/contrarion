@@ -289,7 +289,7 @@ do
                         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
                         ${kill_all_cmd}
                         gather_results ${cops_root_dir} cops
-                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT finished at $(date)" >> ~/progress
 
                         echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
                         internal_cluster_start_cmd ${eiger_root_dir}
@@ -297,7 +297,7 @@ do
                         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
                         ${kill_all_cmd}
                         gather_results ${eiger_root_dir} eiger
-                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT finished at $(date)" >> ~/progress
                     done
                 done
             done

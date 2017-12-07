@@ -102,6 +102,17 @@ public class StressAction extends Thread
         }
 
         Producer producer = new Producer();
+        // Wait until all clients are up
+        if(client.getOperation() == Stress.Operations.EXP10) {
+            try {
+                new ClientSyncer(client, -1, output).run(client.getClientLibrary());
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }
+
         producer.start();
 
         // starting worker threads
@@ -129,7 +140,6 @@ public class StressAction extends Thread
         {
             if (stop || client.exptDurationMs > client.specifiedExptDurationSeconds*1000)
             {
-                output.println("Killing producer consumer");
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
