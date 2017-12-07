@@ -255,10 +255,11 @@ run_exp10() {
             --write-fraction=$write_frac \
             --threads=$num_threads \
             --zipfian-constant=$zipf_const \
+            --expt-duration=$exp_time \
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 10)); ${root_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 20)); ${root_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -269,7 +270,7 @@ run_exp10() {
 rm -f ~/progress
 keys_per_server=100000
 total_keys=$((keys_per_server*num_servers))
-run_time=60
+run_time=30
 for trial in 1 #2 3 4 5
 do
     for value_size in 8 #128 512

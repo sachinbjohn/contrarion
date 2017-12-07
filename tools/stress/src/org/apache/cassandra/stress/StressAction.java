@@ -127,7 +127,7 @@ public class StressAction extends Thread
 
         while (!terminate)
         {
-            if (stop)
+            if (stop || client.exptDurationMs > client.specifiedExptDurationSeconds*1000)
             {
                 output.println("Killing producer consumer");
                 producer.stopProducer();

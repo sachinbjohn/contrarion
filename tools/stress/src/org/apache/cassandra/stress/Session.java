@@ -129,6 +129,8 @@ public class Session implements Serializable
         availableOptions.addOption("", "useZipfian", true, "this stress run uses zipfian workload or not");
 	    availableOptions.addOption("", "zipfian-constant", true, "Set the zipfian constant for Zipfian distribution");
 
+	    availableOptions.addOption("", "expt-duration", true, "Set the maximum running time for experiment");
+
     }
 
     private int numKeys          = 1000 * 1000;
@@ -148,6 +150,7 @@ public class Session implements Serializable
     private String compactionStrategy = null;
 
     private int progressInterval  = 10;
+    public int specifiedExptDurationSeconds = 60;
     private int keysPerCall       = 1000;
     private boolean replicateOnWrite = true;
     private boolean ignoreErrors  = false;
@@ -180,7 +183,7 @@ public class Session implements Serializable
     private final Set<Dep> pregeneratedDependencies = new HashSet<Dep>();
 
     public int stressIndex = 0;
-    private int stressCount = 1;
+    public int stressCount = 1;
     private final int keysOffset = 0;
 
     private boolean justCreateKeyspace = false;
@@ -318,6 +321,9 @@ public class Session implements Serializable
 
             if (cmd.hasOption("i"))
                 progressInterval = Integer.parseInt(cmd.getOptionValue("i"));
+
+            if (cmd.hasOption("expt-duration"))
+                specifiedExptDurationSeconds = Integer.parseInt(cmd.getOptionValue("expt-duration"));
 
             if (cmd.hasOption("g"))
                 keysPerCall = Integer.parseInt(cmd.getOptionValue("g"));
