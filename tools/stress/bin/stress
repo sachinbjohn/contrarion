@@ -53,4 +53,3 @@ if [ "x$JAVA" = "x" ]; then
 fi
 
 $JAVA -server -cp $CLASSPATH org.apache.cassandra.stress.Stress $@
-echo "Exiting stress binary"

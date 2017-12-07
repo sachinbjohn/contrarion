@@ -96,7 +96,7 @@ public final class Stress
             ClientContext clientContext = new ClientContext();
             new StressAction(session, outStream, clientContext).run();
         }
-        outStream.println("Exiting Stress main");
+        System.exit(0);
     }
 
     /**
