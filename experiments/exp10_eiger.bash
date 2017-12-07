@@ -259,7 +259,7 @@ run_exp10() {
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 20)); ${root_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 60)); ${root_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done

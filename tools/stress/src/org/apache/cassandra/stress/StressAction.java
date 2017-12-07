@@ -133,6 +133,7 @@ public class StressAction extends Thread
 		public void run() {
                 stop=true;
                 printLatencyPercentiles();
+                output.println("Exiting ShutDownHook");
             }
 	    }));
 
