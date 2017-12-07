@@ -128,6 +128,7 @@ public class StressAction extends Thread
         {
             if (stop)
             {
+                output.println("Killing producer consumer");
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -180,7 +181,7 @@ public class StressAction extends Thread
                 long currentTimeInSeconds = client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
-                output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds));
+                output.println(String.format("%d,%d,%d,%d,%d,%s,%d alive=%d stop=%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds,alive,stop));
             }
         }
         printLatencyPercentiles();
