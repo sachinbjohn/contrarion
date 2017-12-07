@@ -238,7 +238,7 @@ run_exp10() {
             ssh $client -o StrictHostKeyChecking=no "\
             mkdir -p $cli_output_dir; \
             cd ${root_dir}/tools/stress; \
-            ((bin/stress \
+            timeout 5m bin/stress \
             --progress-interval=1 \
             --nodes=$local_servers_csv \
             --operation=EXP10 \
@@ -257,9 +257,7 @@ run_exp10() {
             --zipfian-constant=$zipf_const \
             --expt-duration=$exp_time \
              > >(tee ${cli_output_dir}/${data_file_name}) \
-            2> ${cli_output_dir}/${data_file_name}.stderr \
-            ) &); \
-            sleep $((exp_time + 60)); ${root_dir}/kill_stress_vicci.bash" \
+            2> ${cli_output_dir}/${data_file_name}.stderr" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -270,7 +268,7 @@ run_exp10() {
 rm -f ~/progress
 keys_per_server=100000
 total_keys=$((keys_per_server*num_servers))
-run_time=30
+run_time=60    #Timeout is set to 5minutes
 for trial in 1 #2 3 4 5
 do
     for value_size in 8 #128 512
