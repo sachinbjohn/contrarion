@@ -16,7 +16,7 @@ with open(file, 'r') as csvfile:
 	csvreader = csv.reader(csvfile)
 	for row in csvreader:
 		if(title==""):
-			title="Keys/Serv="+row[1]+" #Serv="+row[2]+" ValSize="+row[3]+" Key/Read="+row[4]+" WrFr="+row[5]+" zifp="+row[6]
+			title="K/Srv="+row[1]+" #Srv="+row[2]+" Val="+row[3]+" K/Rd="+row[4]+" WrFr="+row[5]+" Z="+row[6]
 			outfile=file[:-4]+"."+row[1]+"_"+row[2]+"_"+row[3]+"_"+row[4]+"_"+row[5]+"_"+row[6]+"_"
 		if(row[0] == 'Eiger') :
 			v=eiger[int(row[7])]

@@ -81,13 +81,15 @@ gather_results() {
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             serv_dir=${exp_output_dir}/server/
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
-            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} #separate log directory for cassandra and eiger
+            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} & #separate log directory for cassandra and eiger
         done
+        wait
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
             client_dir=${exp_output_dir}/client${cli_index}
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
-            rsync -az $client:${exp_output_dir}/* ${client_dir} #shared output dir
+            rsync -az $client:${exp_output_dir}/* ${client_dir} & #shared output dir
         done
+        wait
     done
 }
 
@@ -287,7 +289,6 @@ do
                         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
                         ${kill_all_cmd}
                         gather_results ${cops_root_dir} cops
-                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT finished at $(date)" >> ~/progress
 
                         echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
                         internal_cluster_start_cmd ${eiger_root_dir}
@@ -295,7 +296,6 @@ do
                         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
                         ${kill_all_cmd}
                         gather_results ${eiger_root_dir} eiger
-                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT finished at $(date)" >> ~/progress
                     done
                 done
             done
