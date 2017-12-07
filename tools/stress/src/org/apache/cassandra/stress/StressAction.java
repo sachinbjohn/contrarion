@@ -44,7 +44,7 @@ public class StressAction extends Thread
     private final ClientContext clientContext;
 
     private volatile boolean stop = false;
-    private volatile boolean terminate = false;
+
     private final int key_sets_size;   // for pre-generate 1000000 key sets = 5000000 keys
 
     private static Vector< List<ByteBuffer> > read_key_sets, write_key_sets;
@@ -109,7 +109,7 @@ public class StressAction extends Thread
             consumers[i].start();
 
         // initialization of the values
-        terminate = false;
+        boolean terminate = false;
         latency = byteCount = 0;
         epoch = total = keyCount = columnCount = 0;
 
@@ -120,7 +120,7 @@ public class StressAction extends Thread
 	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 	    @Override
 		public void run() {
-                stopAction();
+                printLatencyPercentiles();
             }
 	    }));
 
@@ -181,10 +181,10 @@ public class StressAction extends Thread
                 long currentTimeInSeconds = client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
-                output.println(String.format("%d,%d,%d,%d,%d,%s,%d alive=%d stop=%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds,alive,stop));
+                output.println(String.format("%d,%d,%d,%d,%d,%s,%d alive=%d stop=%b", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds,alive,stop));
             }
         }
-        printLatencyPercentiles();
+
         // marking an end of the output to the client
         output.println("END");
     }

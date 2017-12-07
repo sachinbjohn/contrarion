@@ -258,7 +258,7 @@ run_exp10() {
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 90)); ${root_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 10)); ${root_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -267,7 +267,7 @@ run_exp10() {
 }
 
 rm -f ~/progress
-keys_per_server=1000000
+keys_per_server=100000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
 for trial in 1 #2 3 4 5
