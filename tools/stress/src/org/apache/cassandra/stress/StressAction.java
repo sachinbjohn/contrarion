@@ -120,6 +120,7 @@ public class StressAction extends Thread
 	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 	    @Override
 		public void run() {
+                stop=true;
                 printLatencyPercentiles();
             }
 	    }));
@@ -181,7 +182,7 @@ public class StressAction extends Thread
                 long currentTimeInSeconds = client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
-                output.println(String.format("%d,%d,%d,%d,%d,%s,%d alive=%d stop=%b", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds,alive,stop));
+                output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
 
