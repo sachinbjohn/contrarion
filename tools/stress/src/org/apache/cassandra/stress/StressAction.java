@@ -109,7 +109,7 @@ public class StressAction extends Thread
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
-                System.exit(-1);
+                //System.exit(-1);
             }
         }
 
