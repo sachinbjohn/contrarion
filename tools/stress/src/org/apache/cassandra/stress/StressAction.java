@@ -337,7 +337,7 @@ public class StressAction extends Thread
 
         //Lsum, Lavg
         outputs.add(String.valueOf(latency));
-        outputs.add(String.valueOf(latency/numOps));
+        outputs.add(String.valueOf(latency*1000/numOps));
         System.err.println(String.join(",",outputs));
 
     }
