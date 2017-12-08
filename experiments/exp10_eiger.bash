@@ -267,6 +267,18 @@ run_exp10() {
     wait
 }
 
+process_exp10() {
+    local keys_per_serv=$1
+    local num_serv=$2
+    local column_size=$3
+    local keys_per_read=$4
+    local write_frac=$5
+    local zipf_const=$6
+    local data_file_name=$1_$2_$3_$4_$5_$6
+    find $output_dir -name "${data_file_name}*.stderr" | xargs -n1  grep -E 'COPS|Eiger' >> "${output_dir}/${data_file_name}.csv"
+}
+
+
 rm -f ~/progress
 keys_per_server=100000
 total_keys=$((keys_per_server*num_servers))
@@ -297,6 +309,7 @@ do
                         ${kill_all_cmd}
                         gather_results ${eiger_root_dir} eiger
                     done
+                    process_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
                 done
             done
         done
