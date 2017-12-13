@@ -138,13 +138,21 @@ public class StressAction extends Thread
 
         while (!terminate)
         {
-            if (stop || client.exptDurationMs > client.specifiedExptDurationSeconds*1000)
+            if (client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+                output.println("Start stats");
+                client.measureStats = true;
+            }
+            if (client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
+                output.println("End stats");
+                client.measureStats = false;
+            }
+            if (stop || client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000)
             {
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
                     consumer.stopConsume();
-
+                client.exptDurationMs -= 2*client.warmupPeriodSeconds*1000;
                 break;
             }
 

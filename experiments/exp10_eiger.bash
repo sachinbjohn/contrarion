@@ -282,7 +282,7 @@ process_exp10() {
 rm -f ~/progress
 keys_per_server=100000
 total_keys=$((keys_per_server*num_servers))
-run_time=60    #Timeout is set to 5minutes
+run_time=30    #Timeout is set to 5minutes
 for trial in 1 #2 3 4 5
 do
     for value_size in 128 #128 512
