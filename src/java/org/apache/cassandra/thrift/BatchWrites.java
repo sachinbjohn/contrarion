@@ -64,7 +64,7 @@ public class BatchWrites {
                 fetchTxnIds(batchedMutations, chosenTime_min);
             }
         };
-        StorageService.scheduledTasks.scheduleWithFixedDelay(doBatchedWrites, BATCH_INTERVAL_IN_MS, BATCH_INTERVAL_IN_MS, TimeUnit.MILLISECONDS);
+        StorageService.scheduledTasks.scheduleWithFixedDelay(doBatchedWrites, BATCH_INTERVAL_IN_MS, BATCH_INTERVAL_IN_MS, TimeUnit.MICROSECONDS);
     }
 
     public void fetchTxnIds(List<Pair<RowMutation, IWriteResponseHandler>> rowMutations, long chosenTime) {

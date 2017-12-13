@@ -287,13 +287,13 @@ for trial in 1 #2 3 4 5
 do
     for value_size in 8 #128 512
     do
-        for zipf_c in 0.99 #0.0 0.8 0.99
+        for write_frac in 0.3 #0.01 0.3 0.05
         do
-            for keys_per_read in 2 #4 16
+            for keys_per_read in 2 #4 8
             do
-                for write_frac in 0.01 #0.05 0.1
+                for zipf_c in 0.99 #0.0 0.99
                 do
-                    for numT in 32 24 16 12 8 4 1 #4 8 12 16 24 32
+                    for numT in 32 16 8 4 1 #4 8 12 16 24 32
                     do
                         echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
                         internal_cluster_start_cmd ${cops_root_dir}
