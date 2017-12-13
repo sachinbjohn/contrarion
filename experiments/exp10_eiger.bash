@@ -285,7 +285,7 @@ total_keys=$((keys_per_server*num_servers))
 run_time=60    #Timeout is set to 5minutes
 for trial in 1 #2 3 4 5
 do
-    for value_size in 8 #128 512
+    for value_size in 128 #128 512
     do
         for write_frac in 0.3 #0.01 0.3 0.05
         do
