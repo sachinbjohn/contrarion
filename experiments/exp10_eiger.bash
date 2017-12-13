@@ -280,18 +280,18 @@ process_exp10() {
 
 
 rm -f ~/progress
-keys_per_server=100000
+keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=30    #Timeout is set to 5minutes
+run_time=50    #Timeout is set to 5minutes
 for trial in 1 #2 3 4 5
 do
     for value_size in 128 #128 512
     do
-        for write_frac in 0.3 #0.01 0.3 0.05
+        for write_frac in 0.01 0.3 0.05
         do
-            for keys_per_read in 2 #4 8
+            for keys_per_read in 2 4 8 #also 16 #also change servers
             do
-                for zipf_c in 0.99 #0.0 0.99
+                for zipf_c in 0.0 0.99
                 do
                     for numT in 32 16 8 4 1 #4 8 12 16 24 32
                     do
