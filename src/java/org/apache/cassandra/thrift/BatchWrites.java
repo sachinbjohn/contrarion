@@ -71,6 +71,7 @@ public class BatchWrites {
         HashSet<ByteBuffer> keySet = new HashSet<ByteBuffer>();
         ConcurrentHashMap<InetAddress, Set<ByteBuffer>> GroupedKeys = new ConcurrentHashMap<InetAddress, Set<ByteBuffer>>();
         Map<ByteBuffer, HashSet<ByteBuffer>> mutationMap = new HashMap<ByteBuffer, HashSet<ByteBuffer>>();
+        StorageProxy.numBatches.getAndIncrement();
         for (Pair<RowMutation, IWriteResponseHandler> mutation_pair : rowMutations) {
             RowMutation mutation = mutation_pair.left;
             if (mutation.getDependencies().size() > 0) {
@@ -91,6 +92,7 @@ public class BatchWrites {
                 keySet.clear();
             }
         }
+        StorageProxy.numServersContacted.getAndAdd(GroupedKeys.size());
         // now groupedKeys has all keys of an entire batchmutate grouped into each endpoint
         // send out fetchtxnid message
         assert GroupedKeys.size() > 0 : "No dependencies; this condition should be filtered out earlier in StorageProxy";

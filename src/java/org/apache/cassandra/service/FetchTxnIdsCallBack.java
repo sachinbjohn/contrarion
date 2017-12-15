@@ -76,6 +76,7 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
         if (chosenTime == 0) {
             useChosenTime = 1L;
         }
+        HashSet<Long> uniqIds = new HashSet<>();
         Map<ByteBuffer, ArrayList<Long>> returnedIdsMap = new HashMap<ByteBuffer, ArrayList<Long>>();
         for (int i = 0; i < numKeys; ++i) {
             int blockSize = inputStream.readInt();
@@ -84,7 +85,9 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
             for (int x = 0; x < blockSize; ++x) {
                 long txnId = inputStream.readLong();
                 idList.add(txnId);
+                uniqIds.add(txnId);
             }
+            StorageProxy.sizeMsgRecvd.getAndAdd(idList.size());
             for (Map.Entry<ByteBuffer, HashSet<ByteBuffer>> entry : mutationMap.entrySet()) {
                 ByteBuffer locatorKey = entry.getKey();
                 if (entry.getValue().contains(depKey)) {
@@ -97,6 +100,7 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
             }
             idList.clear();
         }
+        StorageProxy.numUniqIds.getAndAdd(uniqIds.size());
         for (Map.Entry<ByteBuffer, ArrayList<Long>> entry : returnedIdsMap.entrySet()) {
             ReadTransactionIdTracker.checkIfTxnIdBeenRecorded(entry.getKey(), entry.getValue(), useChosenTime);
         }

@@ -78,6 +78,11 @@ public class StorageProxy implements StorageProxyMBean
 
     public static final StorageProxy instance = new StorageProxy();
 
+    public static final AtomicInteger numServersContacted = new AtomicInteger();
+    public static final AtomicInteger numBatches = new AtomicInteger();
+    public static final AtomicInteger sizeMsgRecvd = new AtomicInteger();
+    public static final AtomicInteger numUniqIds = new AtomicInteger();
+
     private static volatile boolean hintedHandoffEnabled = DatabaseDescriptor.hintedHandoffEnabled();
     private static volatile int maxHintWindow = DatabaseDescriptor.getMaxHintWindow();
     private static volatile int maxHintsInProgress = 1024 * Runtime.getRuntime().availableProcessors();
@@ -165,6 +170,12 @@ public class StorageProxy implements StorageProxyMBean
                 StageManager.getStage(Stage.MUTATION).execute(runnable);
             }
         };
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println(String.format("COPS put stats, %d, %d, %d",numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get()));
+            }
+        }));
     }
 
     /**
