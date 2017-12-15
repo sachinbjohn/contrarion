@@ -102,6 +102,10 @@ public class StorageProxy implements StorageProxyMBean
 
     private StorageProxy() {}
 
+    public static String getStats() {
+        return String.format("COPS put stats, %d, %d, %d",numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get());
+    }
+
     static
     {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -170,12 +174,6 @@ public class StorageProxy implements StorageProxyMBean
                 StageManager.getStage(Stage.MUTATION).execute(runnable);
             }
         };
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println(String.format("COPS put stats, %d, %d, %d",numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get()));
-            }
-        }));
     }
 
     /**

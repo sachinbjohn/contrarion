@@ -485,6 +485,10 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
                 mutationStage.awaitTermination(3600, TimeUnit.SECONDS);
                 StorageProxy.instance.verifyNoHintsInProgress();
 
+                String stat = StorageProxy.getStats();
+                System.out.println(stat);
+                logger_.error(stat);
+
                 List<Future<?>> flushes = new ArrayList<Future<?>>();
                 for (Table table : Table.all())
                 {
