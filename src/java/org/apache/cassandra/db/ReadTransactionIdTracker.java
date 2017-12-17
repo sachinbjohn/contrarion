@@ -61,10 +61,10 @@ public class ReadTransactionIdTracker {
             ConcurrentHashMap<Long, ArrayList<Long>> txnEntry = new ConcurrentHashMap<Long, ArrayList<Long>>();
             txnEntry.put(transactionId, timesEntry);
             keyToReadTxnIds.put(locatorKey, txnEntry);
-            logger.trace("KeyRead "+ByteBufferUtil.bytesToHex(locatorKey));
+//            logger.trace("KeyRead "+ByteBufferUtil.bytesToHex(locatorKey));
             keyToLastAccessedTime.put(locatorKey, System.currentTimeMillis());
-            txnEntry.clear();
-            txnEntry = null;
+//            txnEntry.clear();
+//            txnEntry = null;
         }
         else {
             long safetyTime = System.currentTimeMillis() - SAFTYTIMER;
@@ -115,8 +115,7 @@ public class ReadTransactionIdTracker {
             return returnedIdList;
         }
         ConcurrentHashMap<Long, ArrayList<Long>> rtxns = keyToReadTxnIds.get(locatorKey);
-        if(rtxns.size() == 0)
-            logger.trace("getReadTxnIds({}) = Empty",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
+
         for (Entry<Long, ArrayList<Long>> entry : rtxns.entrySet()) {
             long safeTime = System.currentTimeMillis() - SAFTYTIMER;
             if (entry.getValue().get(1) >= safeTime) {
@@ -129,7 +128,10 @@ public class ReadTransactionIdTracker {
         }
         keyToLastAccessedTime.put(locatorKey, System.currentTimeMillis());
         if(logger.isTraceEnabled()){
-            logger.trace("getReadTxnIds({}) = {}",new Object[]{ByteBufferUtil.bytesToHex(locatorKey), logline});
+            if(rtxns.size() == 0)
+                logger.trace("getReadTxnIds({}) = Empty",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
+            else
+                logger.trace("getReadTxnIds({}) = {}",new Object[]{ByteBufferUtil.bytesToHex(locatorKey), logline});
         }
         return returnedIdList;
     }
