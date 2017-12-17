@@ -113,6 +113,8 @@ public class ReadTransactionIdTracker {
             }
             return returnedIdList;
         }
+        if(keyToReadTxnIds.get(locatorKey).size() == 0)
+            logger.trace("getReadTxnIds({}) = Empty",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
         for (Entry<Long, ArrayList<Long>> entry : keyToReadTxnIds.get(locatorKey).entrySet()) {
             long safeTime = System.currentTimeMillis() - SAFTYTIMER;
             if (entry.getValue().get(1) >= safeTime) {
