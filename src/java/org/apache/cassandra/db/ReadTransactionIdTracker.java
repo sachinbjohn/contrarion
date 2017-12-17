@@ -93,11 +93,11 @@ public class ReadTransactionIdTracker {
                         keyToReadTxnIds.get(locatorKey).get(transactionId).set(0, txnTime); //update txnTime
                     }
                 }
-                findTxnId.clear();
-                findTxnId = null;
+//                findTxnId.clear();
+//                findTxnId = null;
             }
-            txnIdList.clear();
-            txnIdList = null;
+//            txnIdList.clear();
+//            txnIdList = null;
         }
         // if txnTimeToReturn not equal to 0, then it also means we found this txnId in our record
         return txnTimeToReturn;
