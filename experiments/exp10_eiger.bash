@@ -287,7 +287,7 @@ for trial in 1 #2 3 4 5
 do
     for value_size in 128 #128 512
     do
-        for write_frac in 0.3 #0.01 0.3 0.05
+        for write_frac in 0.01 0.3 0.05
         do
             for keys_per_read in 2 4 8 #also 16 #also change servers
             do

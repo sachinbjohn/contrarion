@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class ReadTransactionIdTracker {
     private static Logger logger = LoggerFactory.getLogger(ReadTransactionIdTracker.class);
-    public static final long SAFTYTIMER = 5000;    // used for garbage collection of old versions, 5 seconds
+    public static final long SAFTYTIMER = 100000;    // used for garbage collection of old versions, 5 seconds
     /**
      * keyToReadTxnIds contains all read transactions just partly happened on this node
      * It is a map of <locator_key, map<transaction_id, ArrayList<txnTime, record_time>>>.
@@ -61,6 +61,7 @@ public class ReadTransactionIdTracker {
             ConcurrentHashMap<Long, ArrayList<Long>> txnEntry = new ConcurrentHashMap<Long, ArrayList<Long>>();
             txnEntry.put(transactionId, timesEntry);
             keyToReadTxnIds.put(locatorKey, txnEntry);
+            logger.trace("KeyRead "+ByteBufferUtil.bytesToHex(locatorKey));
             keyToLastAccessedTime.put(locatorKey, System.currentTimeMillis());
             txnEntry.clear();
             txnEntry = null;
@@ -113,9 +114,10 @@ public class ReadTransactionIdTracker {
             }
             return returnedIdList;
         }
-        if(keyToReadTxnIds.get(locatorKey).size() == 0)
+        ConcurrentHashMap<Long, ArrayList<Long>> rtxns = keyToReadTxnIds.get(locatorKey);
+        if(rtxns.size() == 0)
             logger.trace("getReadTxnIds({}) = Empty",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
-        for (Entry<Long, ArrayList<Long>> entry : keyToReadTxnIds.get(locatorKey).entrySet()) {
+        for (Entry<Long, ArrayList<Long>> entry : rtxns.entrySet()) {
             long safeTime = System.currentTimeMillis() - SAFTYTIMER;
             if (entry.getValue().get(1) >= safeTime) {
                 logline.add(String.valueOf(entry.getKey()));
