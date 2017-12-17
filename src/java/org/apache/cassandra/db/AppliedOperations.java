@@ -288,14 +288,21 @@ public class AppliedOperations
         int size = (numKeys + 1) * DBConstants.intSize + DBConstants.shortSize * numKeys + numIds * DBConstants.longSize;
         //convert txnIds to byte array and pass it into dep_check reply message
         DataOutputBuffer buffer = new DataOutputBuffer(size);
+        ArrayList<String> blockSizes = new ArrayList<>();
         buffer.writeInt(numKeys);
         for (Map.Entry<ByteBuffer, ArrayList<Long>> keyids : totalIdList.entrySet()) {
             buffer.writeInt(keyids.getValue().size());
+            blockSizes.add(String.valueOf(keyids.getValue().size()));
             ByteBufferUtil.writeWithShortLength(keyids.getKey(), buffer);
             for (Long eachid : keyids.getValue()) {
                 buffer.writeLong(eachid);
             }
         }
+
+        if(logger.isTraceEnabled()){
+            logger.trace(String.format("SendTxnId numKeys=%d, blockSizes=%s",numKeys, String.join(",",blockSizes)));
+        }
+
         byte[] compressed = Snappy.compress(buffer.getData());
         Message reply = fetchIdMessage.getReply(FBUtilities.getBroadcastAddress(), compressed, fetchIdMessage.getVersion());
         MessagingService.instance().sendReply(reply, id, fetchIdMessage.getFrom());

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -76,13 +77,13 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
         if (chosenTime == 0) {
             useChosenTime = 1L;
         }
-        if(logger_.isTraceEnabled()){
-            logger_.trace(String.format("%d / %d  numKeys = %d",responses, numEP,numKeys));
-        }
+
+        ArrayList<String> blocks = new ArrayList<>();
         HashSet<Long> uniqIds = new HashSet<>();
         Map<ByteBuffer, ArrayList<Long>> returnedIdsMap = new HashMap<ByteBuffer, ArrayList<Long>>();
         for (int i = 0; i < numKeys; ++i) {
             int blockSize = inputStream.readInt();
+            blocks.add(String.valueOf(blockSize));
             ByteBuffer depKey = ByteBufferUtil.readWithShortLength(inputStream);
             ArrayList<Long> idList = new ArrayList<Long>();
             for (int x = 0; x < blockSize; ++x) {
@@ -102,6 +103,9 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
                 }
             }
             idList.clear();
+        }
+        if(logger_.isTraceEnabled()){
+            logger_.trace(String.format("%d / %d  numKeys = %d blockSizes=%s",responses, numEP,numKeys, String.join(",",blocks)));
         }
         StorageProxy.numUniqIds.getAndAdd(uniqIds.size());
         for (Map.Entry<ByteBuffer, ArrayList<Long>> entry : returnedIdsMap.entrySet()) {
