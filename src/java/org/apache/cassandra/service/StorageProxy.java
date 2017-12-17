@@ -103,7 +103,7 @@ public class StorageProxy implements StorageProxyMBean
     private StorageProxy() {}
 
     public static String getStats() {
-        return String.format("COPS put stats, %d, %d, %d",numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get());
+        return String.format("COPS put stats, %d, %d, %d%n",numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get());
     }
 
     static

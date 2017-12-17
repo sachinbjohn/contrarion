@@ -18,9 +18,7 @@
 
 package org.apache.cassandra.service;
 
-import java.io.File;
-import java.io.IOError;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -470,6 +468,10 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
             @Override
             public void runMayThrow() throws ExecutionException, InterruptedException, IOException
             {
+                String stat = StorageProxy.getStats();
+                System.out.println(stat);
+                logger_.error(stat);
+                new PrintStream(new FileOutputStream("~/cops.data")).append(stat);
                 ThreadPoolExecutor mutationStage = StageManager.getStage(Stage.MUTATION);
                 if (mutationStage.isShutdown())
                     return; // drained already
@@ -485,9 +487,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
                 mutationStage.awaitTermination(3600, TimeUnit.SECONDS);
                 StorageProxy.instance.verifyNoHintsInProgress();
 
-                String stat = StorageProxy.getStats();
-                System.out.println(stat);
-                logger_.error(stat);
+
 
                 List<Future<?>> flushes = new ArrayList<Future<?>>();
                 for (Table table : Table.all())

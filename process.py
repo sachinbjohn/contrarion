@@ -74,8 +74,8 @@ with open(file, 'r') as csvfile:
 	eigerW99 = eigerTrans[8]			
 			
 	fig,p=plt.subplots()
-	p.plot(copsThr, copsRavg, '-o', label='COPS R-avg')
-	p.plot(eigerThr, eigerRavg, '-x', label = 'Eiger R-avg')
+	p.plot(copsThr, copsRavg, '-x', label='COPS-SNOW R-avg')
+	p.plot(eigerThr, eigerRavg, '-o', label = 'Eiger R-avg')
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
@@ -84,8 +84,8 @@ with open(file, 'r') as csvfile:
 	plt.clf()
 
 	fig,p=plt.subplots()
-	p.plot(copsThr, copsR50, '-o', label='COPS R-50')
-	p.plot(eigerThr, eigerR50, '-x', label = 'Eiger R-50')
+	p.plot(copsThr, copsR50, '-x', label='COPS-SNOW R-50')
+	p.plot(eigerThr, eigerR50, '-o', label = 'Eiger R-50')
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
@@ -94,8 +94,8 @@ with open(file, 'r') as csvfile:
 	plt.clf()
 
 	fig,p=plt.subplots()
-	p.plot(copsThr, copsR90, '-o', label='COPS R-90')
-	p.plot(eigerThr, eigerR90, '-x', label = 'Eiger R-90')
+	p.plot(copsThr, copsR90, '-x', label='COPS-SNOW R-90')
+	p.plot(eigerThr, eigerR90, '-o', label = 'Eiger R-90')
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
@@ -104,8 +104,8 @@ with open(file, 'r') as csvfile:
 	plt.clf()
 	
 	fig,p=plt.subplots()
-	p.plot(copsThr, copsR99, '-o', label='COPS R-99')
-	p.plot(eigerThr, eigerR99, '-x', label = 'Eiger R-99')
+	p.plot(copsThr, copsR99, '-x', label='COPS-SNOW R-99')
+	p.plot(eigerThr, eigerR99, '-o', label = 'Eiger R-99')
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
