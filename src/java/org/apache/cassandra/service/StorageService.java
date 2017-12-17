@@ -469,9 +469,9 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
             public void runMayThrow() throws ExecutionException, InterruptedException, IOException
             {
                 String stat = StorageProxy.getStats();
-                System.out.println("out "+stat);
-                System.err.println("err "+stat);
-                logger_.error(stat);
+                //System.out.println("out "+stat);
+                //System.err.println("err "+stat);
+                //logger_.error(stat);
                 FileWriter writer = new FileWriter("cops.data", true);
                 writer.write(stat);
                 writer.close();

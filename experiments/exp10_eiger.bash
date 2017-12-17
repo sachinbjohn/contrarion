@@ -282,7 +282,7 @@ process_exp10() {
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=50    #Timeout is set to 5minutes
+run_time=5    #Timeout is set to 5minutes
 for trial in 1 #2 3 4 5
 do
     for value_size in 128 #128 512
@@ -301,7 +301,7 @@ do
                         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
                         ${kill_all_cmd}
                         gather_results ${cops_root_dir} cops
-
+                        exit
                         echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
                         internal_cluster_start_cmd ${eiger_root_dir}
                         internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger

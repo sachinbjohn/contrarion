@@ -76,6 +76,9 @@ public class FetchTxnIdsCallBack implements IAsyncCallback {
         if (chosenTime == 0) {
             useChosenTime = 1L;
         }
+        if(logger_.isTraceEnabled()){
+            logger_.trace(String.format("%d / %d  numKeys = %d",responses, numEP,numKeys));
+        }
         HashSet<Long> uniqIds = new HashSet<>();
         Map<ByteBuffer, ArrayList<Long>> returnedIdsMap = new HashMap<ByteBuffer, ArrayList<Long>>();
         for (int i = 0; i < numKeys; ++i) {
