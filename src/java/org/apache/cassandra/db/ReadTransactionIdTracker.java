@@ -19,8 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class ReadTransactionIdTracker {
-    private static Logger logger = LoggerFactory.getLogger(ReadTransactionIdTracker.class);
-    public static final long SAFTYTIMER = 100000;    // used for garbage collection of old versions, 5 seconds
+    public static final long SAFTYTIMER = 5000;    // used for garbage collection of old versions, 5 seconds
     /**
      * keyToReadTxnIds contains all read transactions just partly happened on this node
      * It is a map of <locator_key, map<transaction_id, ArrayList<txnTime, record_time>>>.
@@ -107,32 +106,17 @@ public class ReadTransactionIdTracker {
     //Called by sendDepCheckReply to incorporate ROT ids
     public static ArrayList<Long> getReadTxnIds(ByteBuffer locatorKey) {
         ArrayList<Long> returnedIdList = new ArrayList<Long>();
-        ArrayList<String> logline = new ArrayList<>();
-        if (keyToReadTxnIds.get(locatorKey) == null) {
-            if(logger.isTraceEnabled()){
-                logger.trace("getReadTxnIds({}) = NULL",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
-            }
+        if (keyToReadTxnIds.get(locatorKey) == null)
             return returnedIdList;
-        }
-        ConcurrentHashMap<Long, ArrayList<Long>> rtxns = keyToReadTxnIds.get(locatorKey);
-
-        for (Entry<Long, ArrayList<Long>> entry : rtxns.entrySet()) {
+        for (Entry<Long, ArrayList<Long>> entry : keyToReadTxnIds.get(locatorKey).entrySet()) {
             long safeTime = System.currentTimeMillis() - SAFTYTIMER;
             if (entry.getValue().get(1) >= safeTime) {
-                logline.add(String.valueOf(entry.getKey()));
                 returnedIdList.add(entry.getKey());
             } else {
-                logline.add("TO");
                 keyToReadTxnIds.get(locatorKey).remove(entry.getKey());
             }
         }
         keyToLastAccessedTime.put(locatorKey, System.currentTimeMillis());
-        if(logger.isTraceEnabled()){
-            if(rtxns.size() == 0)
-                logger.trace("getReadTxnIds({}) = Empty",new Object[]{ByteBufferUtil.bytesToHex(locatorKey)});
-            else
-                logger.trace("getReadTxnIds({}) = {}",new Object[]{ByteBufferUtil.bytesToHex(locatorKey), logline});
-        }
         return returnedIdList;
     }
 

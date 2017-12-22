@@ -103,7 +103,14 @@ public class StorageProxy implements StorageProxyMBean
     private StorageProxy() {}
 
     public static String getStats() {
-        return String.format("PutStats, %d, %d, %d, %d%n",numBatches.get(), numServersContacted.get(), sizeMsgRecvd.get(), numUniqIds.get());
+        int numW = numBatches.get();
+        int numMsg = numServersContacted.get();
+        int totIds = sizeMsgRecvd.get();
+        int uniqIds = numUniqIds.get();
+        float avgMsgW = numMsg / (1.0f * numW);
+        float avgIdMsg = totIds / (1.0f * numMsg);
+        float avgIdW = totIds / (1.0f * numW);
+        return String.format("PutStats, %d, %d, %d, %d, %f, %f, %f%n",numW, numMsg, totIds, uniqIds, avgMsgW, avgIdW, avgIdW);
     }
 
     static

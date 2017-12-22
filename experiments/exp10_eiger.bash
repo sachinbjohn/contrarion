@@ -283,35 +283,29 @@ rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
 run_time=5    #Timeout is set to 5minutes
-for trial in 1 #2 3 4 5
+
+for allparams in `cat ${cops_root_dir}/allparams.txt`
 do
-    for value_size in 128 #128 512
+    trial=1
+    value_size=`echo $allparams | cut -d: -f1`
+    write_frac=`echo $allparams | cut -d: -f2`
+    keys_per_read=`echo $allparams | cut -d: -f3`
+    zipf_c=`echo $allparams | cut -d: -f4`
+    for numT in 32 16 8 4 1 #4 8 12 16 24 32
     do
-        for write_frac in 0.01 0.3 0.05
-        do
-            for keys_per_read in 2 4 8 #also 16 #also change servers
-            do
-                for zipf_c in 0.99 #0.0 0.99
-                do
-                    for numT in 32 16 8 4 1 #4 8 12 16 24 32
-                    do
-                        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
-                        internal_cluster_start_cmd ${cops_root_dir}
-                        internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
-                        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
-                        ${kill_all_cmd}
-                        gather_results ${cops_root_dir} cops
-                        exit
-                        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
-                        internal_cluster_start_cmd ${eiger_root_dir}
-                        internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger
-                        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
-                        ${kill_all_cmd}
-                        gather_results ${eiger_root_dir} eiger
-                    done
-                    process_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
-                done
-            done
-        done
+        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        internal_cluster_start_cmd ${cops_root_dir}
+        internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
+        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
+        ${kill_all_cmd}
+        gather_results ${cops_root_dir} cops
+
+        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        internal_cluster_start_cmd ${eiger_root_dir}
+        internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger
+        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
+        ${kill_all_cmd}
+        gather_results ${eiger_root_dir} eiger
     done
+    process_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
 done
