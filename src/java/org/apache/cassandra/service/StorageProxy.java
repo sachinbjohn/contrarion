@@ -97,8 +97,6 @@ public class StorageProxy implements StorageProxyMBean
     });
     private static final AtomicLong totalHints = new AtomicLong();
 
-    // snow: instantiate a batchwrite object for periodically batching
-    static final BatchWrites batchWrites = new BatchWrites();
 
     private StorageProxy() {}
 
@@ -327,16 +325,7 @@ public class StorageProxy implements StorageProxyMBean
             {
                 if (destination.equals(FBUtilities.getBroadcastAddress()) && OPTIMIZE_LOCAL_REQUESTS)
                 {
-                    // snow: get time, batch, and check deps
-                    if (rm.getDependencies().size() == 0) {
                         insertLocal(rm, responseHandler);
-                    } else {
-                        // we fetch txn Ids, amazing happens here
-                        long chosenTime = LamportClock.currentVersion();
-                        Pair<RowMutation, IWriteResponseHandler> mutation_handler_pair = new Pair<RowMutation, IWriteResponseHandler>(rm, responseHandler);
-                        Pair<Pair<RowMutation, IWriteResponseHandler>, Long> mutation_time_pair = new Pair<Pair<RowMutation, IWriteResponseHandler>, Long>(mutation_handler_pair, chosenTime);
-                        batchWrites.enqueue(mutation_time_pair);
-                    }
                 }
                 else
                 {

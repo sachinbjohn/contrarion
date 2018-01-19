@@ -564,7 +564,6 @@ struct BatchMutateResult {
     2: LamportTimestamp lts
 }
 
-
 service Cassandra {
   # auth methods
   LamportTimestamp login(1: required AuthenticationRequest auth_request, 99: LamportTimestamp lts) throws (1:AuthenticationException authnx, 2:AuthorizationException authzx),
@@ -617,11 +616,26 @@ service Cassandra {
                 2:required ColumnParent column_parent, 
                 3:required SlicePredicate predicate, 
                 4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-                5:required i64 transactionId,   //HL: add transaction id into Thrift arguments
                 99: LamportTimestamp lts)
       throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
-      
-  MultigetSliceResult multiget_slice_by_time(1:required list<binary> keys,
+
+  MultigetSliceResult rot_coordinator(1: required list<binary> keys,
+                2:required ColumnParent column_parent,
+                3:required SlicePredicate predicate,
+                4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
+                5:required i64 transactionId,   //HL: add transaction id into Thrift arguments
+                6:required list<binary> remoteKeys,
+                99: LamportTimestamp lts)
+     throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
+
+  MultigetSliceResult rot_cohort(1: required list<binary> keys,
+                  2:required ColumnParent column_parent,
+                  3:required SlicePredicate predicate,
+                  4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
+                  5:required i64 transactionId)   //HL: add transaction id into Thrift arguments
+    throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
+
+   MultigetSliceResult multiget_slice_by_time(1:required list<binary> keys,
                 2:required ColumnParent column_parent, 
                 3:required SlicePredicate predicate, 
                 4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
@@ -691,6 +705,12 @@ service Cassandra {
               99: LamportTimestamp lts)
        throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
+  WriteResult put(1:required binary key,
+              2:required ColumnParent column_parent,
+              3:required Column column,
+              4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
+              99: LamportTimestamp lts)
+       throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
   /**
    * Increment or decrement a counter.
    */

@@ -26,7 +26,7 @@ public class LamportClock {
     private static Short localId = null;
 
     private LamportClock() {
-        //don't instantiate me
+        logicalTime.set(now());
     }
 
     //localId must be set before calling getVersion, otherwise you'll get a null exception
@@ -34,41 +34,70 @@ public class LamportClock {
     /**
      * @return next "version" for this node, version is timestamp + nodeid
      */
+    private static long now() {
+        return System.currentTimeMillis();
+    }
+
     public static long getVersion() {
-        long localTime = logicalTime.incrementAndGet();
-        long version = (localTime << 16) + localId.shortValue();
-        //logger.debug("getVersion {} = {} << 16 + {}", new Object[]{version, localTime, localId.shortValue()});
-        return version;
+        throw new UnsupportedOperationException();
     }
 
     //Should only be used for sanity checking
     public static long currentVersion() {
-        return (logicalTime.get() << 16) + localId.shortValue();
+        throw new UnsupportedOperationException();
     }
 
 
     public static long sendTimestamp() {
-        long newLocalTime = logicalTime.incrementAndGet();
-        //logger.debug("sendTimestamp({})", newLocalTime);
-        return newLocalTime;
+        throw new UnsupportedOperationException();
     }
 
+    public static long updateLocalTime(long lts) {
+        long t = lts;
+        long cur = logicalTime.get();
+        long tnow = now();
+        if (tnow > t)
+            t = tnow;
+        if (cur > t)
+            t = cur;
+        if (!logicalTime.compareAndSet(cur, t)) {
+            do {
+                cur = logicalTime.get();
+                tnow = now();
+                if (tnow > t)
+                    t = tnow;
+                if (cur > t)
+                    t = cur;
+            } while (!logicalTime.compareAndSet(cur, t));
+        }
+        return t;
+    }
+
+    public static long updateLocalTimeIncr(long lts) {
+        long t = lts + 1;
+        long cur = logicalTime.get() + 1;
+        long tnow = now();
+        if (tnow > t)
+            t = tnow;
+        if (cur > t)
+            t = cur;
+        if (!logicalTime.compareAndSet(cur, t)) {
+            do {
+                cur = logicalTime.get() + 1;
+                tnow = now();
+                if (tnow > t)
+                    t = tnow;
+                if (cur > t)
+                    t = cur;
+            } while (!logicalTime.compareAndSet(cur, t));
+        }
+        return t;
+    }
+    public static void setLocalTime(long lts) {
+        logicalTime.set(lts);
+    }
     public static synchronized void updateTime(long updateTime) {
-        if (updateTime == NO_CLOCK_TICK) {
-            //logger.debug("updateTimestamp(NO_CLOCK_TICK == {})", updateTime);
-            return;
-        }
-
-        long localTime = logicalTime.longValue();
-        long timeDiff = updateTime - localTime;
-
-        long resultTime;
-        if (timeDiff < 0) {
-            resultTime = logicalTime.incrementAndGet();
-        } else {
-            resultTime = logicalTime.addAndGet(timeDiff+1);
-        }
-        //logger.debug("updateTimestamp({},{}) = {}", new Object[]{updateTime, localTime, resultTime});
+        throw new UnsupportedOperationException();
     }
 
     public static void setLocalId(short localId2) {
@@ -98,7 +127,7 @@ public class LamportClock {
     }
 
     public static long sendTranId() throws Exception {
-        long localTime = logicalTime.incrementAndGet();
+        long localTime = logicalTime.get();
         long tranId = (localTime << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
         return tranId;
     }
