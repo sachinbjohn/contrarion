@@ -39,7 +39,7 @@ public class LamportClock {
     }
 
     public static long getVersion() {
-        throw new UnsupportedOperationException();
+        return logicalTime.longValue();
     }
 
     //Should only be used for sanity checking
