@@ -39,7 +39,10 @@ public class LamportClock {
     }
 
     public static long getVersion() {
-        return logicalTime.longValue();
+        long localTime = logicalTime.incrementAndGet();
+        long version = localTime; //(localTime << 16) + localId.shortValue();
+        //logger.debug("getVersion {} = {} << 16 + {}", new Object[]{version, localTime, localId.shortValue()});
+        return version;
     }
 
     //Should only be used for sanity checking
@@ -49,7 +52,9 @@ public class LamportClock {
 
 
     public static long sendTimestamp() {
-        throw new UnsupportedOperationException();
+        long newLocalTime = logicalTime.incrementAndGet();
+        //logger.debug("sendTimestamp({})", newLocalTime);
+        return newLocalTime;
     }
 
     public static long updateLocalTime(long lts) {
