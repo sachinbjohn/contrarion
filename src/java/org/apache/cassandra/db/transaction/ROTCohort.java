@@ -12,6 +12,8 @@ public class ROTCohort {
         } else {
             ROT_Timestamp new_idts = new ROT_Timestamp();
             ROT_Timestamp idts = map.putIfAbsent(id, new_idts);
+            if(idts == null)
+                idts = new_idts;
             idts.lts = lts;
             idts.cv.signal();
         }
@@ -25,6 +27,8 @@ public class ROTCohort {
         } else {
             ROT_Timestamp new_idts = new ROT_Timestamp();
             ROT_Timestamp idts = map.putIfAbsent(id, new_idts);
+            if(idts == null)
+                idts = new_idts;
             idts.cv.await();
             map.remove(id);
             return idts.lts;
