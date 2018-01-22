@@ -278,9 +278,9 @@ public class ClientLibrary {
 
     private void checkReady(Cassandra.AsyncClient cl) throws IllegalAccessException,NoSuchFieldException {
 
-            Field cm = cl.getClass().getDeclaredField("___currentMethod");
+            Field cm = cl.getClass().getSuperclass().getDeclaredField("___currentMethod");
             cm.setAccessible(true);
-            Field er = cl.getClass().getDeclaredField("___error");
+            Field er = cl.getClass().getSuperclass().getDeclaredField("___error");
             er.setAccessible(true);
 
             if(cm.get(cl) != null)
