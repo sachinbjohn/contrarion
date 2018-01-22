@@ -1,5 +1,6 @@
 package org.apache.cassandra.client;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -274,6 +275,19 @@ public class ClientLibrary {
      * part in original Eiger. But we assure our one-round by asserting after checking evt and lvt (we can disable this
      * assertion for production since it's only testing purpose)
      */
+
+    private void checkReady(Cassandra.AsyncClient cl) throws IllegalAccessException,NoSuchFieldException {
+
+            Field cm = cl.getClass().getDeclaredField("_____currentMethod");
+            cm.setAccessible(true);
+            Field er = cl.getClass().getDeclaredField("___error");
+            er.setAccessible(true);
+
+            if(cm.get(cl) != null)
+                throw new IllegalStateException("Current Method not empty");
+            if(er.get(cl) != null)
+                throw new IllegalStateException("There is error in client");
+    }
     public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate)
     throws Exception
     {
@@ -310,12 +324,14 @@ public class ClientLibrary {
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = null;
         Queue<BlockingQueueCallback<rot_cohort_call>> cohortCallbacks = new LinkedList<BlockingQueueCallback<rot_cohort_call>>();
 
+        checkReady(coordinator);
         //Send Coordinator Request
         coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
         contactedServers.add(coordinator);
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             Cassandra.AsyncClient asyncClient = entry.getKey();
+            checkReady(asyncClient);
             List<ByteBuffer> keysForThisClient = entry.getValue();
 
             BlockingQueueCallback<rot_cohort_call> callback = new BlockingQueueCallback<rot_cohort_call>();
@@ -349,6 +365,11 @@ public class ClientLibrary {
 
             }
         }
+
+        for(Cassandra.AsyncClient s : contactedServers) {
+            checkReady(s);
+        }
+
         LamportClock.setLocalTime(coordinatorResult.lts);
         return keyToResult;
     }
