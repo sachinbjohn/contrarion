@@ -242,7 +242,7 @@ public class CassandraServer implements Cassandra.Iface
 
         sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
 
-        ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
+        ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
         assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
         Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
         //select results for each key that were visible at the chosen_time
