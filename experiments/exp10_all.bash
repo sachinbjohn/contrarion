@@ -17,19 +17,20 @@ client_config=${nservers}_clients_in_vicci
 
 cops_root_dir="$HOME/COPS-SNOW"
 eiger_root_dir="$HOME/eiger"
+contr_root_dir="$HOME/contrarion"
 
 
-exp_dir="${cops_root_dir}/experiments"  #shared with Eiger
+exp_dir="${cops_root_dir}/experiments"  #shared with other algos
 
-output_dir_base="${exp_dir}/exp10" #shared with Eiger
+output_dir_base="${exp_dir}/exp10" #shared
 exp_uid=$(date +%s)
-output_dir="${output_dir_base}/${exp_uid}" #shared with Eiger
+output_dir="${output_dir_base}/${exp_uid}" #shared
 mkdir -p ${output_dir}
 rm $output_dir_base/latest
 ln -s $output_dir $output_dir_base/latest
 
 
-dcl_config_full="${cops_root_dir}/vicci_dcl_config/${dcl_config}" #shared with Eiger
+dcl_config_full="${cops_root_dir}/vicci_dcl_config/${dcl_config}" #shared
 
 all_servers=($(cat $dcl_config_full | grep cassandra_ips | awk -F"=" '{ print $2 }' | xargs))
 all_servers=$(echo "echo ${all_servers[@]}" | bash)
@@ -51,7 +52,7 @@ echo ${servers_by_dc[@]}
 
 
 
-client_config_full="${cops_root_dir}/vicci_dcl_config/${client_config}" #shared with Eiger
+client_config_full="${cops_root_dir}/vicci_dcl_config/${client_config}" #shared
 
 all_clients=$(cat $client_config_full | grep cassandra_ips | awk -F"=" '{ print $2 }' | xargs)
 all_clients=$(echo "echo ${all_clients[@]}" | bash)
@@ -81,7 +82,7 @@ gather_results() {
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             serv_dir=${exp_output_dir}/server/
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
-            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} & #separate log directory for cassandra and eiger
+            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} & #separate log directory for cassandra and algo
         done
         wait
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
@@ -99,6 +100,7 @@ cleanup() {
     ${cops_root_dir}/kill_all.bash $nservers #works for both
     #    gather_results $cops_root_dir cops
     #    gather_results $eiger_root_dir eiger
+    #    gather_results $contr_root_dir contrarion
 }
 
 
@@ -165,7 +167,7 @@ internal_populate_cluster() {
 
                 #write to ALL so the cluster is populated everywhere
 
-                #output is shared bw COPS and EIGER
+                #output is shared bw Contrarion, COPS and EIGER
                 #stress is called of respective algo
                 ssh $client -o StrictHostKeyChecking=no "\
                     mkdir -p ${exp_output_dir}; \
@@ -293,6 +295,14 @@ do
     zipf_c=`echo $allparams | cut -d: -f4`
     for numT in 32 16 8 4 1 #4 8 12 16 24 32
     do
+
+        echo "Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        internal_cluster_start_cmd ${contr_root_dir}
+        internal_populate_cluster ${contr_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion
+        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
+        ${kill_all_cmd}
+        gather_results ${contr_root_dir} contrarion
+
         echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
         internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
