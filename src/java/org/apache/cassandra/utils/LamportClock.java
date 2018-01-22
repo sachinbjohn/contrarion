@@ -47,7 +47,7 @@ public class LamportClock {
 
     //Should only be used for sanity checking
     public static long currentVersion() {
-        throw new UnsupportedOperationException();
+        return (logicalTime.get()) ;// << 16) + localId.shortValue();
     }
 
 
@@ -56,6 +56,25 @@ public class LamportClock {
         //logger.debug("sendTimestamp({})", newLocalTime);
         return newLocalTime;
     }
+
+    public static synchronized void updateTime(long updateTime) {
+        if (updateTime == NO_CLOCK_TICK) {
+            //logger.debug("updateTimestamp(NO_CLOCK_TICK == {})", updateTime);
+            return;
+        }
+
+        long localTime = logicalTime.longValue();
+        long timeDiff = updateTime - localTime;
+
+        long resultTime;
+        if (timeDiff < 0) {
+            resultTime = logicalTime.incrementAndGet();
+        } else {
+            resultTime = logicalTime.addAndGet(timeDiff+1);
+        }
+        //logger.debug("updateTimestamp({},{}) = {}", new Object[]{updateTime, localTime, resultTime});
+    }
+
 
     public static long updateLocalTime(long lts) {
         long t = lts;
@@ -100,24 +119,6 @@ public class LamportClock {
     }
     public static void setLocalTime(long lts) {
         logicalTime.set(lts);
-    }
-
-    public static synchronized void updateTime(long updateTime) {
-        if (updateTime == NO_CLOCK_TICK) {
-            //logger.debug("updateTimestamp(NO_CLOCK_TICK == {})", updateTime);
-            return;
-        }
-
-        long localTime = logicalTime.longValue();
-        long timeDiff = updateTime - localTime;
-
-        long resultTime;
-        if (timeDiff < 0) {
-            resultTime = logicalTime.incrementAndGet();
-        } else {
-            resultTime = logicalTime.addAndGet(timeDiff+1);
-        }
-        //logger.debug("updateTimestamp({},{}) = {}", new Object[]{updateTime, localTime, resultTime});
     }
 
     public static void setLocalId(short localId2) {

@@ -237,7 +237,7 @@ public class CassandraServer implements Cassandra.Iface
     public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, long lts)
             throws InvalidRequestException, UnavailableException, TimedOutException {
 
-        long chosenTime = LamportClock.updateLocalTimeIncr(lts);
+        long chosenTime = LamportClock.updateLocalTime(lts);
         String keyspace = state().getKeyspace();
 
         sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
@@ -260,7 +260,9 @@ public class CassandraServer implements Cassandra.Iface
         try {
 
             //Wait until it receives timestamp from coordinator
+
             long chosenTime = ROTCohort.getTimestamp(transactionId);
+            long lamport = LamportClock.updateLocalTime(chosenTime);
 
             ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
             assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
@@ -695,7 +697,7 @@ public class CassandraServer implements Cassandra.Iface
     @Override
     public WriteResult put(ByteBuffer key, ColumnParent column_parent, Column column, ConsistencyLevel consistency_level, long lts) throws InvalidRequestException, UnavailableException, TimedOutException {
 
-        long chosenTime = LamportClock.updateLocalTime(lts);
+        long chosenTime = LamportClock.updateLocalTimeIncr(lts);
 
         state().hasColumnFamilyAccess(column_parent.column_family, Permission.WRITE);
 
@@ -713,7 +715,7 @@ public class CassandraServer implements Cassandra.Iface
         // At the accepting (local) datacenter, the timestamp (version) should
         // be 0 when sent to us, and we'll set it here.
         if (column.timestamp == 0) {
-            column.timestamp = chosenTime;
+            column.timestamp = LamportClock.getVersion();
             logger.debug("Setting timestamp to {}", column.timestamp);
         }
 
