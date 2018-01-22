@@ -26,13 +26,11 @@ public class ClientContext {
     }
 
     public void addDep(Dep dep) {
-        deps.add(dep);
+        //SBJ: Do nothing
     }
 
     public void addDeps(Set<Dep> deps) {
-        for (Dep dep : deps) {
-            addDep(dep);
-        }
+        //SBJ: Do nothing
     }
 
     public void addDep(int not_yet_supported) {

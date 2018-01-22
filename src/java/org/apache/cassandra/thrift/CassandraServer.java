@@ -695,44 +695,6 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public WriteResult put(ByteBuffer key, ColumnParent column_parent, Column column, ConsistencyLevel consistency_level, long lts) throws InvalidRequestException, UnavailableException, TimedOutException {
-
-        long chosenTime = LamportClock.updateLocalTimeIncr(lts);
-
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.WRITE);
-
-        CFMetaData metadata = ThriftValidation.validateColumnFamily(state().getKeyspace(), column_parent.column_family, false);
-        ThriftValidation.validateKey(metadata, key);
-        ThriftValidation.validateColumnParent(metadata, column_parent);
-        // SuperColumn field is usually optional, but not when we're inserting
-        if (metadata.cfType == ColumnFamilyType.Super && column_parent.super_column == null) {
-            throw new InvalidRequestException("missing mandatory super column name for super CF " + column_parent.column_family);
-        }
-        ThriftValidation.validateColumnNames(metadata, column_parent, Arrays.asList(column.name));
-        ThriftValidation.validateColumnData(metadata, column, column_parent.super_column != null);
-
-        //TODO this thrift-related function will only be called at the accepting datacenter, don't need this check
-        // At the accepting (local) datacenter, the timestamp (version) should
-        // be 0 when sent to us, and we'll set it here.
-        if (column.timestamp == 0) {
-            column.timestamp = LamportClock.getVersion();
-            logger.debug("Setting timestamp to {}", column.timestamp);
-        }
-
-        Set<Dependency> dependencies = new HashSet<Dependency>(); //SBJ: Dummy
-
-        RowMutation rm = new RowMutation(state().getKeyspace(), key, dependencies);
-        try {
-            rm.add(new QueryPath(column_parent.column_family, column_parent.super_column, column.name), column.value, column.timestamp, column.ttl);
-        } catch (MarshalException e) {
-            throw new InvalidRequestException(e.getMessage());
-        }
-
-        doInsert(consistency_level, Arrays.asList(rm));
-        return new WriteResult(-1, LamportClock.getCurrentTime());
-    }
-
-    @Override
     public WriteResult insert(ByteBuffer key, ColumnParent column_parent, Column column, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
@@ -750,28 +712,20 @@ public class CassandraServer implements Cassandra.Iface
         return new WriteResult(column.timestamp, LamportClock.sendTimestamp());
     }
 
-    private Set<Dep> internal_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long chosenTime)
+    private void internal_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, long opTimestamp)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
         List<String> cfamsSeen = new ArrayList<String>();
         List<IMutation> rowMutations = new ArrayList<IMutation>();
         String keyspace = state().getKeyspace();
 
-        Set<Dependency> dependencies = new HashSet<Dependency>();
-        for (Dep dep : deps) {
-            dependencies.add(new Dependency(dep));
-        }
-
+        Set<Dependency> dependencies = new HashSet<Dependency>(); //SBJ: Dummy
         //Note, we're assuming here the entire mutation is resident on this node, (all storageProxy calls are local)
         //the returnDeps are what we return to the client, for them to depend on after this call
-        HashSet<Dep> returnDeps = new HashSet<Dep>();
+
         for (Map.Entry<ByteBuffer, Map<String, List<Mutation>>> mutationEntry: mutation_map.entrySet())
         {
             ByteBuffer key = mutationEntry.getKey();
-
-            //Get the timestamp for the entire row mutation(s) (these are applied atomically in Cassandra 1)
-            long opTimestamp = LamportClock.getVersion();
-            returnDeps.add(new Dep(key, opTimestamp));
 
             // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
             // CounterMutation) because it doesn't follow the same code path
@@ -827,14 +781,15 @@ public class CassandraServer implements Cassandra.Iface
         }
 
         doInsert(consistency_level, rowMutations);
-        return returnDeps;
     }
 
     @Override
     public BatchMutateResult batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        throw new UnsupportedOperationException();
+        long chosenTime = LamportClock.updateLocalTimeIncr(lts);
+        internal_batch_mutate(mutation_map, consistency_level, chosenTime);
+        return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)

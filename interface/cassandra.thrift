@@ -705,12 +705,7 @@ service Cassandra {
               99: LamportTimestamp lts)
        throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
-  WriteResult put(1:required binary key,
-              2:required ColumnParent column_parent,
-              3:required Column column,
-              4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-              99: LamportTimestamp lts)
-       throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
+
   /**
    * Increment or decrement a counter.
    */

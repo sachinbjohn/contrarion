@@ -1081,20 +1081,62 @@ public class ClientLibrary {
         clientContext.addDep(new Dep(key, result.version));
     }
 
-    public void put(ByteBuffer key, ColumnParent column_parent, Column column)
-            throws InvalidRequestException, UnavailableException, TimedOutException, TException {
-        column.timestamp = 0;
-        WriteResult result = findClient(key).put(key, column_parent, column, consistencyLevel, LamportClock.getCurrentTime());
-        LamportClock.setLocalTime(result.lts);
-    }
-
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        throw new UnsupportedOperationException();
+        //if (logger.isTraceEnabled()) {
+        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+        //}
+
+        //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
+        // 0 out all timestamps
+        for (Map<String, List<Mutation>> cfToMutations : mutation_map.values()) {
+            for (List<Mutation> mutations : cfToMutations.values()) {
+                for (Mutation mutation : mutations) {
+                    if (mutation.isSetColumn_or_supercolumn()) {
+                        ColumnOrSuperColumnHelper.updateTimestamp(mutation.column_or_supercolumn, 0);
+                    } else {
+                        assert mutation.isSetDeletion();
+                        mutation.deletion.timestamp = 0L;
+                    }
+                }
+            }
+        }
+
+        //split it into a set of batch_mutations, one for each server in the cluster
+        Map<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>> asyncClientToMutations = new HashMap<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>>();
+        for (Entry<ByteBuffer, Map<String,List<Mutation>>> entry : mutation_map.entrySet()) {
+            ByteBuffer key = entry.getKey();
+            Map<String,List<Mutation>> mutations = entry.getValue();
+
+            Cassandra.AsyncClient asyncClient = findAsyncClient(key);
+            if (!asyncClientToMutations.containsKey(asyncClient)) {
+                asyncClientToMutations.put(asyncClient, new HashMap<ByteBuffer,Map<String,List<Mutation>>>());
+            }
+            asyncClientToMutations.get(asyncClient).put(key, mutations);
+        }
+
+        //We need to split up based key because even if keys are colocated on the same server here,
+        //we can't guarantee they'll be colocated on the same server in other datacenters
+        Queue<BlockingQueueCallback<batch_mutate_call>> callbacks = new LinkedList<BlockingQueueCallback<batch_mutate_call>>();
+        for (Entry<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>> entry : asyncClientToMutations.entrySet()) {
+            Cassandra.AsyncClient asyncClient = entry.getKey();
+            Map<ByteBuffer,Map<String,List<Mutation>>> mutations = entry.getValue();
+
+            BlockingQueueCallback<batch_mutate_call> callback = new BlockingQueueCallback<batch_mutate_call>();
+            callbacks.add(callback);
+            //SBJ: empty deps
+            asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp(), callback);
+        }
+
+        //SBJ: Single callback anyways
+        for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
+            BatchMutateResult result = callback.getResponseNoInterruption().getResult();
+            LamportClock.updateTime(result.lts);
+
+        }
 
     }
-
     public void transactional_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {

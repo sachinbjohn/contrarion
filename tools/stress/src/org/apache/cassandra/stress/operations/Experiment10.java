@@ -158,12 +158,12 @@ public class Experiment10 extends Operation {
             value = generateValue();
 
         Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(value).setTimestamp(FBUtilities.timestampMicros());
-        ColumnParent parent = new ColumnParent("Standard1");
+        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
 
         int srvID = Stress.randomizer.nextInt(totalServers);
 
         ByteBuffer key = getZipfGeneratedKey(srvID);
-
+        record.put(key, getColumnMutationMap(column));
 
         long startNano = System.nanoTime();
 
@@ -174,7 +174,7 @@ public class Experiment10 extends Operation {
             if (success)
                 break;
             try {
-                clientLibrary.put(key,parent,column);
+                clientLibrary.batch_mutate(record);
                 success = true;
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
