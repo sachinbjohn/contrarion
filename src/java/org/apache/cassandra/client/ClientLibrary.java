@@ -300,6 +300,8 @@ public class ClientLibrary {
             }
             asyncClientIndex++;
         }
+
+        HashSet<Cassandra.AsyncClient> contactedServers = new HashSet<>();
         asyncClientToKeys.remove(coordinator);
 
         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
@@ -310,7 +312,7 @@ public class ClientLibrary {
 
         //Send Coordinator Request
         coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
-
+        contactedServers.add(coordinator);
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             Cassandra.AsyncClient asyncClient = entry.getKey();
@@ -319,8 +321,10 @@ public class ClientLibrary {
             BlockingQueueCallback<rot_cohort_call> callback = new BlockingQueueCallback<rot_cohort_call>();
             cohortCallbacks.add(callback);
 
-
+            if(contactedServers.contains(asyncClient))
+                throw new IllegalStateException("Only single connections per server");
             asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, callback);
+            contactedServers.add(asyncClient);
         }
 
         Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
