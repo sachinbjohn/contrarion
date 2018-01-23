@@ -317,7 +317,7 @@ public class ClientLibrary {
 
         HashSet<Cassandra.AsyncClient> contactedServers = new HashSet<>();
         asyncClientToKeys.remove(coordinator);
-
+        logger.trace("Coordinator ={} , Cohort = {}", new Object[] {coordinator, asyncClientToKeys.keySet()});
         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
         long lts = LamportClock.getCurrentTime();
 
@@ -327,6 +327,7 @@ public class ClientLibrary {
         checkReady(coordinator);
         //Send Coordinator Request
         coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
+        logger.trace("Send to "+coordinator);
         contactedServers.add(coordinator);
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
@@ -339,6 +340,7 @@ public class ClientLibrary {
 
             if(contactedServers.contains(asyncClient))
                 throw new IllegalStateException("Only single connections per server");
+            logger.trace("Send to "+asyncClient);
             asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, callback);
             contactedServers.add(asyncClient);
         }
