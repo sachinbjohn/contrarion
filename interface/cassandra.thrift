@@ -632,7 +632,8 @@ service Cassandra {
                   2:required ColumnParent column_parent,
                   3:required SlicePredicate predicate,
                   4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-                  5:required i64 transactionId)   //HL: add transaction id into Thrift arguments
+                  5:required i64 transactionId,
+                  99: LamportTimestamp lts)       //HL: add transaction id into Thrift arguments
     throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
    MultigetSliceResult multiget_slice_by_time(1:required list<binary> keys,

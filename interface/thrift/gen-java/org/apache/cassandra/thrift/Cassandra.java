@@ -104,7 +104,7 @@ public class Cassandra {
 
     public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, long lts) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException;
 
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException;
+    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException;
 
     public MultigetSliceResult multiget_slice_by_time(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long chosen_time, long lts) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException;
 
@@ -384,7 +384,7 @@ public class Cassandra {
 
     public void rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, long lts, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.rot_coordinator_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.rot_cohort_call> resultHandler) throws org.apache.thrift.TException;
+    public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.rot_cohort_call> resultHandler) throws org.apache.thrift.TException;
 
     public void multiget_slice_by_time(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long chosen_time, long lts, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.multiget_slice_by_time_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -713,13 +713,13 @@ public class Cassandra {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "rot_coordinator failed: unknown result");
     }
 
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException
+    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts) throws InvalidRequestException, UnavailableException, TimedOutException, org.apache.thrift.TException
     {
-      send_rot_cohort(keys, column_parent, predicate, consistency_level, transactionId);
+      send_rot_cohort(keys, column_parent, predicate, consistency_level, transactionId, lts);
       return recv_rot_cohort();
     }
 
-    public void send_rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId) throws org.apache.thrift.TException
+    public void send_rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts) throws org.apache.thrift.TException
     {
       rot_cohort_args args = new rot_cohort_args();
       args.setKeys(keys);
@@ -727,6 +727,7 @@ public class Cassandra {
       args.setPredicate(predicate);
       args.setConsistency_level(consistency_level);
       args.setTransactionId(transactionId);
+      args.setLts(lts);
       sendBase("rot_cohort", args);
     }
 
@@ -2077,7 +2078,7 @@ public class Cassandra {
 
     public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      rot_cohort_call method_call = new rot_cohort_call(keys, column_parent, predicate, consistency_level, transactionId, resultHandler, this, ___protocolFactory, ___transport);
+      rot_cohort_call method_call = new rot_cohort_call(keys, column_parent, predicate, consistency_level, transactionId, lts, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -2094,18 +2095,20 @@ public class Cassandra {
             }
         }
 
-        private List<ByteBuffer> keys;
+      private List<ByteBuffer> keys;
       private ColumnParent column_parent;
       private SlicePredicate predicate;
       private ConsistencyLevel consistency_level;
       private long transactionId;
-      public rot_cohort_call(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private long lts;
+      public rot_cohort_call(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.keys = keys;
         this.column_parent = column_parent;
         this.predicate = predicate;
         this.consistency_level = consistency_level;
         this.transactionId = transactionId;
+        this.lts = lts;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -2116,6 +2119,7 @@ public class Cassandra {
         args.setPredicate(predicate);
         args.setConsistency_level(consistency_level);
         args.setTransactionId(transactionId);
+        args.setLts(lts);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -3571,7 +3575,7 @@ public class Cassandra {
       protected rot_cohort_result getResult(I iface, rot_cohort_args args) throws org.apache.thrift.TException {
         rot_cohort_result result = new rot_cohort_result();
         try {
-          result.success = iface.rot_cohort(args.keys, args.column_parent, args.predicate, args.consistency_level, args.transactionId);
+          result.success = iface.rot_cohort(args.keys, args.column_parent, args.predicate, args.consistency_level, args.transactionId, args.lts);
         } catch (InvalidRequestException ire) {
           result.ire = ire;
         } catch (UnavailableException ue) {
@@ -12821,6 +12825,7 @@ public class Cassandra {
     private static final org.apache.thrift.protocol.TField PREDICATE_FIELD_DESC = new org.apache.thrift.protocol.TField("predicate", org.apache.thrift.protocol.TType.STRUCT, (short)3);
     private static final org.apache.thrift.protocol.TField CONSISTENCY_LEVEL_FIELD_DESC = new org.apache.thrift.protocol.TField("consistency_level", org.apache.thrift.protocol.TType.I32, (short)4);
     private static final org.apache.thrift.protocol.TField TRANSACTION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionId", org.apache.thrift.protocol.TType.I64, (short)5);
+    private static final org.apache.thrift.protocol.TField LTS_FIELD_DESC = new org.apache.thrift.protocol.TField("lts", org.apache.thrift.protocol.TType.I64, (short)99);
 
     public List<ByteBuffer> keys; // required
     public ColumnParent column_parent; // required
@@ -12831,6 +12836,7 @@ public class Cassandra {
      */
     public ConsistencyLevel consistency_level; // required
     public long transactionId; // required
+    public long lts; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -12842,7 +12848,8 @@ public class Cassandra {
        * @see ConsistencyLevel
        */
       CONSISTENCY_LEVEL((short)4, "consistency_level"),
-      TRANSACTION_ID((short)5, "transactionId");
+      TRANSACTION_ID((short)5, "transactionId"),
+      LTS((short)99, "lts");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -12867,6 +12874,8 @@ public class Cassandra {
             return CONSISTENCY_LEVEL;
           case 5: // TRANSACTION_ID
             return TRANSACTION_ID;
+          case 99: // LTS
+            return LTS;
           default:
             return null;
         }
@@ -12908,7 +12917,8 @@ public class Cassandra {
 
     // isset id assignments
     private static final int __TRANSACTIONID_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __LTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
@@ -12924,6 +12934,8 @@ public class Cassandra {
           new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, ConsistencyLevel.class)));
       tmpMap.put(_Fields.TRANSACTION_ID, new org.apache.thrift.meta_data.FieldMetaData("transactionId", org.apache.thrift.TFieldRequirementType.REQUIRED, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.LTS, new org.apache.thrift.meta_data.FieldMetaData("lts", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "LamportTimestamp")));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(rot_cohort_args.class, metaDataMap);
     }
@@ -12938,7 +12950,8 @@ public class Cassandra {
       ColumnParent column_parent,
       SlicePredicate predicate,
       ConsistencyLevel consistency_level,
-      long transactionId)
+      long transactionId,
+      long lts)
     {
       this();
       this.keys = keys;
@@ -12947,6 +12960,8 @@ public class Cassandra {
       this.consistency_level = consistency_level;
       this.transactionId = transactionId;
       setTransactionIdIsSet(true);
+      this.lts = lts;
+      setLtsIsSet(true);
     }
 
     /**
@@ -12974,6 +12989,7 @@ public class Cassandra {
         this.consistency_level = other.consistency_level;
       }
       this.transactionId = other.transactionId;
+      this.lts = other.lts;
     }
 
     public rot_cohort_args deepCopy() {
@@ -12989,6 +13005,8 @@ public class Cassandra {
 
       setTransactionIdIsSet(false);
       this.transactionId = 0;
+      setLtsIsSet(false);
+      this.lts = 0;
     }
 
     public int getKeysSize() {
@@ -13133,6 +13151,29 @@ public class Cassandra {
       __isset_bit_vector.set(__TRANSACTIONID_ISSET_ID, value);
     }
 
+    public long getLts() {
+      return this.lts;
+    }
+
+    public rot_cohort_args setLts(long lts) {
+      this.lts = lts;
+      setLtsIsSet(true);
+      return this;
+    }
+
+    public void unsetLts() {
+      __isset_bit_vector.clear(__LTS_ISSET_ID);
+    }
+
+    /** Returns true if field lts is set (has been assigned a value) and false otherwise */
+    public boolean isSetLts() {
+      return __isset_bit_vector.get(__LTS_ISSET_ID);
+    }
+
+    public void setLtsIsSet(boolean value) {
+      __isset_bit_vector.set(__LTS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case KEYS:
@@ -13175,6 +13216,14 @@ public class Cassandra {
         }
         break;
 
+      case LTS:
+        if (value == null) {
+          unsetLts();
+        } else {
+          setLts((Long)value);
+        }
+        break;
+
       }
     }
 
@@ -13194,6 +13243,9 @@ public class Cassandra {
 
       case TRANSACTION_ID:
         return Long.valueOf(getTransactionId());
+
+      case LTS:
+        return Long.valueOf(getLts());
 
       }
       throw new IllegalStateException();
@@ -13216,6 +13268,8 @@ public class Cassandra {
         return isSetConsistency_level();
       case TRANSACTION_ID:
         return isSetTransactionId();
+      case LTS:
+        return isSetLts();
       }
       throw new IllegalStateException();
     }
@@ -13278,6 +13332,15 @@ public class Cassandra {
           return false;
       }
 
+      boolean this_present_lts = true;
+      boolean that_present_lts = true;
+      if (this_present_lts || that_present_lts) {
+        if (!(this_present_lts && that_present_lts))
+          return false;
+        if (this.lts != that.lts)
+          return false;
+      }
+
       return true;
     }
 
@@ -13309,6 +13372,11 @@ public class Cassandra {
       builder.append(present_transactionId);
       if (present_transactionId)
         builder.append(transactionId);
+
+      boolean present_lts = true;
+      builder.append(present_lts);
+      if (present_lts)
+        builder.append(lts);
 
       return builder.toHashCode();
     }
@@ -13367,6 +13435,16 @@ public class Cassandra {
       }
       if (isSetTransactionId()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionId, typedOther.transactionId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetLts()).compareTo(typedOther.isSetLts());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetLts()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.lts, typedOther.lts);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -13436,6 +13514,14 @@ public class Cassandra {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 99: // LTS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.lts = iprot.readI64();
+              setLtsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -13484,6 +13570,9 @@ public class Cassandra {
       oprot.writeFieldBegin(TRANSACTION_ID_FIELD_DESC);
       oprot.writeI64(this.transactionId);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(LTS_FIELD_DESC);
+      oprot.writeI64(this.lts);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -13527,6 +13616,10 @@ public class Cassandra {
       if (!first) sb.append(", ");
       sb.append("transactionId:");
       sb.append(this.transactionId);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("lts:");
+      sb.append(this.lts);
       first = false;
       sb.append(")");
       return sb.toString();

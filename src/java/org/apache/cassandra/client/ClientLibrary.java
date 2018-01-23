@@ -342,7 +342,7 @@ public class ClientLibrary {
             if(contactedServers.contains(asyncClient))
                 throw new IllegalStateException("Only single connections per server");
             logger.trace("Send to "+asyncClient);
-            asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, callback);
+            asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, lts, callback);
             contactedServers.add(asyncClient);
         }
 

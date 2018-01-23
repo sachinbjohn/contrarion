@@ -255,7 +255,7 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId)
+    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long  lts)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
 
