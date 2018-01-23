@@ -41,7 +41,7 @@ if [ "x$CLASSPATH" = "x" ]; then
     done
 fi
 
-CONF=`dirname $0`/../../../conf
+CONF=$(readlink -f `dirname $0`/../../../conf)
 
 if [ -x $JAVA_HOME/bin/java ]; then
     JAVA=$JAVA_HOME/bin/java
@@ -54,4 +54,4 @@ if [ "x$JAVA" = "x" ]; then
     exit 1
 fi
 
-$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=$CONF/log4j-tools.properties -Dlog4j.defaultInitOverride=true org.apache.cassandra.stress.Stress $@
+$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=file:///$CONF/log4j-tools.properties -Dlog4j.defaultInitOverride=true org.apache.cassandra.stress.Stress $@
