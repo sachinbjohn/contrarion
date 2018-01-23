@@ -95,7 +95,7 @@ public class ClientSyncer extends Operation {
             try {
                 columnCount = 0;
                 String missingKeys = "";
-                results = clientLibrary.multiget_slice(keys, parent, nColumnsPredicate);
+                results = clientLibrary.transactional_multiget_slice(keys, parent, nColumnsPredicate);
                 for (Map.Entry<ByteBuffer,List<ColumnOrSuperColumn>> kvs : results.entrySet()) {
                     List<ColumnOrSuperColumn> result = kvs.getValue();
                     int size = result.size();

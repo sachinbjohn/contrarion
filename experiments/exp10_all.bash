@@ -282,7 +282,7 @@ process_exp10() {
 
 
 rm -f ~/progress
-keys_per_server=100000 #TODO increase to 1M
+keys_per_server=100 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
 run_time=1    #Timeout is set to 5minutes
 
