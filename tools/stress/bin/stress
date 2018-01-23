@@ -32,7 +32,6 @@ if [ "x$CLASSPATH" = "x" ]; then
     CLASSPATH=`dirname $0`/../../../build/classes/main
     CLASSPATH=$CLASSPATH:`dirname $0`/../../../build/classes/thrift
     CLASSPATH=$CLASSPATH:`dirname $0`/../build/classes
-    CLASSPATH=$CLASSPATH:`dirname $0`/../../../conf
     for jar in `dirname $0`/../../../lib/*.jar; do
         CLASSPATH=$CLASSPATH:$jar
     done
@@ -41,6 +40,8 @@ if [ "x$CLASSPATH" = "x" ]; then
         CLASSPATH=$CLASSPATH:$jar
     done
 fi
+
+CONF=`dirname $0`/../../../conf
 
 if [ -x $JAVA_HOME/bin/java ]; then
     JAVA=$JAVA_HOME/bin/java
@@ -53,4 +54,4 @@ if [ "x$JAVA" = "x" ]; then
     exit 1
 fi
 
-$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=log4j-tools.properties -Dlog4j.defaultInitOverride=true org.apache.cassandra.stress.Stress $@
+$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=$CONF/log4j-tools.properties -Dlog4j.defaultInitOverride=true org.apache.cassandra.stress.Stress $@
