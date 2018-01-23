@@ -32,6 +32,7 @@ if [ "x$CLASSPATH" = "x" ]; then
     CLASSPATH=`dirname $0`/../../../build/classes/main
     CLASSPATH=$CLASSPATH:`dirname $0`/../../../build/classes/thrift
     CLASSPATH=$CLASSPATH:`dirname $0`/../build/classes
+    CLASSPATH=$CLASSPATH:`dirname $0`/../../../conf
     for jar in `dirname $0`/../../../lib/*.jar; do
         CLASSPATH=$CLASSPATH:$jar
     done
