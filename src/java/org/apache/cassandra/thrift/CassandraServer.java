@@ -251,7 +251,13 @@ public class CassandraServer implements Cassandra.Iface
         //pendingTransactions for now is always null -- we don't consider WOT for now
         selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
-        return new MultigetSliceResult(keyToChosenColumns, chosenTime);
+        MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
+
+        if (logger.isTraceEnabled()) {
+            logger.trace("rot_coordinator(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
+        }
+
+        return result;
     }
 
     @Override
@@ -273,7 +279,13 @@ public class CassandraServer implements Cassandra.Iface
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
-            return new MultigetSliceResult(keyToChosenColumns, chosenTime);
+            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
+
+            if (logger.isTraceEnabled()) {
+                logger.trace("rot_cohort(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
+            }
+
+            return result;
 
         } catch(InterruptedException ex) {
             throw new RuntimeException("Waiting for coordinator interrupted");

@@ -110,6 +110,9 @@ public class ClientSyncer extends Operation {
                 Thread.sleep(200);
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
+                output.println("ClientSync has exception");
+                e.printStackTrace(output);
+                System.exit(-1); //SBJ: TO REMOVE!
             }
         }
 
