@@ -321,7 +321,7 @@ public class ClientLibrary {
         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
         long lts = LamportClock.getCurrentTime();
 
-        BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = null;
+        BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
         Queue<BlockingQueueCallback<rot_cohort_call>> cohortCallbacks = new LinkedList<BlockingQueueCallback<rot_cohort_call>>();
 
         checkReady(coordinator);

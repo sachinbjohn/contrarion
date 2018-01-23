@@ -55,4 +55,4 @@ if [ "x$JAVA" = "x" ]; then
     exit 1
 fi
 
-+$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=log4j-tools.properties org.apache.cassandra.stress.Stress $@
+$JAVA -server -cp $CLASSPATH -Dlog4j.configuration=log4j-tools.properties org.apache.cassandra.stress.Stress $@
