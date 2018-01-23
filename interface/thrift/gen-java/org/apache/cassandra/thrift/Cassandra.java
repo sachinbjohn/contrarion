@@ -2076,7 +2076,7 @@ public class Cassandra {
 
     }
 
-    public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler) throws org.apache.thrift.TException {
+    public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       rot_cohort_call method_call = new rot_cohort_call(keys, column_parent, predicate, consistency_level, transactionId, lts, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
