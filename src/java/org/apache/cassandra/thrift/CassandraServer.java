@@ -196,15 +196,15 @@ public class CassandraServer implements Cassandra.Iface
         } else {
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
             ColumnFamily cf = null;
-            try {
+            DecoratedKey dk = null;
+            logger.trace("Commands = {}, cfmap = {}", new Object[]{commands, columnFamiliesMap});
+
                 for (ReadCommand command : commands) {
-                    cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
+                    dk = StorageService.getPartitioner().decorateKey(command.key);
+                    cf = columnFamilies.get(dk);
+                    logger.trace("cf = {}, dk = {} ", new Object[]{cf, dk});
                     columnFamiliesMap.put(command.key, cf.getSortedColumns());
                 }
-            } catch(NullPointerException ex) {
-                logger.error("Caught exception", ex);
-                logger.error("Commands = {}, cf = {}", new Object[]{commands, cf});
-            }
             return new InternalSliceMap(columnFamiliesMap);
         }
     }
