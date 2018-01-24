@@ -197,7 +197,7 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
             ColumnFamily cf = null;
             DecoratedKey dk = null;
-            logger.trace("Commands = {}, cfmap = {}", new Object[]{commands, columnFamiliesMap});
+            logger.trace("Commands = {}, cfmap = {}", new Object[]{commands, columnFamilies});
 
                 for (ReadCommand command : commands) {
                     dk = StorageService.getPartitioner().decorateKey(command.key);
