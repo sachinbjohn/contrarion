@@ -801,6 +801,9 @@ public class CassandraServer implements Cassandra.Iface
     {
         long chosenTime = LamportClock.updateLocalTimeIncr(lts);
         internal_batch_mutate(mutation_map, consistency_level, chosenTime);
+        if (logger.isTraceEnabled()) {
+            logger.trace("batch_mutate({}, lts = {}, chosenTime = {})", new Object[]{mutation_map,lts, chosenTime});
+        }
         return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
 
