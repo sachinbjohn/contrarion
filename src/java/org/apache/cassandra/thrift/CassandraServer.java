@@ -198,7 +198,7 @@ public class CassandraServer implements Cassandra.Iface
             for (ReadCommand command: commands)
             {
                 DecoratedKey dk = StorageService.getPartitioner().decorateKey(command.key);
-                ColumnFamily cf = columnFamilies.get();
+                ColumnFamily cf = columnFamilies.get(dk);
                 if(cf == null)
                     logger.error("NULL CF for {}", new Object[]{dk});
                 columnFamiliesMap.put(command.key, cf.getSortedColumns());
