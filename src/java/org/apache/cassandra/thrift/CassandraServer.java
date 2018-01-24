@@ -202,7 +202,7 @@ public class CassandraServer implements Cassandra.Iface
                     columnFamiliesMap.put(command.key, cf.getSortedColumns());
                 }
             } catch(NullPointerException ex) {
-                logger.error(ex);
+                logger.error("Caught exception", ex);
                 logger.error("Commands = {}, cf = {}", new Object[]{commands, cf});
             }
             return new InternalSliceMap(columnFamiliesMap);
