@@ -27,8 +27,7 @@ public class SendTxnTS implements MessageProducer {
     public Message getMessage(Integer version) throws IOException {
         DataOutputBuffer dob = new DataOutputBuffer();
         serializer_.serialize(this, dob, version);
-
-        byte[] msg = Snappy.compress(dob.getData());
+        byte[] msg = dob.getData();
         return new Message(FBUtilities.getBroadcastAddress(), StorageService.Verb.SEND_TXN_TS, Arrays.copyOf(msg, msg.length), version);
     }
 
