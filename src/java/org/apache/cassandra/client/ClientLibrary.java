@@ -1117,9 +1117,9 @@ public class ClientLibrary {
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-        }
+//        if (logger.isTraceEnabled()) {
+//            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+//        }
 
         //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
         // 0 out all timestamps

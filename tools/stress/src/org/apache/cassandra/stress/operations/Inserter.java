@@ -91,7 +91,7 @@ public class Inserter extends Operation
             try
             {
                 // We're just populating the cluster, so we dont care about deps yet
-		clientLibrary.getContext().clearDeps();
+		        clientLibrary.getContext().clearDeps();
                 clientLibrary.batch_mutate(record);
                 success = true;
             }
