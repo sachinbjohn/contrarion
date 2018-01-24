@@ -226,6 +226,9 @@ public class CassandraServer implements Cassandra.Iface
             InetAddress localEndpoint = localEndpoints.get(0);
             try {
                 Message msg = new SendTxnTS(txnid, lts).getMessage(Gossiper.instance.getVersion(localEndpoint));
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Sending to={} message={}", new Object[]{localEndpoint, msg});
+                }
                 MessagingService.instance().sendOneWay(msg, localEndpoint);
             } catch (IOException ex) {
                 throw new IOError(ex);

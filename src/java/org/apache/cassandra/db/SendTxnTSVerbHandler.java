@@ -10,16 +10,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SendTxnTSVerbHandler implements IVerbHandler {
-        private static Logger logger_ = LoggerFactory.getLogger(SendTxnTSVerbHandler.class);
+        private static Logger logger = LoggerFactory.getLogger(SendTxnTSVerbHandler.class);
 
         @Override
         public void doVerb(Message message, String id) {
             SendTxnTS msg = null;
+            if (logger.isTraceEnabled()) {
+                logger.trace("Received message = {}", new Object[]{message});
+            }
             try {
                 msg = SendTxnTS.fromBytes(message.getMessageBody(), message.getVersion());
                 ROTCohort.addTimestamp(msg.getTransactionId(), msg.getLts());
             } catch (IOException e) {
-                logger_.error("Error decoding SendTxnMessage");
+                logger.error("Error decoding SendTxnMessage");
             }
         }
 }
