@@ -90,7 +90,7 @@ public class ClientSyncer extends Operation {
         success = false;
         exceptionMessage = null;
 
-
+        output.println("Reading other clients");
         for (int t = 0; t < 100; ++t) {
             try {
                 columnCount = 0;

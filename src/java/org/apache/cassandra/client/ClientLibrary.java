@@ -297,6 +297,7 @@ public class ClientLibrary {
 
      public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate, CopsTestingConcurrentWriteHook afterFirstReadWriteHook, CopsTestingConcurrentWriteHook afterFirstRoundWriteHook)
             throws Exception {
+        logger.trace("transactional_multiget_slice()");
         Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKeys = partitionByAsyncClients(allKeys);
 
         int coordinatorIndex = (int) (Math.random() * asyncClientToKeys.size());
@@ -304,7 +305,7 @@ public class ClientLibrary {
         List<ByteBuffer> coordinatorKeys = null;
         List<ByteBuffer> cohortLocatorKeys = new LinkedList<>();
 
-
+         logger.trace("Coordinator index = "+coordinatorIndex);
         int asyncClientIndex = 0;
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             if (asyncClientIndex == coordinatorIndex) {
@@ -1112,9 +1113,9 @@ public class ClientLibrary {
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-        //}
+        if (logger.isTraceEnabled()) {
+            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+        }
 
         //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
         // 0 out all timestamps
@@ -1160,8 +1161,10 @@ public class ClientLibrary {
         //SBJ: Single callback anyways
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
+            if (logger.isTraceEnabled()) {
+                logger.trace("batch_mutate result = ", new Object[]{result});
+            }
             LamportClock.updateTime(result.lts);
-
         }
 
     }
