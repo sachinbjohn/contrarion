@@ -299,7 +299,7 @@ public class ClientLibrary {
 
      public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate, CopsTestingConcurrentWriteHook afterFirstReadWriteHook, CopsTestingConcurrentWriteHook afterFirstRoundWriteHook)
             throws Exception {
-        logger.trace("transactional_multiget_slice()");
+
         Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKeys = partitionByAsyncClients(allKeys);
 
         int coordinatorIndex = (int) (Math.random() * asyncClientToKeys.size());
@@ -307,7 +307,7 @@ public class ClientLibrary {
         List<ByteBuffer> coordinatorKeys = null;
         List<ByteBuffer> cohortLocatorKeys = new LinkedList<>();
 
-         logger.trace("Coordinator index = "+coordinatorIndex);
+
         int asyncClientIndex = 0;
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             if (asyncClientIndex == coordinatorIndex) {
@@ -321,7 +321,9 @@ public class ClientLibrary {
 
         HashSet<Cassandra.AsyncClient> contactedServers = new HashSet<>();
         asyncClientToKeys.remove(coordinator);
-        logger.trace("Coordinator ={} , Cohort = {}", new Object[] {coordinator, asyncClientToKeys.keySet()});
+        if(logger.isTraceEnabled()) {
+            logger.trace("transactional_multiget_slice :: Coordinator ={} , Cohort = {}", new Object[]{coordinator, asyncClientToKeys.keySet()});
+        }
         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
         long lts = LamportClock.getCurrentTime();
 
@@ -331,7 +333,7 @@ public class ClientLibrary {
         checkReady(coordinator);
         //Send Coordinator Request
         coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
-        logger.trace("Send to "+coordinator);
+
         contactedServers.add(coordinator);
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
@@ -344,7 +346,7 @@ public class ClientLibrary {
 
             if(contactedServers.contains(asyncClient))
                 throw new IllegalStateException("Only single connections per server");
-            logger.trace("Send to "+asyncClient);
+
             asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, lts, callback);
             contactedServers.add(asyncClient);
         }
@@ -1163,9 +1165,6 @@ public class ClientLibrary {
         //SBJ: Single callback anyways
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-            if (logger.isTraceEnabled()) {
-                logger.trace("batch_mutate result = ", new Object[]{result});
-            }
             LamportClock.updateTime(result.lts);
         }
 

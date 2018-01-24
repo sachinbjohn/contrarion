@@ -15,9 +15,6 @@ public class SendTxnTSVerbHandler implements IVerbHandler {
         @Override
         public void doVerb(Message message, String id) {
             SendTxnTS msg = null;
-            if (logger.isTraceEnabled()) {
-                logger.trace("Received message = {} , body={}", new Object[]{message, message.getMessageBody()});
-            }
             try {
                 msg = SendTxnTS.fromBytes(message.getMessageBody(), message.getVersion());
                 ROTCohort.addTimestamp(msg.getTransactionId(), msg.getLts());

@@ -90,7 +90,6 @@ public class ClientSyncer extends Operation {
         success = false;
         exceptionMessage = null;
 
-        output.println("Reading other clients");
         for (int t = 0; t < 100; ++t) {
             try {
                 columnCount = 0;
@@ -112,7 +111,6 @@ public class ClientSyncer extends Operation {
                 exceptionMessage = getExceptionMessage(e);
                 output.println("ClientSync has exception");
                 e.printStackTrace(output);
-                System.exit(-1); //SBJ: TO REMOVE!
             }
         }
 
