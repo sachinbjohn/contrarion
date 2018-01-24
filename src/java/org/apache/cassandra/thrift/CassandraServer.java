@@ -195,7 +195,7 @@ public class CassandraServer implements Cassandra.Iface
             return new ThriftifiedSliceMap(thriftifiedColumnFamiliesMap);
         } else {
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
-            ColumnFamily cf;
+            ColumnFamily cf = null;
             try {
                 for (ReadCommand command : commands) {
                     cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
