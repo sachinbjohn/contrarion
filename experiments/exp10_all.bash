@@ -70,7 +70,7 @@ kill_all_cmd="${cops_root_dir}/vicci_cassandra_killer.bash ${cops_root_dir}/vicc
 stress_killer="${cops_root_dir}/kill_stress_vicci.bash" #shared
 
 
-
+exp_num=0
 
 
 gather_results() {
@@ -78,17 +78,18 @@ gather_results() {
     local exp_name=$2
     local exp_output_dir=${output_dir}/${exp_name}
     mkdir -p ${exp_output_dir}
+    log_dir=${exp_output_dir}/logs/exp${exp_num}
     for dc in 0; do
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
-            serv_dir=${exp_output_dir}/server/
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
-            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${serv_dir} & #separate log directory for cassandra and algo
+            rsync -az $server:${root_dir}/cassandra_var/cassandra* ${log_dir} & #separate log directory for cassandra and algo
         done
         wait
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
             client_dir=${exp_output_dir}/client${cli_index}
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
             rsync -az $client:${exp_output_dir}/* ${client_dir} & #shared output dir
+            rsync -az $client:${root_dir}/tools/stress/stress.log ${log_dir}/client${cli_index}.log
         done
         wait
     done
@@ -221,6 +222,7 @@ internal_populate_cluster() {
 
 run_exp10() {
 
+    exp_num=$((exp_num + 1))
     #external vars :: output_dir, servers by dc, num servers, num clients per dc, clients by dc, strategy properties
     local keys_per_serv=$1
     local num_serv=$2
@@ -282,9 +284,9 @@ process_exp10() {
 
 
 rm -f ~/progress
-keys_per_server=100 #TODO increase to 1M
+keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=1    #Timeout is set to 5minutes
+run_time=50    #Timeout is set to 5minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
 do
@@ -302,7 +304,7 @@ do
         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
         ${kill_all_cmd}
         gather_results ${contr_root_dir} contrarion
-        exit
+
         echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
         internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
