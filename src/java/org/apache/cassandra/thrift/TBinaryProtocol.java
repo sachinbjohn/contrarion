@@ -74,26 +74,26 @@ public class TBinaryProtocol extends org.apache.thrift.protocol.TBinaryProtocol
         }
     }
 
-//    @Override
-//    public void writeBinary(ByteBuffer buffer) throws TException
-//    {
-//        writeI32(buffer.remaining());
-//
-//        if (buffer.hasArray())
-//        {
-//            trans_.write(buffer.array(), buffer.position() + buffer.arrayOffset(), buffer.remaining());
-//        }
-//        else
-//        {
-//            byte[] bytes = new byte[buffer.remaining()];
-//
-//            int j = 0;
-//            for (int i = buffer.position(); i < buffer.limit(); i++)
-//            {
-//                bytes[j++] = buffer.get(i);
-//            }
-//
-//            trans_.write(bytes);
-//        }
-//    }
+    @Override
+    public void writeBinary(ByteBuffer buffer) throws TException
+    {
+        writeI32(buffer.remaining());
+
+        if (buffer.hasArray())
+        {
+            trans_.write(buffer.array(), buffer.position() + buffer.arrayOffset(), buffer.remaining());
+        }
+        else
+        {
+            byte[] bytes = new byte[buffer.remaining()];
+
+            int j = 0;
+            for (int i = buffer.position(); i < buffer.limit(); i++)
+            {
+                bytes[j++] = buffer.get(i);
+            }
+
+            trans_.write(bytes);
+        }
+    }
 }
