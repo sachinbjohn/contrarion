@@ -79,6 +79,7 @@ gather_results() {
     local exp_output_dir=${output_dir}/${exp_name}
     mkdir -p ${exp_output_dir}
     log_dir=${exp_output_dir}/logs/exp${exp_num}
+    mkdir -p ${log_dir}
     for dc in 0; do
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
