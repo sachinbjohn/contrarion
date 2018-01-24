@@ -1165,6 +1165,9 @@ public class ClientLibrary {
         //SBJ: Single callback anyways
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
+            if (logger.isTraceEnabled()) {
+                logger.trace("batch_mutate(mutation_map = {}) = {}", new Object[]{mutation_map, result});
+            }
             LamportClock.updateTime(result.lts);
         }
 

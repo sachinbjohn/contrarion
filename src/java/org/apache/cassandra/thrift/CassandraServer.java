@@ -195,16 +195,11 @@ public class CassandraServer implements Cassandra.Iface
             return new ThriftifiedSliceMap(thriftifiedColumnFamiliesMap);
         } else {
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
-            ColumnFamily cf = null;
-            DecoratedKey dk = null;
-            logger.trace("Commands = {}, cfmap = {}", new Object[]{commands, columnFamilies});
-
-                for (ReadCommand command : commands) {
-                    dk = StorageService.getPartitioner().decorateKey(command.key);
-                    cf = columnFamilies.get(dk);
-                    logger.trace("cf = {}, dk = {} ", new Object[]{cf, dk});
-                    columnFamiliesMap.put(command.key, cf.getSortedColumns());
-                }
+            for (ReadCommand command: commands)
+            {
+                ColumnFamily cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
+                columnFamiliesMap.put(command.key, cf.getSortedColumns());
+            }
             return new InternalSliceMap(columnFamiliesMap);
         }
     }
@@ -806,9 +801,17 @@ public class CassandraServer implements Cassandra.Iface
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
         long chosenTime = LamportClock.updateLocalTimeIncr(lts);
-        internal_batch_mutate(mutation_map, consistency_level, chosenTime);
         if (logger.isTraceEnabled()) {
             logger.trace("batch_mutate({}, lts = {}, chosenTime = {})", new Object[]{mutation_map,lts, chosenTime});
+        }
+        try {
+            internal_batch_mutate(mutation_map, consistency_level, chosenTime);
+        } catch(Exception ex) {
+            logger.error("Exception in batch_mutate", ex);
+            throw ex;
+        }
+        if (logger.isTraceEnabled()) {
+            logger.trace("batch_mutate SUCCESS ({}, lts = {}, chosenTime = {})", new Object[]{mutation_map,lts, chosenTime});
         }
         return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
