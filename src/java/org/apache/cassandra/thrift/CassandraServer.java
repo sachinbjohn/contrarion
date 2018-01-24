@@ -266,7 +266,9 @@ public class CassandraServer implements Cassandra.Iface
         try {
 
             //Wait until it receives timestamp from coordinator
-
+            if (logger.isTraceEnabled()) {
+                logger.trace("rot_cohort(keys={}, lts={}) waiting for coordinator", new Object[]{keys, lts});
+            }
             long chosenTime = ROTCohort.getTimestamp(transactionId);
             long lamport = LamportClock.updateLocalTime(chosenTime);
 

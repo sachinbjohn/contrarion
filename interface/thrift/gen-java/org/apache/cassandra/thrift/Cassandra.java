@@ -26,9 +26,6 @@ package org.apache.cassandra.thrift;
  */
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
@@ -2063,17 +2060,6 @@ public class Cassandra {
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_rot_coordinator();
       }
-        private static Logger logger = LoggerFactory.getLogger(rot_coordinator_call.class);
-        @Override
-        protected void onError(Exception e) {
-            logger.error("rot_coordinator_call has error", e);
-            try {
-                super.onError(e);
-            } catch (Exception ex) {
-                logger.error("Error while handling exception", ex);
-            }
-        }
-
     }
 
     public void rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long lts, org.apache.thrift.async.AsyncMethodCallback<rot_cohort_call> resultHandler) throws org.apache.thrift.TException {
@@ -2084,17 +2070,6 @@ public class Cassandra {
     }
 
     public static class rot_cohort_call extends org.apache.thrift.async.TAsyncMethodCall {
-        private static Logger logger = LoggerFactory.getLogger(rot_cohort_call.class);
-        @Override
-        protected void onError(Exception e) {
-            logger.error("rot_cohort_call has error", e);
-            try {
-                super.onError(e);
-            } catch (Exception ex) {
-                logger.error("Error while handling exception", ex);
-            }
-        }
-
       private List<ByteBuffer> keys;
       private ColumnParent column_parent;
       private SlicePredicate predicate;
