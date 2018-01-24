@@ -16,7 +16,7 @@ public class SendTxnTSVerbHandler implements IVerbHandler {
         public void doVerb(Message message, String id) {
             SendTxnTS msg = null;
             if (logger.isTraceEnabled()) {
-                logger.trace("Received message = {}", new Object[]{message});
+                logger.trace("Received message = {} , body={}", new Object[]{message, message.getMessageBody()});
             }
             try {
                 msg = SendTxnTS.fromBytes(message.getMessageBody(), message.getVersion());

@@ -227,9 +227,15 @@ public class CassandraServer implements Cassandra.Iface
             try {
                 Message msg = new SendTxnTS(txnid, lts).getMessage(Gossiper.instance.getVersion(localEndpoint));
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Sending to={} message={}", new Object[]{localEndpoint, msg});
+                    logger.trace("Sending to={} message={}, body={}", new Object[]{localEndpoint, msg, msg.getMessageBody()});
                 }
                 MessagingService.instance().sendOneWay(msg, localEndpoint);
+                SendTxnTS ts2 = SendTxnTS.fromBytes(msg.getMessageBody(), msg.getVersion());
+                long lts2 = ts2.getLts();
+                long id2 = ts2.getTransactionId();
+                if(lts2 != lts || id2 != txnid) {
+                    logger.error("MISMATCH! Orig={},{}  Recon={},{}", new Object[]{txnid, lts, id2, lts2});
+                }
             } catch (IOException ex) {
                 throw new IOError(ex);
             }
