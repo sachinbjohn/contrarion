@@ -195,10 +195,15 @@ public class CassandraServer implements Cassandra.Iface
             return new ThriftifiedSliceMap(thriftifiedColumnFamiliesMap);
         } else {
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
-            for (ReadCommand command: commands)
-            {
-                ColumnFamily cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
-                columnFamiliesMap.put(command.key, cf.getSortedColumns());
+            ColumnFamily cf;
+            try {
+                for (ReadCommand command : commands) {
+                    cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
+                    columnFamiliesMap.put(command.key, cf.getSortedColumns());
+                }
+            } catch(NullPointerException ex) {
+                logger.error(ex);
+                logger.error("Commands = {}, cf = {}", new Object[]{commands, cf});
             }
             return new InternalSliceMap(columnFamiliesMap);
         }
@@ -242,6 +247,7 @@ public class CassandraServer implements Cassandra.Iface
 
         sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
 
+        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
         ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
         assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
         Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
@@ -269,6 +275,7 @@ public class CassandraServer implements Cassandra.Iface
             long chosenTime = ROTCohort.getTimestamp(transactionId);
             long lamport = LamportClock.updateLocalTime(chosenTime);
 
+            state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
             assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
             Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
