@@ -175,6 +175,7 @@ internal_populate_cluster() {
                     mkdir -p ${exp_output_dir}; \
                     $stress_killer; sleep 1; \
                     cd ${root_dir}/tools/stress; \
+                    rm -f stress.log; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
                     --columns=$max_columns \

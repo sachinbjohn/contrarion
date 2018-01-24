@@ -197,9 +197,10 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
             for (ReadCommand command: commands)
             {
-                ColumnFamily cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
+                DecoratedKey dk = StorageService.getPartitioner().decorateKey(command.key);
+                ColumnFamily cf = columnFamilies.get();
                 if(cf == null)
-                    logger.error("NULL CF for {}", new Object[]{command.key});
+                    logger.error("NULL CF for {}", new Object[]{dk});
                 columnFamiliesMap.put(command.key, cf.getSortedColumns());
             }
             return new InternalSliceMap(columnFamiliesMap);
