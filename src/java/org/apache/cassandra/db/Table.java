@@ -331,6 +331,7 @@ public class Table
     {
         ColumnFamilyStore cfStore = getColumnFamilyStore(filter.getColumnFamilyName());
         ColumnFamily columnFamily = cfStore.getColumnFamily(filter, ArrayBackedSortedColumns.factory());
+        logger.trace("GetRow(filter = {}) :: cfStore = {}, cf = {}", new Object[]{filter, cfStore, columnFamily});
         return new Row(filter.key, columnFamily);
     }
 
