@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * singleton (all static).
  *
  * @author wlloyd
- *
  */
 public class LamportClock {
     //private static Logger logger = LoggerFactory.getLogger(LamportClock.class);
@@ -22,11 +21,11 @@ public class LamportClock {
     //COPS_UNSUPPORTED should only be used in code that we don't intend to support like Hadoop on top of cassandra
     public static final long COPS_UNSUPPORTED = -2;
 
-    private static AtomicLong logicalTime = new AtomicLong();
+    private static long logicalTime;
     private static Short localId = null;
 
     private LamportClock() {
-        logicalTime.set(now());
+        logicalTime = now();
     }
 
     //localId must be set before calling getVersion, otherwise you'll get a null exception
@@ -38,21 +37,21 @@ public class LamportClock {
         return System.currentTimeMillis();
     }
 
-    public static long getVersion() {
-        long localTime = logicalTime.incrementAndGet();
+    public static synchronized long getVersion() {
+        long localTime = ++logicalTime;
         long version = (localTime); // << 16) + localId.shortValue();
         //logger.debug("getVersion {} = {} << 16 + {}", new Object[]{version, localTime, localId.shortValue()});
         return version;
     }
 
     //Should only be used for sanity checking
-    public static long currentVersion() {
-        return (logicalTime.get()) ;// << 16) + localId.shortValue();
+    public static synchronized long currentVersion() {
+        return (logicalTime);// << 16) + localId.shortValue();
     }
 
 
-    public static long sendTimestamp() {
-        long newLocalTime = logicalTime.incrementAndGet();
+    public static synchronized long sendTimestamp() {
+        long newLocalTime = ++logicalTime;
         //logger.debug("sendTimestamp({})", newLocalTime);
         return newLocalTime;
     }
@@ -63,65 +62,46 @@ public class LamportClock {
             return;
         }
 
-        long localTime = logicalTime.longValue();
+        long localTime = logicalTime;
         long timeDiff = updateTime - localTime;
 
         long resultTime;
         if (timeDiff < 0) {
-            resultTime = logicalTime.incrementAndGet();
+            resultTime = ++logicalTime;
         } else {
-            resultTime = logicalTime.addAndGet(timeDiff+1);
+            resultTime = logicalTime += (timeDiff + 1);
         }
         //logger.debug("updateTimestamp({},{}) = {}", new Object[]{updateTime, localTime, resultTime});
     }
 
 
-    public static long updateLocalTime(long lts) {
-        long t = lts;
-        long cur = logicalTime.get();
+    public static synchronized long updateLocalTime(long lts) {
+        long tmax = lts;
+        long cur = logicalTime;
         long tnow = now();
-        if (tnow > t)
-            t = tnow;
-        if (cur > t)
-            t = cur;
-        if (!logicalTime.compareAndSet(cur, t)) {
-            do {
-                cur = logicalTime.get();
-                tnow = now();
-                if (tnow > t)
-                    t = tnow;
-                if (cur > t)
-                    t = cur;
-            } while (!logicalTime.compareAndSet(cur, t));
-        }
-        return t;
+        if (tnow > tmax)
+            tmax = tnow;
+        if (cur > tmax)
+            tmax = cur;
+        logicalTime = tmax;
+        return tmax;
     }
 
-    public static long updateLocalTimeIncr(long lts) {
-        long t = lts + 1;
-        long cur = logicalTime.get() + 1;
+    public static synchronized long updateLocalTimeIncr(long lts) {
+        long tmax = lts + 1;
+        long cur = logicalTime + 1;
         long tnow = now();
-        if (tnow > t)
-            t = tnow;
-        if (cur > t)
-            t = cur;
-        if (!logicalTime.compareAndSet(cur, t)) {
-            cur = logicalTime.get();
-            if(cur > t)
-                logicalTime.set(t);
-//            do {
-//                cur = logicalTime.get() + 1;
-//                tnow = now();
-//                if (tnow > t)
-//                    t = tnow;
-//                if (cur > t)
-//                    t = cur;
-//            } while (!logicalTime.compareAndSet(cur, t));
-        }
-        return t;
+        if (tnow > tmax)
+            tmax = tnow;
+        if (cur > tmax)
+            tmax = cur;
+        logicalTime = tmax;
+        return tmax;
     }
-    public static void setLocalTime(long lts) {
-        logicalTime.set(lts);
+
+    public static synchronized void setLocalTime(long lts) {
+        if(lts > logicalTime)
+            logicalTime = lts;
     }
 
     public static void setLocalId(short localId2) {
@@ -129,8 +109,8 @@ public class LamportClock {
     }
 
     //HL: add a function to return current lts
-    public static long getCurrentTime() {
-        return logicalTime.longValue();
+    public static synchronized long getCurrentTime() {
+        return logicalTime;
     }
 
     //SNOW: for new way of generating txnid
@@ -150,8 +130,8 @@ public class LamportClock {
 
     }
 
-    public static long sendTranId() throws Exception {
-        long localTime = logicalTime.get();
+    public static synchronized long sendTranId() throws Exception {
+        long localTime = logicalTime;
         long tranId = (localTime << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
         return tranId;
     }
