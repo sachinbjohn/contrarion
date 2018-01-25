@@ -295,32 +295,16 @@ public class ClientLibrary {
          long lts = LamportClock.getCurrentTime();
 
         int asyncClientIndex = 0;
-        StringBuilder logMessage = new StringBuilder();
-        logMessage.append("Transaction id = "+tranId);
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             if (asyncClientIndex == coordinatorIndex) {
                 coordinator = entry.getKey();
                 coordinatorKeys = entry.getValue();
-                String keyStr = "";
-                try {
-                for(ByteBuffer key : coordinatorKeys)
-                    keyStr += ByteBufferUtil.string(key) + ", ";
-                } catch (Exception ex) {}
-                logMessage.append("\nServer "+asyncClientIndex + "  coordinator  keys = {"+keyStr+"}");
             } else {
                 List<ByteBuffer> cohortKeys = entry.getValue();
                 cohortLocatorKeys.add(cohortKeys.get(0));
-                String keyStr = "";
-                try {
-                    for(ByteBuffer key : cohortKeys)
-                        keyStr += ByteBufferUtil.string(key) + ", ";
-                } catch (Exception ex) {}
-                logMessage.append("\nServer "+asyncClientIndex + "  cohort  keys = {"+keyStr+"}");
             }
             asyncClientIndex++;
         }
-        logger.error(logMessage.toString());
-
          asyncClientToKeys.remove(coordinator);
 
 
@@ -349,11 +333,6 @@ public class ClientLibrary {
             ByteBuffer key = entry.getKey();
             List<ColumnOrSuperColumn> coscList = entry.getValue();
             keyToResult.put(key, coscList);
-            String keyStr="";
-            try{
-                keyStr = ByteBufferUtil.string(key);
-            } catch (Exception e) {}
-            logger.error("Transaction id {}  coordinator responded with {} for key {}", new Object[]{tranId, coscList, keyStr});
         }
 
         //Cohort Response
@@ -364,11 +343,6 @@ public class ClientLibrary {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
                 keyToResult.put(key, coscList);
-                String keyStr="";
-                try{
-                    keyStr = ByteBufferUtil.string(key);
-                } catch (Exception e) {}
-                logger.error("Transaction id {}  cohort responded with {} for key {}", new Object[]{tranId, coscList, keyStr});
             }
         }
         LamportClock.setLocalTime(coordinatorResult.lts);

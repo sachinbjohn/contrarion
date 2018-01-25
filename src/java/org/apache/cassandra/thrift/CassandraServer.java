@@ -202,7 +202,8 @@ public class CassandraServer implements Cassandra.Iface
                 if (cf == null) {
                     columnFamiliesMap.put(command.key, emptyCols);
                     try {
-                        logger.error("Missing key " + ByteBufferUtil.string(command.key));
+                        if(logger.isTraceEnabled())
+                            logger.trace("Missing key " + ByteBufferUtil.string(command.key));
                     } catch (Exception ex) {}
                 }
                 else
@@ -246,13 +247,15 @@ public class CassandraServer implements Cassandra.Iface
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
             long chosenTime = LamportClock.updateLocalTime(lts);
+
+            if(logger.isTraceEnabled()) {
+                String keyStr = "";
+                for (ByteBuffer key : keys)
+                    keyStr += ByteBufferUtil.string(key) + ";";
+                logger.trace("Transaction {} :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{transactionId, keys.size(), keyStr, lts, chosenTime});
+            }
+
             String keyspace = state().getKeyspace();
-
-            String keyStr = "";
-            for(ByteBuffer key: keys)
-                keyStr += ByteBufferUtil.string(key) +";";
-
-            logger.error("Transaction {} :: coordinator size={} key={}", new Object[]{transactionId, keys.size(), keyStr});
             sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
@@ -266,12 +269,8 @@ public class CassandraServer implements Cassandra.Iface
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
-
-            if (logger.isTraceEnabled()) {
-                logger.trace("rot_coordinator(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
-            }
-
             return result;
+
         } catch (Exception ex) {
             logger.error("ROT coordinator has error", ex);
             throw new RuntimeException(ex);
@@ -283,14 +282,20 @@ public class CassandraServer implements Cassandra.Iface
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
             String keyStr = "";
-            for(ByteBuffer key: keys)
-                keyStr += ByteBufferUtil.string(key) +";";
+            if (logger.isTraceEnabled()) {
+                for (ByteBuffer key : keys)
+                    keyStr += ByteBufferUtil.string(key) + ";";
+                logger.trace("Transaction {} ::  cohort size={}  key={} lts={}", new Object[]{transactionId, keys.size(), keyStr, lts});
+            }
 
-            logger.error("Transaction {} ::  cohort size={}  key={}", new Object[]{transactionId, keys.size(), keyStr});
             //Wait until it receives timestamp from coordinator
             long chosenTime = ROTCohort.getTimestamp(transactionId);
             long lamport = LamportClock.updateLocalTime(chosenTime);
-            logger.error("Transaction {} ::  cohort chosen time ={}", new Object[]{transactionId, chosenTime});
+
+            if (logger.isTraceEnabled()) {
+                logger.trace("Transaction {} ::  cohort chosen time ={}", new Object[]{transactionId, chosenTime});
+            }
+
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
             assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
@@ -302,11 +307,8 @@ public class CassandraServer implements Cassandra.Iface
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
-
-            if (logger.isTraceEnabled()) {
-                logger.trace("rot_cohort(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
-            }
             return result;
+
         } catch (Exception ex) {
             logger.error("ROT Cohort has error", ex);
             throw new RuntimeException(ex);
@@ -817,21 +819,22 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public BatchMutateResult batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
-    throws InvalidRequestException, UnavailableException, TimedOutException
-    {
-        long chosenTime = LamportClock.updateLocalTimeIncr(lts);
+    public BatchMutateResult batch_mutate(Map<ByteBuffer, Map<String, List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
+            throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
-            logger.error("Insert " + ByteBufferUtil.string(mutation_map.keySet().iterator().next()));
-        } catch (CharacterCodingException ex) {}
 
-        try {
+            if(logger.isTraceEnabled()) {
+                logger.trace("Insert " + ByteBufferUtil.string(mutation_map.keySet().iterator().next()));
+            }
+
+            long chosenTime = LamportClock.updateLocalTimeIncr(lts);
             internal_batch_mutate(mutation_map, consistency_level, chosenTime);
-        } catch(Exception ex) {
+            return new BatchMutateResult(deps, LamportClock.getCurrentTime());
+
+        } catch (Exception ex) {
             logger.error("batch_mutate has exception", ex);
             throw new RuntimeException(ex);
         }
-        return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)
