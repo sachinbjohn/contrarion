@@ -65,7 +65,6 @@ import org.apache.cassandra.utils.ColumnOrSuperColumnHelper.EvtAndLvt;
 import org.apache.cassandra.utils.LamportClock;
 import org.apache.cassandra.utils.Pair;
 import org.apache.thrift.TException;
-import org.omg.SendingContext.RunTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

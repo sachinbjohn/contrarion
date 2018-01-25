@@ -32,11 +32,12 @@ import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.LamportClock;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 public class Inserter extends Operation
 {
     private static List<ByteBuffer> values;
-
+    private static Logger logger = LoggerFactory.getLogger(Inserter.class);
     public Inserter(Session client, int index)
     {
         super(client, index);
@@ -72,6 +73,7 @@ public class Inserter extends Operation
         }
 
         String rawKey = String.format(format, index);
+        logger.trace("Inserting "+rawKey);
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
 
         record.put(ByteBufferUtil.bytes(rawKey), session.getColumnFamilyType() == ColumnFamilyType.Super
