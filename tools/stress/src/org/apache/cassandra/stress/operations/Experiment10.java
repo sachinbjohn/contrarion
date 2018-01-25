@@ -121,11 +121,16 @@ public class Experiment10 extends Operation {
                 success = (results.size() == keys.size());
                 if (!success)
                     exceptionMessage = "Wrong number of keys: " + results.size() + " instead of " + involvedServers;
-                for (List<ColumnOrSuperColumn> result : results.values()) {
+                for (Map.Entry<ByteBuffer,List<ColumnOrSuperColumn>> entry : results.entrySet()) {
+                    List<ColumnOrSuperColumn> result = entry.getValue();
                     columnCount += result.size();
                     assert result.size() == 1;
-                    for (ColumnOrSuperColumn cosc : result) {
-                        bytesCount += ColumnOrSuperColumnHelper.findLength(cosc);
+                    try {
+                        for (ColumnOrSuperColumn cosc : result) {
+                            bytesCount += ColumnOrSuperColumnHelper.findLength(cosc);
+                        }
+                    } catch (NullPointerException ex) {
+                        logger.error("Error for key " + ByteBufferUtil.string(entry.getKey()));
                     }
                 }
 

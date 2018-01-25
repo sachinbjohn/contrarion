@@ -267,7 +267,9 @@ public class CassandraServer implements Cassandra.Iface
             Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
-
+            for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
+                logger.error("ROT Coordinator Key = {} COSC = {}", new Object[]{ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+            }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
 
@@ -306,6 +308,9 @@ public class CassandraServer implements Cassandra.Iface
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
+            for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
+                logger.error("ROT Cohort Key = {} COSC = {}", new Object[]{ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+            }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
 
@@ -797,6 +802,9 @@ public class CassandraServer implements Cassandra.Iface
 
                 for (Mutation mutation : columnFamilyMutations.getValue())
                 {
+                    try {
+                        logger.error("Batch_Mutate : key={}, mutation={}", new Object[]{ByteBufferUtil.string(key), mutation});
+                    }catch (Exception ex) {}
                     ThriftValidation.validateMutation(metadata, mutation);
 
                     if (mutation.deletion != null)
