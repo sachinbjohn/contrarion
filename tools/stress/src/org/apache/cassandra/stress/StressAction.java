@@ -31,6 +31,9 @@ import org.apache.cassandra.stress.util.Operation;
 import org.apache.cassandra.thrift.Cassandra;
 
 import static com.google.common.base.Charsets.UTF_8;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class StressAction extends Thread
 {
@@ -139,6 +142,7 @@ public class StressAction extends Thread
         while (!terminate)
         {
             if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+                output.println("Start stats");
                 client.measureStats = true;
                 before = false;
             }
@@ -388,6 +392,7 @@ public class StressAction extends Thread
      */
     private class Consumer extends Thread
     {
+        private static Logger logger = LoggerFactory.getLogger(Consumer.class);
         private final int items;
         private volatile boolean stop = false;
 
@@ -411,26 +416,22 @@ public class StressAction extends Thread
             {
                 ClientLibrary library = client.getClientLibrary();
 
-                for (int i = 0; i < items; i++)
-                {
+                for (int i = 0; i < items; i++) {
                     if (stop)
                         break;
 
-                    try
-                    {
+                    try {
                         operations.take().run(library); // running job
-                    }
-		    catch (Exception e)
-		    {
-			if (output == null)
-		        {
-			    System.err.println(e.getMessage());
-			    e.printStackTrace();
-			    System.exit(-1);
-			}
-			output.println(e.getMessage());
-			e.printStackTrace();
-			break;
+                    } catch (Exception e) {
+                        if (output == null) {
+                            System.err.println(e.getMessage());
+                            e.printStackTrace();
+                            System.exit(-1);
+                        }
+                        output.println(e.getMessage());
+                        e.printStackTrace();
+                        logger.error("Consumer has error", e);
+                        // break;
                     }
                 }
             }
