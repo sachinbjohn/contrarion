@@ -85,17 +85,14 @@ public class LamportClock {
         if (cur > t)
             t = cur;
         if (!logicalTime.compareAndSet(cur, t)) {
-            cur = logicalTime.get();
-            if(t > cur)
-                logicalTime.set(t);
-//            do {
-//                cur = logicalTime.get();
-//                tnow = now();
-//                if (tnow > t)
-//                    t = tnow;
-//                if (cur > t)
-//                    t = cur;
-//            } while (!logicalTime.compareAndSet(cur, t));
+            do {
+                cur = logicalTime.get();
+                tnow = now();
+                if (tnow > t)
+                    t = tnow;
+                if (cur > t)
+                    t = cur;
+            } while (!logicalTime.compareAndSet(cur, t));
         }
         return t;
     }
@@ -109,17 +106,14 @@ public class LamportClock {
         if (cur > t)
             t = cur;
         if (!logicalTime.compareAndSet(cur, t)) {
-            cur = logicalTime.get();
-            if(t > cur)
-                logicalTime.set(t);
-//            do {
-//                cur = logicalTime.get() + 1;
-//                tnow = now();
-//                if (tnow > t)
-//                    t = tnow;
-//                if (cur > t)
-//                    t = cur;
-//            } while (!logicalTime.compareAndSet(cur, t));
+            do {
+                cur = logicalTime.get() + 1;
+                tnow = now();
+                if (tnow > t)
+                    t = tnow;
+                if (cur > t)
+                    t = cur;
+            } while (!logicalTime.compareAndSet(cur, t));
         }
         return t;
     }
@@ -154,7 +148,7 @@ public class LamportClock {
     }
 
     public static long sendTranId() throws Exception {
-        long localTime = logicalTime.incrementAndGet();
+        long localTime = logicalTime.get();
         long tranId = (localTime << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
         return tranId;
     }
