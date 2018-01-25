@@ -199,8 +199,12 @@ public class CassandraServer implements Cassandra.Iface
             {
                 DecoratedKey dk = StorageService.getPartitioner().decorateKey(command.key);
                 ColumnFamily cf = columnFamilies.get(dk);
-                if (cf == null)
+                if (cf == null) {
                     columnFamiliesMap.put(command.key, emptyCols);
+                    try {
+                        logger.error("Missing key " + ByteBufferUtil.string(command.key));
+                    } catch (Exception ex) {}
+                }
                 else
                     columnFamiliesMap.put(command.key, cf.getSortedColumns());
             }
@@ -240,29 +244,33 @@ public class CassandraServer implements Cassandra.Iface
     @Override
     public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, long lts)
             throws InvalidRequestException, UnavailableException, TimedOutException {
+        try {
+            long chosenTime = LamportClock.updateLocalTime(lts);
+            String keyspace = state().getKeyspace();
 
-        long chosenTime = LamportClock.updateLocalTime(lts);
-        String keyspace = state().getKeyspace();
+            sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
 
-        sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
+            state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
+            ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
+            assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
+            Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
+            //select results for each key that were visible at the chosen_time
+            Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
+            Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
+            //pendingTransactions for now is always null -- we don't consider WOT for now
+            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-        ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
-        assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
-        Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
-        //select results for each key that were visible at the chosen_time
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
-        //pendingTransactions for now is always null -- we don't consider WOT for now
-        selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
+            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
 
-        MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
+            if (logger.isTraceEnabled()) {
+                logger.trace("rot_coordinator(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
+            }
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("rot_coordinator(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
+            return result;
+        } catch (Exception ex) {
+            logger.error("ROT coordinator has error", ex);
+            throw new RuntimeException(ex);
         }
-
-        return result;
     }
 
     @Override
@@ -289,11 +297,10 @@ public class CassandraServer implements Cassandra.Iface
             if (logger.isTraceEnabled()) {
                 logger.trace("rot_cohort(keys={}, lts={}, chosenTime= {}) = {}", new Object[]{keys, lts, chosenTime, result});
             }
-
             return result;
-
-        } catch(InterruptedException ex) {
-            throw new RuntimeException("Waiting for coordinator interrupted");
+        } catch (Exception ex) {
+            logger.error("ROT Cohort has error", ex);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -805,7 +812,16 @@ public class CassandraServer implements Cassandra.Iface
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
         long chosenTime = LamportClock.updateLocalTimeIncr(lts);
-        internal_batch_mutate(mutation_map, consistency_level, chosenTime);
+        try {
+            logger.error("Insert " + ByteBufferUtil.string(mutation_map.keySet().iterator().next()));
+        } catch (CharacterCodingException ex) {}
+
+        try {
+            internal_batch_mutate(mutation_map, consistency_level, chosenTime);
+        } catch(Exception ex) {
+            logger.error("batch_mutate has exception", ex);
+            throw new RuntimeException(ex);
+        }
         return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
 
