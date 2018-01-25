@@ -803,7 +803,7 @@ public class CassandraServer implements Cassandra.Iface
                 for (Mutation mutation : columnFamilyMutations.getValue())
                 {
                     try {
-                        logger.error("Batch_Mutate : key={}, mutation={}", new Object[]{ByteBufferUtil.string(key), mutation});
+                        logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp});
                     }catch (Exception ex) {}
                     ThriftValidation.validateMutation(metadata, mutation);
 

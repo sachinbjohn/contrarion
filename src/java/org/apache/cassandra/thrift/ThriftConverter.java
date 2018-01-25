@@ -447,7 +447,14 @@ public class ThriftConverter
                        }
                    }
                }
-
+               StringBuilder tss = new StringBuilder();
+               tss.append("Versions = "+column.earliestValidTime());
+               if(column.previousVersions() !=  null) {
+                   for(IColumn oldColumn: column.previousVersions()) {
+                       tss.append(","+oldColumn.earliestValidTime());
+                   }
+               }
+               logger.error("No version found. Existing "+tss.toString());
                // If no previous version matches, then the client's first round read value is valid
                return new ChosenColumnResult(markFirstRoundResultAsValid(currentlyVisibleColumn), new HashSet<Long>());
            }
