@@ -319,7 +319,7 @@ public class ClientLibrary {
             }
             asyncClientIndex++;
         }
-        logger.error(logMessage);
+        logger.error(logMessage.toString());
 
          asyncClientToKeys.remove(coordinator);
 
