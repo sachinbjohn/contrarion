@@ -451,7 +451,7 @@ prevVersion = null;
                     if (previousColumn.previousVersions == null) {
                         this.previousVersions = new TreeSet<IColumn>(new EVTComparator());
                     } else {
-                        previousColumn.removeOldPreviousVersions();
+                        //previousColumn.removeOldPreviousVersions();
                         this.previousVersions = previousColumn.previousVersions;
                         previousColumn.previousVersions = null;
                     }
@@ -462,7 +462,7 @@ prevVersion = null;
                 //TODO: could special case to reduce synchronization
                 synchronized (previousColumn) {
                     if (previousColumn.previousVersions != null) {
-                        previousColumn.removeOldPreviousVersions();
+                        //previousColumn.removeOldPreviousVersions();
                         this.previousVersions.addAll(previousColumn.previousVersions);
                         previousColumn.previousVersions = null;
                     }
