@@ -40,14 +40,14 @@ public class LamportClock {
 
     public static long getVersion() {
         long localTime = logicalTime.incrementAndGet();
-        long version = (localTime << 16) + localId.shortValue();
+        long version = (localTime); // << 16) + localId.shortValue();
         //logger.debug("getVersion {} = {} << 16 + {}", new Object[]{version, localTime, localId.shortValue()});
         return version;
     }
 
     //Should only be used for sanity checking
     public static long currentVersion() {
-        return (logicalTime.get() << 16) + localId.shortValue();
+        return (logicalTime.get()) ;// << 16) + localId.shortValue();
     }
 
 
@@ -106,14 +106,17 @@ public class LamportClock {
         if (cur > t)
             t = cur;
         if (!logicalTime.compareAndSet(cur, t)) {
-            do {
-                cur = logicalTime.get() + 1;
-                tnow = now();
-                if (tnow > t)
-                    t = tnow;
-                if (cur > t)
-                    t = cur;
-            } while (!logicalTime.compareAndSet(cur, t));
+            cur = logicalTime.get();
+            if(cur > t)
+                logicalTime.set(t);
+//            do {
+//                cur = logicalTime.get() + 1;
+//                tnow = now();
+//                if (tnow > t)
+//                    t = tnow;
+//                if (cur > t)
+//                    t = cur;
+//            } while (!logicalTime.compareAndSet(cur, t));
         }
         return t;
     }
