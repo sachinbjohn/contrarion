@@ -247,7 +247,12 @@ public class CassandraServer implements Cassandra.Iface
         try {
             long chosenTime = LamportClock.updateLocalTime(lts);
             String keyspace = state().getKeyspace();
-            logger.error("Transaction {} ::  coordinator size={} key={}", new Object[]{transactionId, keys.size(), keys.get(0)});
+
+            String keyStr = "";
+            for(ByteBuffer key: keys)
+                keyStr += ByteBufferUtil.string(key) +";";
+
+            logger.error("Transaction {} :: coordinator size={} key={}", new Object[]{transactionId, keys.size(), keyStr});
             sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
@@ -277,11 +282,15 @@ public class CassandraServer implements Cassandra.Iface
     public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long  lts)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
-            logger.error("Transaction {} ::  cohort size={} key={}", new Object[]{transactionId, keys.size(), keys.get(0)});
+            String keyStr = "";
+            for(ByteBuffer key: keys)
+                keyStr += ByteBufferUtil.string(key) +";";
+
+            logger.error("Transaction {} ::  cohort size={}  key={}", new Object[]{transactionId, keys.size(), keyStr});
             //Wait until it receives timestamp from coordinator
             long chosenTime = ROTCohort.getTimestamp(transactionId);
             long lamport = LamportClock.updateLocalTime(chosenTime);
-            logger.error("Transaction {} ::  cohort  chosen time ={}", new Object[]{transactionId, chosenTime});
+            logger.error("Transaction {} ::  cohort chosen time ={}", new Object[]{transactionId, chosenTime});
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
             assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";

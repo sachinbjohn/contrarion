@@ -131,7 +131,7 @@ public class LamportClock {
     }
 
     public static synchronized long sendTranId() throws Exception {
-        long localTime = logicalTime;
+        long localTime = ++logicalTime;
         long tranId = (localTime << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
         return tranId;
     }

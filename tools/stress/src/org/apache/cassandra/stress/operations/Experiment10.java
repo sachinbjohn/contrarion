@@ -119,9 +119,18 @@ public class Experiment10 extends Operation {
                 columnCount = 0;
                 results = clientLibrary.transactional_multiget_slice(keys, parent, nColumnsPredicate);
                 success = (results.size() == keys.size());
-                if (!success)
-                    exceptionMessage = "Wrong number of keys: " + results.size() + " instead of " + involvedServers;
+                if (!success) {
+                    String origKeyStr = "";
+                    String receivedKeyStr = "";
 
+                    try{
+                        for(ByteBuffer key: keys)
+                            origKeyStr += ByteBufferUtil.string(key)+";";
+                        for(ByteBuffer key : results.keySet())
+                            receivedKeyStr += ByteBufferUtil.string(key)+";";
+                    } catch (Exception ex) {}
+                    exceptionMessage = "Wrong number of keys: " + origKeyStr + "(" + results.size() + ") instead of " + receivedKeyStr + "(" + involvedServers + ")";
+                }
                 for (List<ColumnOrSuperColumn> result : results.values()) {
                     columnCount += result.size();
                     assert result.size() == 1;

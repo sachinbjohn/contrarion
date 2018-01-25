@@ -291,22 +291,38 @@ public class ClientLibrary {
         List<ByteBuffer> coordinatorKeys = null;
         List<ByteBuffer> cohortLocatorKeys = new LinkedList<>();
 
+         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
+         long lts = LamportClock.getCurrentTime();
 
         int asyncClientIndex = 0;
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("Transaction id = "+tranId);
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             if (asyncClientIndex == coordinatorIndex) {
                 coordinator = entry.getKey();
                 coordinatorKeys = entry.getValue();
+                String keyStr = "";
+                try {
+                for(ByteBuffer key : coordinatorKeys)
+                    keyStr += ByteBufferUtil.string(key) + ", ";
+                } catch (Exception ex) {}
+                logMessage.append("\nServer "+asyncClientIndex + "  coordinator  keys = {"+keyStr+"}");
             } else {
-                cohortLocatorKeys.add(entry.getValue().get(0));
+                List<ByteBuffer> cohortKeys = entry.getValue();
+                cohortLocatorKeys.add(cohortKeys.get(0));
+                String keyStr = "";
+                try {
+                    for(ByteBuffer key : cohortKeys)
+                        keyStr += ByteBufferUtil.string(key) + ", ";
+                } catch (Exception ex) {}
+                logMessage.append("\nServer "+asyncClientIndex + "  cohort  keys = {"+keyStr+"}");
             }
             asyncClientIndex++;
         }
+        logger.error(logMessage);
 
-        asyncClientToKeys.remove(coordinator);
+         asyncClientToKeys.remove(coordinator);
 
-        long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
-        long lts = LamportClock.getCurrentTime();
 
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
         Queue<BlockingQueueCallback<rot_cohort_call>> cohortCallbacks = new LinkedList<BlockingQueueCallback<rot_cohort_call>>();
@@ -333,7 +349,11 @@ public class ClientLibrary {
             ByteBuffer key = entry.getKey();
             List<ColumnOrSuperColumn> coscList = entry.getValue();
             keyToResult.put(key, coscList);
-            logger.error("Transaction id {}  coordinator responded with {} for key {}", new Object[]{tranId, coscList, key});
+            String keyStr="";
+            try{
+                keyStr = ByteBufferUtil.string(key);
+            } catch (Exception e) {}
+            logger.error("Transaction id {}  coordinator responded with {} for key {}", new Object[]{tranId, coscList, keyStr});
         }
 
         //Cohort Response
@@ -344,7 +364,11 @@ public class ClientLibrary {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
                 keyToResult.put(key, coscList);
-                logger.error("Transaction id {}  cohort responded with {} for key {}", new Object[]{tranId, coscList, key});
+                String keyStr="";
+                try{
+                    keyStr = ByteBufferUtil.string(key);
+                } catch (Exception e) {}
+                logger.error("Transaction id {}  cohort responded with {} for key {}", new Object[]{tranId, coscList, keyStr});
             }
         }
         LamportClock.setLocalTime(coordinatorResult.lts);
