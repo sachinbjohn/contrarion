@@ -333,7 +333,7 @@ public class ClientLibrary {
             ByteBuffer key = entry.getKey();
             List<ColumnOrSuperColumn> coscList = entry.getValue();
             keyToResult.put(key, coscList);
-
+            logger.error("Transaction id {}  coordinator responded with {} for key {}", new Object[]{tranId, coscList, key});
         }
 
         //Cohort Response
@@ -344,7 +344,7 @@ public class ClientLibrary {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
                 keyToResult.put(key, coscList);
-
+                logger.error("Transaction id {}  cohort responded with {} for key {}", new Object[]{tranId, coscList, key});
             }
         }
         LamportClock.setLocalTime(coordinatorResult.lts);

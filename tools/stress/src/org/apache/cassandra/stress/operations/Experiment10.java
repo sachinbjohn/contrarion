@@ -136,11 +136,13 @@ public class Experiment10 extends Operation {
             }
         }
         if (!success) {
-            error(String.format("Operation [%d] retried %d times - error on calling multiget_slice for keys %s %s%n",
+            String eMsg = String.format("Operation [%d] retried %d times - error on calling multiget_slice for keys %s %s%n",
                     index,
                     session.getRetryTimes(),
                     keys,
-                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
+                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
+            error(eMsg);
+            logger.error(eMsg);
         }
         if (session.measureStats) {
             session.operations.getAndIncrement();
