@@ -276,7 +276,7 @@ public class CassandraServer implements Cassandra.Iface
 
         } catch (Exception ex) {
             logger.error("ROT coordinator has error", ex);
-            throw new RuntimeException(ex);
+            throw new UnavailableException();
         }
     }
 
@@ -317,7 +317,7 @@ public class CassandraServer implements Cassandra.Iface
 
         } catch (Exception ex) {
             logger.error("ROT Cohort has error", ex);
-            throw new RuntimeException(ex);
+            throw new UnavailableException();
         }
     }
 
@@ -842,7 +842,7 @@ public class CassandraServer implements Cassandra.Iface
 
         } catch (Exception ex) {
             logger.error("batch_mutate has exception", ex);
-            throw new RuntimeException(ex);
+            throw new UnavailableException();
         }
     }
 

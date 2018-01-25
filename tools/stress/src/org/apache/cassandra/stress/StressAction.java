@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class StressAction extends Thread
 {
+    private static Logger logger = LoggerFactory.getLogger(StressAction.class);
     /**
      * Producer-Consumer model: 1 producer, N consumers
      */
@@ -111,6 +112,7 @@ public class StressAction extends Thread
             try {
                 new ClientSyncer(client, -1, output).run(client.getClientLibrary());
             } catch (Exception e) {
+                logger.error("ClientSyncer has exception", e);
                 System.err.println(e.getMessage());
                 e.printStackTrace();
             }
