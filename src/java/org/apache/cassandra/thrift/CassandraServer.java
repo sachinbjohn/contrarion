@@ -268,7 +268,7 @@ public class CassandraServer implements Cassandra.Iface
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
             for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
-                logger.error("ROT Coordinator lts = {} chosenTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+                logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
@@ -309,7 +309,7 @@ public class CassandraServer implements Cassandra.Iface
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
             for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
-                logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+                logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
@@ -803,7 +803,7 @@ public class CassandraServer implements Cassandra.Iface
                 for (Mutation mutation : columnFamilyMutations.getValue())
                 {
                     try {
-                        logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp});
+                        logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} now = {} logicalTime = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp, System.currentTimeMillis(), LamportClock.getCurrentTime()});
                     }catch (Exception ex) {}
                     ThriftValidation.validateMutation(metadata, mutation);
 
