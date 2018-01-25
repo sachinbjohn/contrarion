@@ -76,6 +76,7 @@ public class CassandraServer implements Cassandra.Iface
     private static Logger logger = LoggerFactory.getLogger(CassandraServer.class);
 
     private final static int COUNT_PAGE_SIZE = 1024;
+    private static Collection<IColumn> emptyCols = Collections.emptyList();
 
     // thread local state containing session information
     public final ThreadLocal<ClientState> clientState = new ThreadLocal<ClientState>()
@@ -198,9 +199,10 @@ public class CassandraServer implements Cassandra.Iface
             {
                 DecoratedKey dk = StorageService.getPartitioner().decorateKey(command.key);
                 ColumnFamily cf = columnFamilies.get(dk);
-                if(cf == null)
-                    logger.error("NULL CF for {}", new Object[]{dk});
-                columnFamiliesMap.put(command.key, cf.getSortedColumns());
+                if (cf == null)
+                    columnFamiliesMap.put(command.key, emptyCols);
+                else
+                    columnFamiliesMap.put(command.key, cf.getSortedColumns());
             }
             return new InternalSliceMap(columnFamiliesMap);
         }
