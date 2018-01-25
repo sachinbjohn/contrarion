@@ -77,17 +77,21 @@ public class Experiment10 extends Operation {
     @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
         //do all random tosses here
-        while(zipfGen == null); // wait until initialization is over
-        double target_p_w = session.getWrite_fraction();
-        int partitionsToReadFrom = session.getKeys_per_read();
-        assert partitionsToReadFrom <= session.getNum_servers();
-        double p_w = (target_p_w * partitionsToReadFrom) / (1.0 - target_p_w + target_p_w * partitionsToReadFrom);
-        int numPartitions = session.getNum_servers();
-        double opTypeToss = Stress.randomizer.nextDouble();
-        if (opTypeToss <= p_w) {
-            write(clientLibrary, numPartitions);
-        } else {
-            read(clientLibrary, partitionsToReadFrom, numPartitions);
+        try {
+            while (zipfGen == null) ; // wait until initialization is over
+            double target_p_w = session.getWrite_fraction();
+            int partitionsToReadFrom = session.getKeys_per_read();
+            assert partitionsToReadFrom <= session.getNum_servers();
+            double p_w = (target_p_w * partitionsToReadFrom) / (1.0 - target_p_w + target_p_w * partitionsToReadFrom);
+            int numPartitions = session.getNum_servers();
+            double opTypeToss = Stress.randomizer.nextDouble();
+            if (opTypeToss <= p_w) {
+                write(clientLibrary, numPartitions);
+            } else {
+                read(clientLibrary, partitionsToReadFrom, numPartitions);
+            }
+        } catch(Exception ex) {
+            logger.error("Exp10 has error", ex);
         }
     }
 
@@ -145,8 +149,8 @@ public class Experiment10 extends Operation {
                     session.getRetryTimes(),
                     keys,
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
-            error(eMsg);
             logger.error(eMsg);
+            error(eMsg);
         }
         if (session.measureStats) {
             session.operations.getAndIncrement();
@@ -190,11 +194,13 @@ public class Experiment10 extends Operation {
             }
         }
         if (!success) {
-            error(String.format("Operation [%d] retried %d times - error inserting key %s %s%n",
+            String eMsg = String.format("Operation [%d] retried %d times - error inserting key %s %s%n",
                     index,
                     session.getRetryTimes(),
                     key,
-                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
+                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
+            logger.error(eMsg);
+            error(eMsg);
         }
         if(session.measureStats) {
             session.operations.getAndIncrement();

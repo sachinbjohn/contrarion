@@ -73,7 +73,7 @@ public class ClientSyncer extends Operation {
 
         if (!success)
         {
-            error(String.format("Error inserting unique key %s %s%n",
+            logger.error(String.format("Error inserting unique key %s %s%n",
                     rawKey,
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
@@ -118,7 +118,7 @@ public class ClientSyncer extends Operation {
         }
 
         if (!success) {
-            error(String.format("Wait for clients failed  %s!!!!!",  (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
+            logger.error(String.format("Wait for clients failed  %s!!!!!",  (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
 
     }

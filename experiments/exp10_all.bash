@@ -288,7 +288,7 @@ process_exp10() {
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=50    #Timeout is set to 5minutes
+run_time=5   #Timeout is set to 5minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
 do

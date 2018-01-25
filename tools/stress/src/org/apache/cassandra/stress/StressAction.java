@@ -377,6 +377,7 @@ public class StressAction extends Thread
                 }
                 catch (InterruptedException e)
                 {
+                    logger.error("Producer error",e);
                     System.err.println("Producer error - " + e.getMessage());
                     return;
                 }
@@ -394,7 +395,7 @@ public class StressAction extends Thread
      */
     private class Consumer extends Thread
     {
-        private Logger logger = LoggerFactory.getLogger(Consumer.class);
+
         private final int items;
         private volatile boolean stop = false;
 
@@ -419,6 +420,8 @@ public class StressAction extends Thread
                 ClientLibrary library = client.getClientLibrary();
 
                 for (int i = 0; i < items; i++) {
+                    if(i % 1000 == 0 && client.getOperation() == Stress.Operations.EXP10)
+                        logger.error("Client op "+i);
                     if (stop)
                         break;
 
