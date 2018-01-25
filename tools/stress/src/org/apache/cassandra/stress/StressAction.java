@@ -30,8 +30,6 @@ import org.apache.cassandra.stress.operations.*;
 import org.apache.cassandra.stress.util.Operation;
 import org.apache.cassandra.thrift.Cassandra;
 
-import static com.google.common.base.Charsets.UTF_8;
-
 public class StressAction extends Thread
 {
     /**
