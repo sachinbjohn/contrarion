@@ -803,18 +803,7 @@ public class CassandraServer implements Cassandra.Iface
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
         long chosenTime = LamportClock.updateLocalTimeIncr(lts);
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate({}, lts = {}, chosenTime = {})", new Object[]{mutation_map,lts, chosenTime});
-        }
-        try {
-            internal_batch_mutate(mutation_map, consistency_level, chosenTime);
-        } catch(Exception ex) {
-            logger.error("Exception in batch_mutate", ex);
-            throw ex;
-        }
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate SUCCESS ({}, lts = {}, chosenTime = {})", new Object[]{mutation_map,lts, chosenTime});
-        }
+        internal_batch_mutate(mutation_map, consistency_level, chosenTime);
         return new BatchMutateResult(deps, LamportClock.getCurrentTime());
     }
 

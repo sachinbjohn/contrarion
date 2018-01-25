@@ -1,13 +1,12 @@
 package org.apache.cassandra.client;
 
-import java.lang.reflect.Field;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.RowPosition;
 import org.apache.cassandra.dht.*;
 import org.apache.cassandra.hadoop.ConfigHelper;
@@ -34,8 +33,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 /**
  * This client library provide the extra functionality needed for COPS2.
  * Namely:
@@ -278,19 +275,6 @@ public class ClientLibrary {
      * part in original Eiger. But we assure our one-round by asserting after checking evt and lvt (we can disable this
      * assertion for production since it's only testing purpose)
      */
-
-    private void checkReady(Cassandra.AsyncClient cl) throws IllegalAccessException,NoSuchFieldException {
-
-            Field cm = cl.getClass().getSuperclass().getDeclaredField("___currentMethod");
-            cm.setAccessible(true);
-            Field er = cl.getClass().getSuperclass().getDeclaredField("___error");
-            er.setAccessible(true);
-
-            if(cm.get(cl) != null)
-                throw new IllegalStateException("Current Method not empty");
-            if(er.get(cl) != null)
-                throw new IllegalStateException("There is error in client");
-    }
     public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate)
     throws Exception
     {
@@ -298,8 +282,8 @@ public class ClientLibrary {
     }
 
      public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate, CopsTestingConcurrentWriteHook afterFirstReadWriteHook, CopsTestingConcurrentWriteHook afterFirstRoundWriteHook)
-            throws Exception {
-
+     throws Exception
+     {
         Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKeys = partitionByAsyncClients(allKeys);
 
         int coordinatorIndex = (int) (Math.random() * asyncClientToKeys.size());
@@ -319,36 +303,26 @@ public class ClientLibrary {
             asyncClientIndex++;
         }
 
-        HashSet<Cassandra.AsyncClient> contactedServers = new HashSet<>();
         asyncClientToKeys.remove(coordinator);
-        if(logger.isTraceEnabled()) {
-            logger.trace("transactional_multiget_slice :: Coordinator ={} , Cohort = {}", new Object[]{coordinator, asyncClientToKeys.keySet()});
-        }
+
         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
         long lts = LamportClock.getCurrentTime();
 
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
         Queue<BlockingQueueCallback<rot_cohort_call>> cohortCallbacks = new LinkedList<BlockingQueueCallback<rot_cohort_call>>();
 
-        checkReady(coordinator);
         //Send Coordinator Request
         coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
 
-        contactedServers.add(coordinator);
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             Cassandra.AsyncClient asyncClient = entry.getKey();
-            checkReady(asyncClient);
             List<ByteBuffer> keysForThisClient = entry.getValue();
 
             BlockingQueueCallback<rot_cohort_call> callback = new BlockingQueueCallback<rot_cohort_call>();
             cohortCallbacks.add(callback);
 
-            if(contactedServers.contains(asyncClient))
-                throw new IllegalStateException("Only single connections per server");
-
             asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, lts, callback);
-            contactedServers.add(asyncClient);
         }
 
         Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
@@ -373,11 +347,6 @@ public class ClientLibrary {
 
             }
         }
-
-        for(Cassandra.AsyncClient s : contactedServers) {
-            checkReady(s);
-        }
-
         LamportClock.setLocalTime(coordinatorResult.lts);
         return keyToResult;
     }
@@ -1117,9 +1086,9 @@ public class ClientLibrary {
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-//        if (logger.isTraceEnabled()) {
-//            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-//        }
+        //if (logger.isTraceEnabled()) {
+        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+        //}
 
         //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
         // 0 out all timestamps
@@ -1165,9 +1134,6 @@ public class ClientLibrary {
         //SBJ: Single callback anyways
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-            if (logger.isTraceEnabled()) {
-                logger.trace("batch_mutate(mutation_map = {}) = {}", new Object[]{mutation_map, result});
-            }
             LamportClock.updateTime(result.lts);
         }
 

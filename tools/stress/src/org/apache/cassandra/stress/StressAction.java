@@ -110,7 +110,6 @@ public class StressAction extends Thread
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
-                //System.exit(-1);
             }
         }
 
@@ -139,15 +138,13 @@ public class StressAction extends Thread
         boolean before=true,after=false;
         while (!terminate)
         {
-            if (isExp10) {
-                if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
-                    client.measureStats = true;
-                    before = false;
-                }
-                if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
-                    client.measureStats = false;
-                    after = true;
-                }
+            if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+                client.measureStats = true;
+                before = false;
+            }
+            if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
+                client.measureStats = false;
+                after = true;
             }
             if (stop || (isExp10 && client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000))
             {
