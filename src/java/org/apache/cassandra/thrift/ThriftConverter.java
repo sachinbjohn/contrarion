@@ -447,17 +447,21 @@ public class ThriftConverter
                        }
                    }
                }
-               StringBuilder tss = new StringBuilder();
-               tss.append("  ChosenTime = "+chosenTime);
-               tss.append("  Now = "+System.currentTimeMillis());
-               tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
-               tss.append("  Existing Versions = "+column.earliestValidTime());
-               if(column.previousVersions() !=  null) {
-                   for(IColumn oldColumn: column.previousVersions()) {
-                       tss.append(","+oldColumn.earliestValidTime());
-                   }
-               }
-               logger.error("No version found.  "+tss.toString());
+               // StringBuilder tss = new StringBuilder();
+               // tss.append("  ChosenTime = "+chosenTime);
+               // tss.append("  Now = "+System.currentTimeMillis());
+               // tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
+               // tss.append("  Existing Versions = "+column.earliestValidTime());
+               // if(column.previousVersions() !=  null) {
+               //     for(IColumn oldColumn: column.previousVersions()) {
+               //         tss.append(","+oldColumn.earliestValidTime());
+               //     }
+               // }
+               logger.error("No version found");
+
+               //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
+               //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());
+
                // If no previous version matches, then the client's first round read value is valid
                return new ChosenColumnResult(markFirstRoundResultAsValid(currentlyVisibleColumn), new HashSet<Long>());
            }

@@ -267,9 +267,10 @@ public class CassandraServer implements Cassandra.Iface
             Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
-            for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
-                logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
-            }
+
+            // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
+            //     logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+            // }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
 
@@ -308,9 +309,9 @@ public class CassandraServer implements Cassandra.Iface
             //pendingTransactions for now is always null -- we don't consider WOT for now
             selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
 
-            for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
-                logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
-            }
+            // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
+            //     logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
+            // }
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
             return result;
 
@@ -802,9 +803,9 @@ public class CassandraServer implements Cassandra.Iface
 
                 for (Mutation mutation : columnFamilyMutations.getValue())
                 {
-                    try {
-                        logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} now = {} logicalTime = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp, System.currentTimeMillis(), LamportClock.getCurrentTime()});
-                    }catch (Exception ex) {}
+                    // try {
+                    //     logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} now = {} logicalTime = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp, System.currentTimeMillis(), LamportClock.getCurrentTime()});
+                    // }catch (Exception ex) {}
                     ThriftValidation.validateMutation(metadata, mutation);
 
                     if (mutation.deletion != null)
