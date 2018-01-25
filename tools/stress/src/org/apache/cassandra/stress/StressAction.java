@@ -392,7 +392,7 @@ public class StressAction extends Thread
      */
     private class Consumer extends Thread
     {
-        private static Logger logger = LoggerFactory.getLogger(Consumer.class);
+        private Logger logger = LoggerFactory.getLogger(Consumer.class);
         private final int items;
         private volatile boolean stop = false;
 
