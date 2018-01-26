@@ -100,6 +100,7 @@ public class Experiment10 extends Operation {
                 ByteBufferUtil.EMPTY_BYTE_BUFFER,
                 false, 1));
 
+        logger.error("R");
         int pId = Stress.randomizer.nextInt(totalServers);
 
         List<ByteBuffer> keys = generateReadTxnKeys(totalServers, involvedServers, 1);
@@ -163,12 +164,13 @@ public class Experiment10 extends Operation {
             session.readlatencies.add(latencyNano / 1000);
             session.numReads.getAndIncrement();
         }
+        logger.error("/R  "+session.measureStats);
     }
 
     public void write(ClientLibrary clientLibrary, int totalServers) throws IOException {
         if (value == null)
             value = generateValue();
-
+        logger.error("W");
         Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(value).setTimestamp(FBUtilities.timestampMicros());
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
 
@@ -213,6 +215,7 @@ public class Experiment10 extends Operation {
             session.writelatencies.add(latencyNano / 1000);
             session.numWrites.getAndIncrement();
         }
+        logger.error("/W  "+session.measureStats);
     }
 
     private Map<String, List<Mutation>> getColumnMutationMap(Column c) {

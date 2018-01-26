@@ -346,7 +346,6 @@ public class ClientLibrary {
             }
         }
         LamportClock.setLocalTime(coordinatorResult.lts);
-        logger.error("Read : keys = "+ allKeys.size() + " results = "+ keyToResult.size());
         return keyToResult;
     }
 
@@ -1103,7 +1102,6 @@ public class ClientLibrary {
                 }
             }
         }
-        String keyStr = "";
         //split it into a set of batch_mutations, one for each server in the cluster
         Map<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>> asyncClientToMutations = new HashMap<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>>();
         for (Entry<ByteBuffer, Map<String,List<Mutation>>> entry : mutation_map.entrySet()) {
@@ -1114,7 +1112,6 @@ public class ClientLibrary {
             if (!asyncClientToMutations.containsKey(asyncClient)) {
                 asyncClientToMutations.put(asyncClient, new HashMap<ByteBuffer,Map<String,List<Mutation>>>());
             }
-            try{ keyStr += ByteBufferUtil.string(key) + " "; } catch (Exception ex) {}
             asyncClientToMutations.get(asyncClient).put(key, mutations);
         }
 
@@ -1135,7 +1132,6 @@ public class ClientLibrary {
         //SBJ: Single callback anyways
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-            logger.error("Write "+keyStr);
             LamportClock.updateTime(result.lts);
         }
 
