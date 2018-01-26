@@ -143,17 +143,19 @@ public class StressAction extends Thread
         boolean before=true,after=false;
         while (!terminate)
         {
-            if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
-                output.println("Start stats");
-                client.measureStats = true;
-                before = false;
-            }
-            if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
-                client.measureStats = false;
-                after = true;
-            }
+            client.measureStats = true;
+            // if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+            //     logger.error("Start stats");
+            //     client.measureStats = true;
+            //     before = false;
+            // }
+            // if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
+            //     client.measureStats = false;
+            //     after = true;
+            // }
             if (stop || (isExp10 && client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000))
             {
+                logger.error("Stopping everything");
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -206,7 +208,7 @@ public class StressAction extends Thread
                 long currentTimeInSeconds = client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
-                output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
+                output.println(String.format("Alive= %d,%d,%d,%d,%d,%d,%s,%d", alive, total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
 
