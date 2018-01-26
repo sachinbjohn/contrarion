@@ -421,18 +421,20 @@ public class StressAction extends Thread
 
                 for (int i = 0; i < items; i++) {
                     if(i % 1000 == 0 && client.getOperation() == Stress.Operations.EXP10)
-                        logger.error("Client op "+i);
-                    if (stop)
+                        logger.error("Client op "+i+"/"+items);
+                    if (stop) {
+                        logger.error("Consumer stopping");
                         break;
+                    }
 
                     try {
                         operations.take().run(library); // running job
                     } catch (Exception e) {
-                        if (output == null) {
-                            System.err.println(e.getMessage());
-                            e.printStackTrace();
-                            System.exit(-1);
-                        }
+                        // if (output == null) {
+                        //     System.err.println(e.getMessage());
+                        //     e.printStackTrace();
+                        //     System.exit(-1);
+                        // }
                         output.println(e.getMessage());
                         e.printStackTrace();
                         logger.error("Consumer has error", e);
