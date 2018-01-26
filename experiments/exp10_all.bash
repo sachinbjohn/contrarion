@@ -4,8 +4,8 @@
 set -u
 set -x
 
-if [ $# -ne 1 ]; then
-    echo "$0: [# servers]"
+if [ $# -lt 1 ]; then
+    echo "$0: [# servers] [email]"
     exit
 fi
 
@@ -323,3 +323,8 @@ do
     done
     process_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
 done
+
+if [ $# -ge 2 ]; then
+    echo "$1 server experiment complete" | mail -s "Expt progress" $2
+fi
+
