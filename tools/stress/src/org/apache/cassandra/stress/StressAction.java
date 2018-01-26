@@ -155,7 +155,7 @@ public class StressAction extends Thread
             // }
             if (stop || (isExp10 && client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000))
             {
-                logger.error("Stopping everything");
+                logger.error("Stopping everything. stop = "+stop);
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -407,72 +407,57 @@ public class StressAction extends Thread
         }
 
         @Override
-        public void run()
-        {
-            if (client.getOperation() == Stress.Operations.DYNAMIC ||
-                    client.getOperation() == Stress.Operations.INSERTCL ||
-                    client.getOperation() == Stress.Operations.FACEBOOK ||
-                    client.getOperation() == Stress.Operations.FACEBOOK_POPULATE ||
-                    client.getOperation() == Stress.Operations.WRITE_TXN ||
-                    client.getOperation() == Stress.Operations.BATCH_MUTATE ||
-                    client.getOperation() == Stress.Operations.TWO_ROUND_READ_TXN ||
-                    client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER ||
-                    client.getOperation() == Stress.Operations.EXP10)
-            {
-                ClientLibrary library = client.getClientLibrary();
+        public void run() {
+            try {
+                if (client.getOperation() == Stress.Operations.DYNAMIC ||
+                        client.getOperation() == Stress.Operations.INSERTCL ||
+                        client.getOperation() == Stress.Operations.FACEBOOK ||
+                        client.getOperation() == Stress.Operations.FACEBOOK_POPULATE ||
+                        client.getOperation() == Stress.Operations.WRITE_TXN ||
+                        client.getOperation() == Stress.Operations.BATCH_MUTATE ||
+                        client.getOperation() == Stress.Operations.TWO_ROUND_READ_TXN ||
+                        client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER ||
+                        client.getOperation() == Stress.Operations.EXP10) {
+                    ClientLibrary library = client.getClientLibrary();
 
-                for (int i = 0; i < items; i++) {
-                    if(client.getOperation() == Stress.Operations.EXP10)
-                        logger.error("Client op "+i+"/"+items);
-                    if (stop) {
-                        logger.error("Consumer stopping at i="+i);
-                        break;
-                    }
-
-                    try {
-                        operations.take().run(library); // running job
-                    } catch (Exception e) {
-                        // if (output == null) {
-                        //     System.err.println(e.getMessage());
-                        //     e.printStackTrace();
-                        //     System.exit(-1);
-                        // }
-                        output.println(e.getMessage());
-                        e.printStackTrace();
-                        logger.error("Consumer has error", e);
-                        // break;
-                    }
-                }
-            }
-            else
-            {
-                Cassandra.Client connection = client.getClient();
-
-                for (int i = 0; i < items; i++)
-                {
-                    if (stop)
-                        break;
-
-                    try
-                    {
-                        operations.take().run(connection); // running job
-                    }
-                    catch (Exception e)
-                    {
-                        if (output == null)
-                        {
-                            System.err.println(e.getMessage());
-			    e.printStackTrace();
-                            System.exit(-1);
+                    for (int i = 0; i < items; i++) {
+                        if (client.getOperation() == Stress.Operations.EXP10)
+                            logger.error("Client op " + i + "/" + items);
+                        if (stop) {
+                            logger.error("Consumer stopping at i=" + i);
+                            break;
                         }
 
+                        operations.take().run(library); // running job
 
-                        output.println(e.getMessage());
-			e.printStackTrace();
-                        break;
+                    }
+                } else {
+                    Cassandra.Client connection = client.getClient();
+
+                    for (int i = 0; i < items; i++) {
+                        if (stop)
+                            break;
+
+                        try {
+                            operations.take().run(connection); // running job
+                        } catch (Exception e) {
+                            if (output == null) {
+                                System.err.println(e.getMessage());
+                                e.printStackTrace();
+                                System.exit(-1);
+                            }
+
+
+                            output.println(e.getMessage());
+                            e.printStackTrace();
+                            break;
+                        }
                     }
                 }
+            } catch (Throwable e) {
+                logger.error("Consumer has error", e);
             }
+            logger.error("Consumer thread finished");
         }
 
         public void stopConsume()
