@@ -420,10 +420,10 @@ public class StressAction extends Thread
                 ClientLibrary library = client.getClientLibrary();
 
                 for (int i = 0; i < items; i++) {
-                    if(i % 1000 == 0 && client.getOperation() == Stress.Operations.EXP10)
+                    if(client.getOperation() == Stress.Operations.EXP10)
                         logger.error("Client op "+i+"/"+items);
                     if (stop) {
-                        logger.error("Consumer stopping");
+                        logger.error("Consumer stopping at i="+i);
                         break;
                     }
 
