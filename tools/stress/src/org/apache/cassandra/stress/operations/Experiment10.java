@@ -146,7 +146,6 @@ public class Experiment10 extends Operation {
                     keys,
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
             logger.error(eMsg);
-            error(eMsg);
         }
         if (session.measureStats) {
             session.operations.getAndIncrement();
@@ -189,13 +188,11 @@ public class Experiment10 extends Operation {
             }
         }
         if (!success) {
-            String eMsg = String.format("Operation [%d] retried %d times - error inserting key %s %s%n",
+            logger.error(String.format("Operation [%d] retried %d times - error inserting key %s %s%n",
                     index,
                     session.getRetryTimes(),
                     key,
-                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
-            logger.error(eMsg);
-            error(eMsg);
+                    (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
         if(session.measureStats) {
             session.operations.getAndIncrement();

@@ -34,7 +34,6 @@ import static com.google.common.base.Charsets.UTF_8;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class StressAction extends Thread
 {
     private static Logger logger = LoggerFactory.getLogger(StressAction.class);
@@ -91,8 +90,6 @@ public class StressAction extends Thread
 
         int threadCount = client.getThreads();
         Consumer[] consumers = new Consumer[threadCount];
-
-        output.println("total,interval_op_rate,interval_key_rate,avg_latency,elapsed_time");
 
         int itemsPerThread = client.getKeysPerThread();
         int modulo = client.getNumKeys() % threadCount;
@@ -370,13 +367,10 @@ public class StressAction extends Thread
                 if (stop)
                     break;
 
-                try
-                {
+                try {
                     operations.put(createOperation((i % client.getNumDifferentKeys()) + client.getKeysOffset()));
-                }
-                catch (InterruptedException e)
-                {
-                    logger.error("Producer error",e);
+                } catch (InterruptedException e) {
+                    logger.error("Producer error", e);
                     System.err.println("Producer error - " + e.getMessage());
                     return;
                 }
@@ -423,7 +417,7 @@ public class StressAction extends Thread
 
                         try {
                             operations.take().run(library); // running job
-                        } catch(Throwable e) {
+                        } catch(Exception e) {
                             logger.error("Consumer encountered error in operation", e);
                         }
 

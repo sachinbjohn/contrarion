@@ -197,8 +197,7 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, Collection<IColumn>> columnFamiliesMap = new HashMap<ByteBuffer, Collection<IColumn>>();
             for (ReadCommand command: commands)
             {
-                DecoratedKey dk = StorageService.getPartitioner().decorateKey(command.key);
-                ColumnFamily cf = columnFamilies.get(dk);
+                ColumnFamily cf = columnFamilies.get(StorageService.getPartitioner().decorateKey(command.key));
                 if (cf == null) {
                     columnFamiliesMap.put(command.key, emptyCols);
                     try {
