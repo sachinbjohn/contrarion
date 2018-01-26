@@ -461,7 +461,7 @@ public class ThriftConverter
                //         tss.append(","+oldColumn.earliestValidTime());
                //     }
                // }
-               logger.error("No version found");
+               logger.error("No version found. ChosenTime = {}, Latest = {}, Now = {}, LC = {}", new Object[]{chosenTime, column.earliestValidTime(), LamportClock.now(), LamportClock.getCurrentTime()});
 
                //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
                //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());

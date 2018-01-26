@@ -33,7 +33,7 @@ public class LamportClock {
     /**
      * @return next "version" for this node, version is timestamp + nodeid
      */
-    private static long now() {
+    public static long now() {
         Instant n = Instant.now();
         return (n.getEpochSecond() - initSeconds)*1000000 + n.getNano()/1000;
     }

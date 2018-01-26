@@ -288,7 +288,7 @@ process_exp10() {
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=5   #Timeout is set to 5minutes
+run_time=50   #Timeout is set to 5minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
 do
@@ -297,7 +297,7 @@ do
     write_frac=`echo $allparams | cut -d: -f2`
     keys_per_read=`echo $allparams | cut -d: -f3`
     zipf_c=`echo $allparams | cut -d: -f4`
-    for numT in 32 16 8 4 1 #4 8 12 16 24 32
+    for numT in 16 8 4 1 #4 8 12 16 24 32
     do
 
         echo "Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress

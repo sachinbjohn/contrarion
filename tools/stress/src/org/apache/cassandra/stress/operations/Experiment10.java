@@ -77,7 +77,6 @@ public class Experiment10 extends Operation {
     @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
         //do all random tosses here
-        try {
             while (zipfGen == null) ; // wait until initialization is over
             double target_p_w = session.getWrite_fraction();
             int partitionsToReadFrom = session.getKeys_per_read();
@@ -90,9 +89,6 @@ public class Experiment10 extends Operation {
             } else {
                 read(clientLibrary, partitionsToReadFrom, numPartitions);
             }
-        } catch(Exception ex) {
-            logger.error("Exp10 has error", ex);
-        }
     }
 
     public void read(ClientLibrary clientLibrary, int involvedServers, int totalServers) throws IOException {
@@ -100,7 +96,6 @@ public class Experiment10 extends Operation {
                 ByteBufferUtil.EMPTY_BYTE_BUFFER,
                 false, 1));
 
-        logger.error("R");
         int pId = Stress.randomizer.nextInt(totalServers);
 
         List<ByteBuffer> keys = generateReadTxnKeys(totalServers, involvedServers, 1);
@@ -164,13 +159,11 @@ public class Experiment10 extends Operation {
             session.readlatencies.add(latencyNano / 1000);
             session.numReads.getAndIncrement();
         }
-        logger.error("/R  "+session.measureStats);
     }
 
     public void write(ClientLibrary clientLibrary, int totalServers) throws IOException {
         if (value == null)
             value = generateValue();
-        logger.error("W");
         Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(value).setTimestamp(FBUtilities.timestampMicros());
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
 
@@ -215,7 +208,6 @@ public class Experiment10 extends Operation {
             session.writelatencies.add(latencyNano / 1000);
             session.numWrites.getAndIncrement();
         }
-        logger.error("/W  "+session.measureStats);
     }
 
     private Map<String, List<Mutation>> getColumnMutationMap(Column c) {

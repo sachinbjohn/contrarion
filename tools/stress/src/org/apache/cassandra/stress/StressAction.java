@@ -143,19 +143,16 @@ public class StressAction extends Thread
         boolean before=true,after=false;
         while (!terminate)
         {
-            client.measureStats = true;
-            // if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
-            //     logger.error("Start stats");
-            //     client.measureStats = true;
-            //     before = false;
-            // }
-            // if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
-            //     client.measureStats = false;
-            //     after = true;
-            // }
+            if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+                client.measureStats = true;
+                before = false;
+            }
+            if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
+                client.measureStats = false;
+                after = true;
+            }
             if (stop || (isExp10 && client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000))
             {
-                logger.error("Stopping everything. stop = "+stop);
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -421,14 +418,14 @@ public class StressAction extends Thread
                     ClientLibrary library = client.getClientLibrary();
 
                     for (int i = 0; i < items; i++) {
-                        if (client.getOperation() == Stress.Operations.EXP10)
-                            logger.error("Client op " + i + "/" + items);
-                        if (stop) {
-                            logger.error("Consumer stopping at i=" + i);
+                        if (stop)
                             break;
-                        }
 
-                        operations.take().run(library); // running job
+                        try {
+                            operations.take().run(library); // running job
+                        } catch(Throwable e) {
+                            logger.error("Consumer encountered error in operation", e);
+                        }
 
                     }
                 } else {
@@ -457,7 +454,6 @@ public class StressAction extends Thread
             } catch (Throwable e) {
                 logger.error("Consumer has error", e);
             }
-            logger.error("Consumer thread finished");
         }
 
         public void stopConsume()
