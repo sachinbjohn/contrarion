@@ -5,7 +5,7 @@ import java.net.InetAddress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.time.Instant;
 /**
  * There should only be one LamportClock for each process, so this class is a
  * singleton (all static).
@@ -23,7 +23,7 @@ public class LamportClock {
 
     private static long logicalTime;
     private static Short localId = null;
-
+    private static long initSeconds = Instant.now().getEpochSecond();
     private LamportClock() {
         logicalTime = now();
     }
@@ -34,7 +34,8 @@ public class LamportClock {
      * @return next "version" for this node, version is timestamp + nodeid
      */
     private static long now() {
-        return System.currentTimeMillis();
+        Instant n = Instant.now();
+        return (n.getEpochSecond() - initSeconds)*1000000 + n.getNano()/1000;
     }
 
     public static synchronized long getVersion() {
