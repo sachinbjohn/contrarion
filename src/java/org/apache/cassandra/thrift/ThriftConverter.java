@@ -437,7 +437,7 @@ public class ThriftConverter
 
 
            if (column.earliestValidTime() <= chosenTime) {
-               Set<Long> pendingTransactionIds = findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) column, chosenTime, currentlyVisibleColumn);
+               Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) column, chosenTime, currentlyVisibleColumn);
                return new ChosenColumnResult(thriftifyIColumn(column), pendingTransactionIds);
            } else {
                synchronized (column) {
@@ -445,7 +445,7 @@ public class ThriftConverter
                        for (IColumn oldColumn : column.previousVersions()) {
                            // goes through column by most recent first
                            if (oldColumn.earliestValidTime() <= chosenTime) {
-                               Set<Long> pendingTransactionIds = findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
+                               Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
                                return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
                            }
                        }
