@@ -78,9 +78,6 @@ public class VersionVector {
         }
     }
 
-    public static List<Long> toList() {
-        return LongStream.of(VV).boxed().collect(Collectors.toList());
-    }
 
     public static void updateGSV() {
         int numDCs = GSV.length;

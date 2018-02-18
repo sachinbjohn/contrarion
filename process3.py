@@ -7,25 +7,25 @@ from sets import Set
 
 from collections import defaultdict
 file = sys.argv[1]
-nclients=8
-nthreads=5
+nclients=31
+nthreads=4
 ##  Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
 def mean(x):
-	assert len(x)==nclients
+	assert len(x)==nclients, ("Len = ",len(x))
 	return sum(x)/len(x)
 def lsum(x):
-	assert len(x)==nclients
+	assert len(x)==nclients, ("Len = ",len(x))
 	return sum(x)
 
 
 def filterfn(x):
-	return   x['Key/Read'] == '4' and x['WriteFrac'] == '0.05' and x['Zipf'] == '0.99'
+	return   x['Key/Read'] != '4' and x['WriteFrac'] == '0.05' and x['Zipf'] == '0.99'
 def keyfn(x):
 	return int(x['Threads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
 aggfns=[lsum, mean, mean, mean]
 valcols=('Throughput', 'R50', 'R99', 'Ravg')
 allkeycols=('Threads','Expt','ValSize','Key/Read','WriteFrac','Zipf')
-seriesColNum=[1]
+seriesColNum=[1,3]
 
 assert(len(aggfns) == len(valcols))
 
@@ -48,9 +48,9 @@ def valfn(row):
 def plotFig(data,title,colname):
 	fig,p=plt.subplots()
 	for x,y,l in data:
-		assert len(x)==nthreads
+		assert len(x)==nthreads,("Len x =",str(len(x)))
 		assert len(y)==nthreads
-		c='-o' if l.startswith("Eig") else '-x'
+		c = ('-o' if l.startswith("Eig") else '-x') if not l.startswith("Contr")  else '-*' 
 		p.plot(x, y, c,label=l)
 	plt.xlabel("NumThreads")
 	if(colname == "Throughput"):

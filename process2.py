@@ -7,25 +7,26 @@ from sets import Set
 
 from collections import defaultdict
 file = sys.argv[1]
-nclients=8
-nthreads=5
+nclients=31
+nthreads=4
 ##  Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
 def mean(x):
-	assert len(x)==nclients
+	assert len(x)==nclients,(len(x))
 	return sum(x)/len(x)
 def lsum(x):
-	assert len(x)==nclients
+	assert len(x)==nclients,(len(x))
 	return sum(x)
 
 
 def filterfn(x):
-	return   x['Key/Read'] == '4' and x['WriteFrac'] == '0.05'  #and  x['Zipf'] == '0.99' and x['ValSize'] != '1024'
+	return True# x['Key/Read'] == '4'  and x['ValSize'] != '128' and  x['Zipf'] == '0.99' and x['WriteFrac'] == '0.05'
 def keyfn(x):
 	return int(x['Threads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
-aggfns=[lsum, mean, mean]
-valcols=('Throughput','Ravg', 'R50')
+	
+aggfns=[lsum, mean, mean, mean, mean]
+valcols=('Throughput','Ravg', 'R50', 'R90', 'R99')
 allkeycols=('Threads','Expt','ValSize','Key/Read','WriteFrac','Zipf')
-seriesColNum=[1,5]
+seriesColNum=[1]
 
 assert(len(aggfns) == len(valcols))
 
@@ -46,16 +47,29 @@ def valfn(row):
 
 
 def plotFig(data,title,filesuffix):
+
+	fig_size = plt.rcParams["figure.figsize"]
+	# Prints: [8.0, 6.0]
+	 # fig_size[0] = 20
+	fig_size[1] = 3
 	fig,p=plt.subplots()
 	for x,y,l in data:
-		assert len(x)==nthreads
-		assert len(y)==nthreads
-		c='-o' if l.startswith("Eig") else '-x'
+		assert len(x)==nthreads,(len(x))
+		assert len(y)==nthreads,(len(x))
+		c=('-o' if l.startswith("Eig") else '-x') if not l.startswith("Contr") else '-*'
 		p.plot(x, y, c,label=l)
+	# Get current size
+
+	# fig_size={}
+	
+	
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
 	plt.title("\n".join(wrap(title,60)))
+	fig.tight_layout()
+
+	plt.rcParams["figure.figsize"] = fig_size
 	plt.savefig(file[:-4]+"-"+filesuffix+".png")
 	plt.clf()
 
@@ -86,6 +100,7 @@ for val in range(1, len(valcols)): #do not consider throughput
 	# for s,d in seriesTr.iteritems():
 		# print "{} -> {} {}".format(s, d[0],d[val])
 	ser_val = map(lambda x: (seriesTr[x][0], seriesTr[x][val],x+" "+valcols[val]),sorted(seriesTr.keys()))
+	print ser_val
 	plotFig(ser_val,title,valcols[val])
 
 # for s in seriesNames:

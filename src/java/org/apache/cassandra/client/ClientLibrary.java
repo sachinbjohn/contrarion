@@ -305,7 +305,7 @@ public class ClientLibrary {
             for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
-                // VersionVector.updateClientVV(result.dv); // Cohort DV value is null
+
                 keyToResult.put(key, coscList);
             }
         }
@@ -688,7 +688,7 @@ public class ClientLibrary {
         }
         Cassandra.AsyncClient asyncClient = findAsyncClient(key);
         BlockingQueueCallback<put_call> callback = new BlockingQueueCallback<>();
-        asyncClient.put(key, columnFamily, mutation, consistencyLevel, VersionVector.toList(), callback);
+        asyncClient.put(key, columnFamily, mutation, consistencyLevel, clientContext.DV, callback);
         long lts  = callback.getResponseNoInterruption().getResult();
         clientContext.advanceDV(dcIndex, lts);
     }
