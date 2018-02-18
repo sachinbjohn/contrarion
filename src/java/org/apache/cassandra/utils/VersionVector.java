@@ -46,7 +46,7 @@ public class VersionVector {
                 }
             }
         };
-        StorageService.scheduledTasks.scheduleWithFixedDelay(doGossip, 5, 5, TimeUnit.MILLISECONDS);
+        StorageService.scheduledTasks.scheduleWithFixedDelay(doGossip, 1000, 5, TimeUnit.MILLISECONDS);
     }
 
     // public static long getLocalInGSV() {
@@ -82,12 +82,13 @@ public class VersionVector {
     public static void updateGSV() {
         int numDCs = GSV.length;
         for (int i = 0; i < numDCs; ++i) {
-            long min = allVVs[0][i];
+            long min = VV[i];
             for (int node = 0; node < allVVs.length; ++node) {
-                if (min > allVVs[node][i])
+                if (allVVs[node] != null && min > allVVs[node][i])
                     min = allVVs[node][i];
             }
             GSV[i] = min;
         }
+        logger.trace("Updating GSV to {}", new Object[]{GSV});
     }
 }

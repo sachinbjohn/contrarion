@@ -58,8 +58,7 @@ public class ShortNodeId {
             numDCs = dcIndex;
             LamportClock.setLocalId(getLocalId());
         }
-        if (logger.isTraceEnabled())
-            logger.trace("NodeIDs updated numDC = {}, maxNodes = {}", new Object[]{numDCs, maxServInDC});
+        logger.error("NodeIDs updated numDC = {}, maxNodes = {}", new Object[]{numDCs, maxServInDC});
         VersionVector.init(numDCs, maxServInDC);
     }
 
