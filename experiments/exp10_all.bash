@@ -80,17 +80,20 @@ gather_results() {
     mkdir -p ${exp_output_dir}
     log_dir=${exp_output_dir}/logs/exp${exp_num}
     mkdir -p ${log_dir}
-    for dc in 0; do
+    for dc in $(seq 0 $((num_dcs - 1))); do
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
             rsync -az $server:${root_dir}/cassandra_var/cassandra* ${log_dir} & #separate log directory for cassandra and algo
+            if [[ "$exp_name" == "COPS-SNOW" ]]; then
+                rsync -az $server:${root_dir}/cops.data ${log_dir}/cops_${dc}_${srv_index}.data
+            fi
         done
         wait
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
             client_dir=${exp_output_dir}/client${cli_index}
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
             rsync -az $client:${exp_output_dir}/* ${client_dir} & #shared output dir
-            rsync -az $client:${root_dir}/tools/stress/stress.log ${log_dir}/client${cli_index}.log
+            rsync -az $client:${root_dir}/tools/stress/stress.log ${log_dir}/client_${dc}_${cli_index}.log &
         done
         wait
     done
@@ -292,7 +295,7 @@ process_exp10() {
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers))
-run_time=5   #Timeout is set to 5minutes
+run_time=50   #Timeout is set to 5minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
 do
@@ -310,7 +313,7 @@ do
         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
         ${kill_all_cmd}
         gather_results ${contr_root_dir} contrarion
-        exit
+
         echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
         internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
