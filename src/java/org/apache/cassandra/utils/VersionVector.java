@@ -41,7 +41,8 @@ public class VersionVector {
 
                     Message msg = new VersionGossip(VV).getMessage(MessagingService.version_);
                     for (InetAddress thisDCserver : ShortNodeId.getNonLocalAddressesInThisDC()) {
-                        logger.error("Sending VV {} to {}", new Object[]{VV, thisDCserver});
+                        if(logger.isTraceEnabled())
+                            logger.trace("Sending VV {} to {}", new Object[]{VV, thisDCserver});
                         MessagingService.instance().sendOneWay(msg, thisDCserver);
                     }
                 } catch (IOException ex) {
@@ -59,7 +60,8 @@ public class VersionVector {
     //     GSV[ShortNodeId.getLocalDC()] =  lts;
     // }
     public static void updateVVFromGossip(short nodeid, long[] vv) {
-        logger.error("Recvd VV {} from node {}", new Object[]{vv, nodeid});
+        if(logger.isTraceEnabled())
+            logger.trace("Recvd VV {} from node {}", new Object[]{vv, nodeid});
         allVVs[nodeid] = vv;
     }
     public static void updateVV(byte DC, long ut) {
@@ -93,6 +95,7 @@ public class VersionVector {
             }
             GSV[i] = min;
         }
-        logger.error("Updating GSV to {}", new Object[]{GSV});
+        if(logger.isTraceEnabled())
+          logger.trace("Updating GSV to {}", new Object[]{GSV});
     }
 }

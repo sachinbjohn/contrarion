@@ -83,14 +83,21 @@ public class ShortNodeId {
         return getId(DatabaseDescriptor.getListenAddress());
     }
 
+   static boolean first = true;
     public static Set<InetAddress> getNonLocalAddressesInThisDC() {
         Set<InetAddress> nonLocalAddresses = new HashSet<InetAddress>();
         byte localDC = getLocalDC();
+        if(first)
+            logger.error("I am node {} of DC {} with address {}", new Object[]{getNodeIdWithinDC(getLocalId()), getLocalDC(), DatabaseDescriptor.getListenAddress()});
         for (InetAddress addr : addrToId.keySet()) {
             if (getDC(addr) == localDC && addr != DatabaseDescriptor.getListenAddress()) {
                 nonLocalAddresses.add(addr);
             }
         }
+        if(first)
+            for(InetAddress add: nonLocalAddresses)
+                logger.error("Other nodes in this DC are node = {} dc={} add={}", new Object[]{getNodeIdWithinDC(getId(add)),getDC(add), add});
+        first = false;
         return nonLocalAddresses;
     }
 

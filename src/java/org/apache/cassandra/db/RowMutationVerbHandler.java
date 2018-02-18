@@ -62,7 +62,7 @@ public class RowMutationVerbHandler implements IVerbHandler
                 forwardToLocalNodes(message, forwardBytes);
 
 
-            assert VersionUtil.extractDatacenter(rm.extractTimestamp()) != ShortNodeId.getLocalDC() : "Do not expect replication mutations from the localDC (yet)";
+            assert sourceDC != ShortNodeId.getLocalDC() : "Do not expect replication mutations from the localDC (yet)";
             applyAndRespond(message, id, rm);
 
         }
