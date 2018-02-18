@@ -26,7 +26,7 @@ public class ShortNodeId {
     public static byte numDCs = 0;
     public static int maxServInDC = 0;
     public static void updateShortNodeIds(Map<InetAddress, String[]> addrToDcAndRack) {
-
+        first = true;
         synchronized (addrToId) {
             //Just doing the brain-deadest thing for now
             addrToId.clear();
@@ -90,7 +90,7 @@ public class ShortNodeId {
         if(first)
             logger.error("I am node {} of DC {} with address {}", new Object[]{getNodeIdWithinDC(getLocalId()), getLocalDC(), DatabaseDescriptor.getListenAddress()});
         for (InetAddress addr : addrToId.keySet()) {
-            if (getDC(addr) == localDC && addr != DatabaseDescriptor.getListenAddress()) {
+            if (getDC(addr) == localDC && !addr.equals(DatabaseDescriptor.getListenAddress())) {
                 nonLocalAddresses.add(addr);
             }
         }
