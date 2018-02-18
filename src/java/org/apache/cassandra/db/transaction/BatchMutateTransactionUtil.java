@@ -64,62 +64,7 @@ public class BatchMutateTransactionUtil
     public static List<IMutation> convertToInternalMutations(String keyspace, Map<ByteBuffer, Map<String, List<Mutation>>> mutation_map, ByteBuffer coordinatorKey)
     throws InvalidRequestException
     {
-        //the timestamp and localCommitTime are set when we apply the transaction, so we'll set them to invalid values here
-        long timestamp = Long.MIN_VALUE;
-        long localCommitTime = Long.MIN_VALUE;
-
-        List<IMutation> rowMutations = new ArrayList<IMutation>();
-
-        //convert from thrift mutation_map to internal list of IMutations
-        //code is copied from CassandraServer.batch_mutate_internal - permission checking
-        //Note, permission was checked when the thrift interface received the transaction.
-        for (Map.Entry<ByteBuffer, Map<String, List<Mutation>>> mutationEntry: mutation_map.entrySet()) {
-            ByteBuffer key = mutationEntry.getKey();
-
-            // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
-            // CounterMutation) because it doesn't follow the same code path
-            RowMutation rmStandard = null;
-            RowMutation rmCounter = null;
-
-            Map<String, List<Mutation>> columnFamilyToMutations = mutationEntry.getValue();
-            for (Map.Entry<String, List<Mutation>> columnFamilyMutations : columnFamilyToMutations.entrySet()) {
-                String cfName = columnFamilyMutations.getKey();
-
-                CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
-                ThriftValidation.validateKey(metadata, key);
-
-                RowMutation rm;
-                if (metadata.getDefaultValidator().isCommutative()) {
-                    ThriftValidation.validateCommutativeForWrite(metadata, ConsistencyLevel.ONE);
-                    rmCounter = rmCounter == null ? new RowMutation(keyspace, key) : rmCounter;
-                    rm = rmCounter;
-                } else {
-                    rmStandard = rmStandard == null ? new RowMutation(keyspace, key) : rmStandard;
-                    rm = rmStandard;
-                }
-
-                for (Mutation mutation : columnFamilyMutations.getValue())
-                {
-                    ThriftValidation.validateMutation(metadata, mutation);
-
-                    if (mutation.deletion != null)
-                    {
-                        rm.deleteColumnOrSuperColumn(cfName, mutation.deletion, timestamp, localCommitTime, coordinatorKey);
-                    }
-                    if (mutation.column_or_supercolumn != null)
-                    {
-                        rm.addColumnOrSuperColumn(cfName, mutation.column_or_supercolumn, timestamp, localCommitTime, coordinatorKey);
-                    }
-                }
-            }
-            if (rmStandard != null && !rmStandard.isEmpty())
-                rowMutations.add(rmStandard);
-            if (rmCounter != null && !rmCounter.isEmpty())
-                rowMutations.add(new org.apache.cassandra.db.CounterMutation(rmCounter, ConsistencyLevel.ONE));
-        }
-
-        logger.debug("Mutations are {}", rowMutations);
-        return rowMutations;
+        throw new UnsupportedOperationException();
     }
 
     public static void markTransactionPending(String keyspace, List<IMutation> mutations, long transactionId)

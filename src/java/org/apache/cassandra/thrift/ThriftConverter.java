@@ -47,8 +47,7 @@ public class ThriftConverter
         return ptc_column;
     }
 
-    private static Column thriftifyColumn(org.apache.cassandra.db.Column column)
-    {
+    private static Column thriftifyColumn(org.apache.cassandra.db.Column column) {
         if (column instanceof PendingTransactionColumn) {
             return thriftifyPendingTransactionColumn((PendingTransactionColumn) column);
         } else if (column instanceof org.apache.cassandra.db.DeletedColumn) {
@@ -57,7 +56,17 @@ public class ThriftConverter
 
 
         List<Long> dvList = LongStream.of(column.DV).boxed().collect(Collectors.toList());
-        Column thrift_column = new Column(column.name()).setValue(column.value());
+        Column thrift_column = new Column(column.name()).setValue(column.value()).setTimestamp(column.timestamp());
+        thrift_column.setEarliest_valid_time(column.earliestValidTime());
+        thrift_column.setLatest_valid_time(column.isSetLatestValidTime() ? column.latestValidTime() : LamportClock.getVersion());
+        if (column instanceof ExpiringColumn) {
+            thrift_column.setTtl(((ExpiringColumn) column).getTimeToLive());
+        }
+        ByteBuffer transactionCoordinatorKey = column.transactionCoordinatorKey();
+        if (transactionCoordinatorKey != null) {
+            thrift_column.setTransactionCoordinatorKey(transactionCoordinatorKey);
+        }
+
         thrift_column.setDV(dvList);
         thrift_column.setSourceReplica(column.sourceReplica);
 
@@ -67,8 +76,8 @@ public class ThriftConverter
     private static ColumnOrSuperColumn markFirstRoundResultAsValid(org.apache.cassandra.db.Column currentColumn)
     {
         Column thrift_column = new Column(currentColumn.name());
-        // thrift_column.setFirst_round_was_valid(true);
-        // thrift_column.setLatest_valid_time(currentColumn.earliestValidTime()-1);
+        thrift_column.setFirst_round_was_valid(true);
+        thrift_column.setLatest_valid_time(currentColumn.earliestValidTime()-1);
         return wrapInCOSC(thrift_column);
     }
 

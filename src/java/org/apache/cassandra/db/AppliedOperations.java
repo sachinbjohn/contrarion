@@ -37,5 +37,7 @@ public class AppliedOperations
     public static synchronized void checkDependency(DependencyCheck depCheck, Message depCheckMessage, String id) {
         throw new UnsupportedOperationException();
     }
-
+    public static void sendFetchTxnIdsReply(FetchTxnIds fetchId, Message fetchIdMessage, String id) {
+        throw new UnsupportedOperationException();
+    }
 }

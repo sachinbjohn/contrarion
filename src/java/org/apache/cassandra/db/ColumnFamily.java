@@ -137,10 +137,11 @@ public class ColumnFamily extends AbstractColumnContainer
         return getType() == ColumnFamilyType.Super;
     }
 
-    // public void addColumn(QueryPath path, ByteBuffer value, long timestamp)
-    // {
-    //     addColumn(path, value, timestamp, timestamp, 0, null);
-    // }
+    //SBJ: Backward compatibility for System tables
+    public void addColumn(QueryPath path, ByteBuffer value, long timestamp)
+    {
+        addColumn(path, value, timestamp, timestamp, 0, null);
+    }
     //
     // public void addColumn(QueryPath path, ByteBuffer value, long timestamp, int timeToLive)
     // {

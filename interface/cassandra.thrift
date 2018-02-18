@@ -96,8 +96,16 @@ struct Dep {
 struct Column {
    1: required binary name,
    2: optional binary value,
-   3: optional byte sourceReplica,
-   4: optional VectorClock DV
+   3: optional i64 timestamp,
+   4: optional i32 ttl,
+   5: optional i64 deleted_time,
+   6: optional i64 earliest_valid_time,
+   7: optional i64 latest_valid_time,
+   8: optional binary transactionCoordinatorKey,
+   9: optional bool first_round_was_valid,
+   10: optional byte sourceReplica,
+   11: optional VectorClock DV
+
 }
 
 /** A named list of columns.

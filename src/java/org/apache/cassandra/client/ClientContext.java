@@ -20,6 +20,10 @@ import org.apache.cassandra.utils.LamportClock;
 public class ClientContext {
     ArrayList<Long> DV;
     int xactIdGen;
+    public ClientContext() {
+        //Backward compatitbility reasons; Nothing to initialize
+
+    }
     public ClientContext(int numDCs) {
         DV = new ArrayList<>(numDCs);
         xactIdGen = 0;
