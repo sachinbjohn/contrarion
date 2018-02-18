@@ -688,6 +688,7 @@ public class ClientLibrary {
         }
         Cassandra.AsyncClient asyncClient = findAsyncClient(key);
         BlockingQueueCallback<put_call> callback = new BlockingQueueCallback<>();
+        logger.error("Put key = {}, DV = {}", new Object[]{ByteBufferUtil.string(key), clientContext.DV});
         asyncClient.put(key, columnFamily, mutation, consistencyLevel, clientContext.DV, callback);
         long lts  = callback.getResponseNoInterruption().getResult();
         clientContext.advanceDV(dcIndex, lts);

@@ -26,6 +26,8 @@ public class ClientContext {
     }
     public ClientContext(int numDCs) {
         DV = new ArrayList<>(numDCs);
+        for(int i = 0; i < numDCs; ++i)
+            DV.add(new Long(0));
         xactIdGen = 0;
     }
 
