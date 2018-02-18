@@ -308,15 +308,15 @@ public class AuthenticationRequest implements org.apache.thrift.TBase<Authentica
         case 1: // CREDENTIALS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map41 = iprot.readMapBegin();
-              this.credentials = new HashMap<String,String>(2*_map41.size);
-              for (int _i42 = 0; _i42 < _map41.size; ++_i42)
+              org.apache.thrift.protocol.TMap _map45 = iprot.readMapBegin();
+              this.credentials = new HashMap<String,String>(2*_map45.size);
+              for (int _i46 = 0; _i46 < _map45.size; ++_i46)
               {
-                String _key43; // required
-                String _val44; // required
-                _key43 = iprot.readString();
-                _val44 = iprot.readString();
-                this.credentials.put(_key43, _val44);
+                String _key47; // required
+                String _val48; // required
+                _key47 = iprot.readString();
+                _val48 = iprot.readString();
+                this.credentials.put(_key47, _val48);
               }
               iprot.readMapEnd();
             }
@@ -343,10 +343,10 @@ public class AuthenticationRequest implements org.apache.thrift.TBase<Authentica
       oprot.writeFieldBegin(CREDENTIALS_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.credentials.size()));
-        for (Map.Entry<String, String> _iter45 : this.credentials.entrySet())
+        for (Map.Entry<String, String> _iter49 : this.credentials.entrySet())
         {
-          oprot.writeString(_iter45.getKey());
-          oprot.writeString(_iter45.getValue());
+          oprot.writeString(_iter49.getKey());
+          oprot.writeString(_iter49.getValue());
         }
         oprot.writeMapEnd();
       }

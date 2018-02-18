@@ -383,16 +383,16 @@ public class MultigetCountResult implements org.apache.thrift.TBase<MultigetCoun
         case 1: // VALUE
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map113 = iprot.readMapBegin();
-              this.value = new HashMap<ByteBuffer,CountWithMetadata>(2*_map113.size);
-              for (int _i114 = 0; _i114 < _map113.size; ++_i114)
+              org.apache.thrift.protocol.TMap _map121 = iprot.readMapBegin();
+              this.value = new HashMap<ByteBuffer,CountWithMetadata>(2*_map121.size);
+              for (int _i122 = 0; _i122 < _map121.size; ++_i122)
               {
-                ByteBuffer _key115; // required
-                CountWithMetadata _val116; // required
-                _key115 = iprot.readBinary();
-                _val116 = new CountWithMetadata();
-                _val116.read(iprot);
-                this.value.put(_key115, _val116);
+                ByteBuffer _key123; // required
+                CountWithMetadata _val124; // required
+                _key123 = iprot.readBinary();
+                _val124 = new CountWithMetadata();
+                _val124.read(iprot);
+                this.value.put(_key123, _val124);
               }
               iprot.readMapEnd();
             }
@@ -427,10 +427,10 @@ public class MultigetCountResult implements org.apache.thrift.TBase<MultigetCoun
       oprot.writeFieldBegin(VALUE_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, this.value.size()));
-        for (Map.Entry<ByteBuffer, CountWithMetadata> _iter117 : this.value.entrySet())
+        for (Map.Entry<ByteBuffer, CountWithMetadata> _iter125 : this.value.entrySet())
         {
-          oprot.writeBinary(_iter117.getKey());
-          _iter117.getValue().write(oprot);
+          oprot.writeBinary(_iter125.getKey());
+          _iter125.getValue().write(oprot);
         }
         oprot.writeMapEnd();
       }

@@ -28,12 +28,13 @@ import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.MarshalException;
 import org.apache.cassandra.utils.Allocator;
 import org.apache.cassandra.utils.FBUtilities;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /** TODO: rename */
 public interface IColumn
 {
     public static final int MAX_NAME_LENGTH = FBUtilities.MAX_UNSIGNED_SHORT;
-
+    default public boolean isVisible(long[] GSV) { throw new NotImplementedException(); }
     public boolean isMarkedForDelete();
     public long getMarkedForDeleteAt();
     public long mostRecentLiveChangeAt();

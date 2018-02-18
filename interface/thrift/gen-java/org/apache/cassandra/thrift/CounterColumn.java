@@ -707,15 +707,15 @@ public class CounterColumn implements org.apache.thrift.TBase<CounterColumn, Cou
         case 4: // TIMESTAMP_TO_COORDINATOR_KEY
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map4 = iprot.readMapBegin();
-              this.timestampToCoordinatorKey = new HashMap<Long,ByteBuffer>(2*_map4.size);
-              for (int _i5 = 0; _i5 < _map4.size; ++_i5)
+              org.apache.thrift.protocol.TMap _map8 = iprot.readMapBegin();
+              this.timestampToCoordinatorKey = new HashMap<Long,ByteBuffer>(2*_map8.size);
+              for (int _i9 = 0; _i9 < _map8.size; ++_i9)
               {
-                long _key6; // required
-                ByteBuffer _val7; // required
-                _key6 = iprot.readI64();
-                _val7 = iprot.readBinary();
-                this.timestampToCoordinatorKey.put(_key6, _val7);
+                long _key10; // required
+                ByteBuffer _val11; // required
+                _key10 = iprot.readI64();
+                _val11 = iprot.readBinary();
+                this.timestampToCoordinatorKey.put(_key10, _val11);
               }
               iprot.readMapEnd();
             }
@@ -775,10 +775,10 @@ public class CounterColumn implements org.apache.thrift.TBase<CounterColumn, Cou
         oprot.writeFieldBegin(TIMESTAMP_TO_COORDINATOR_KEY_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.I64, org.apache.thrift.protocol.TType.STRING, this.timestampToCoordinatorKey.size()));
-          for (Map.Entry<Long, ByteBuffer> _iter8 : this.timestampToCoordinatorKey.entrySet())
+          for (Map.Entry<Long, ByteBuffer> _iter12 : this.timestampToCoordinatorKey.entrySet())
           {
-            oprot.writeI64(_iter8.getKey());
-            oprot.writeBinary(_iter8.getValue());
+            oprot.writeI64(_iter12.getKey());
+            oprot.writeBinary(_iter12.getValue());
           }
           oprot.writeMapEnd();
         }

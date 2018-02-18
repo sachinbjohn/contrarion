@@ -377,14 +377,14 @@ public class BatchMutateResult implements org.apache.thrift.TBase<BatchMutateRes
         case 1: // DEPS
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set126 = iprot.readSetBegin();
-              this.deps = new HashSet<Dep>(2*_set126.size);
-              for (int _i127 = 0; _i127 < _set126.size; ++_i127)
+              org.apache.thrift.protocol.TSet _set134 = iprot.readSetBegin();
+              this.deps = new HashSet<Dep>(2*_set134.size);
+              for (int _i135 = 0; _i135 < _set134.size; ++_i135)
               {
-                Dep _elem128; // required
-                _elem128 = new Dep();
-                _elem128.read(iprot);
-                this.deps.add(_elem128);
+                Dep _elem136; // required
+                _elem136 = new Dep();
+                _elem136.read(iprot);
+                this.deps.add(_elem136);
               }
               iprot.readSetEnd();
             }
@@ -419,9 +419,9 @@ public class BatchMutateResult implements org.apache.thrift.TBase<BatchMutateRes
       oprot.writeFieldBegin(DEPS_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRUCT, this.deps.size()));
-        for (Dep _iter129 : this.deps)
+        for (Dep _iter137 : this.deps)
         {
-          _iter129.write(oprot);
+          _iter137.write(oprot);
         }
         oprot.writeSetEnd();
       }

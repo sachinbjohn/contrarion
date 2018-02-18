@@ -24,15 +24,11 @@ import java.security.MessageDigest;
 import java.util.*;
 
 import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.MarshalException;
 import org.apache.cassandra.db.transaction.PendingTransactionColumn;
 import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.apache.cassandra.utils.Allocator;
-import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.cassandra.utils.HeapAllocator;
-import org.apache.cassandra.utils.LamportClock;
+import org.apache.cassandra.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,13 +61,19 @@ public class Column implements IColumn
     NavigableSet<IColumn> previousVersions;
     protected final ByteBuffer transactionCoordinatorKey;
 
+    public long[] DV;
+    public byte sourceReplica;
+
     //protected final String constructionStackTrace;
 
     private final boolean sanityCheck = false;
 
-    Column(ByteBuffer name)
-    {
-        this(name, ByteBufferUtil.EMPTY_BYTE_BUFFER);
+    @Override
+    public boolean isVisible(long[] GSV) {
+        for (int i = 0; i < DV.length; ++i)
+            if (DV[i] > GSV[i])
+                return false;
+        return true;
     }
 
     public Column(ByteBuffer name, ByteBuffer value)
@@ -86,9 +88,12 @@ public class Column implements IColumn
 
     public Column(ByteBuffer name, ByteBuffer value, long timestamp, ByteBuffer transactionCoordinatorKey)
     {
-        this(name, value, timestamp, null, null, null, null, null, transactionCoordinatorKey);
+        this(name, value, timestamp, null, null, null, null, null, transactionCoordinatorKey, (byte)0, null);
     }
 
+    public Column(ByteBuffer name, ByteBuffer value, byte sr, long[] dv) {
+        this(name, value, dv[sr], null, null, dv[sr], null, null, null, sr, dv);
+    }
 
     //sorts things so we see newest first
     protected static class EVTComparator implements Comparator<IColumn>
@@ -106,7 +111,7 @@ public class Column implements IColumn
         }
     }
 
-    public Column(ByteBuffer name, ByteBuffer value, long timestamp, Long lastAccessTime, Long lastAccessTimeOfAPreviousVersion, Long earliestValidTime, Long latestValidTime, NavigableSet<IColumn> previousVersions, ByteBuffer transactionCoordinatorKey)
+    public Column(ByteBuffer name, ByteBuffer value, long timestamp, Long lastAccessTime, Long lastAccessTimeOfAPreviousVersion, Long earliestValidTime, Long latestValidTime, NavigableSet<IColumn> previousVersions, ByteBuffer transactionCoordinatorKey, byte sr, long[] DV)
     {
         assert name != null;
         assert value != null;
@@ -132,6 +137,8 @@ public class Column implements IColumn
         }
         this.transactionCoordinatorKey = transactionCoordinatorKey;
 
+        this.sourceReplica = sr;
+        this.DV = DV;
         // StringWriter stackTrace = new StringWriter();
         // new Throwable().printStackTrace(new PrintWriter(stackTrace));
         // constructionStackTrace = stackTrace.toString();
@@ -277,6 +284,8 @@ public class Column implements IColumn
          * + 4 longs
          * + 1 int and size of each of the previous versions
          * + 1 int + if set (transactionCoordinatorKey length + 1) for transactionCoordinatorKey
+         * + 1 byte for sourceReplica
+         * + 1 byte + if set numDCs longs for DV
         */
         int size = DBConstants.shortSize + name.remaining() + 1 + DBConstants.tsSize + DBConstants.intSize + value.remaining() + 4*DBConstants.longSize + DBConstants.intSize;
         if (previousVersions != null) {
@@ -285,6 +294,8 @@ public class Column implements IColumn
             }
         }
         size += DBConstants.intSize + ((transactionCoordinatorKey == null) ? 0 : DBConstants.intSize + transactionCoordinatorKey.remaining());
+        size += 1;
+        size += 1 + (DV == null ? 0 : DBConstants.longSize * DV.length);
         return size;
     }
 
@@ -574,7 +585,7 @@ prevVersion = null;
     @Override
     public IColumn localCopy(ColumnFamilyStore cfs, Allocator allocator)
     {
-        return new Column(cfs.internOrCopy(name, allocator), allocator.clone(value), timestamp, lastAccessTime, lastAccessTimeOfAPreviousVersion, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey);
+        return new Column(cfs.internOrCopy(name, allocator), allocator.clone(value), timestamp, lastAccessTime, lastAccessTimeOfAPreviousVersion, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey, sourceReplica, DV);
     }
 
     @Override

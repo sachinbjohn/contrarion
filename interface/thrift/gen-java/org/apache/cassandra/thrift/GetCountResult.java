@@ -459,14 +459,14 @@ public class GetCountResult implements org.apache.thrift.TBase<GetCountResult, G
         case 2: // DEPS
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set96 = iprot.readSetBegin();
-              this.deps = new HashSet<Dep>(2*_set96.size);
-              for (int _i97 = 0; _i97 < _set96.size; ++_i97)
+              org.apache.thrift.protocol.TSet _set100 = iprot.readSetBegin();
+              this.deps = new HashSet<Dep>(2*_set100.size);
+              for (int _i101 = 0; _i101 < _set100.size; ++_i101)
               {
-                Dep _elem98; // required
-                _elem98 = new Dep();
-                _elem98.read(iprot);
-                this.deps.add(_elem98);
+                Dep _elem102; // required
+                _elem102 = new Dep();
+                _elem102.read(iprot);
+                this.deps.add(_elem102);
               }
               iprot.readSetEnd();
             }
@@ -504,9 +504,9 @@ public class GetCountResult implements org.apache.thrift.TBase<GetCountResult, G
       oprot.writeFieldBegin(DEPS_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRUCT, this.deps.size()));
-        for (Dep _iter99 : this.deps)
+        for (Dep _iter103 : this.deps)
         {
-          _iter99.write(oprot);
+          _iter103.write(oprot);
         }
         oprot.writeSetEnd();
       }

@@ -67,6 +67,7 @@ const string VERSION = "19.25.0+cops.2.0.3"
  * between nodes in the system.
  */
 typedef i64 LamportTimestamp
+typedef list<LamportTimestamp> VectorClock
 
 /** Dep(endencies) indicate the operations that should appear before a
  *  given value or values in each datacenter.
@@ -95,13 +96,8 @@ struct Dep {
 struct Column {
    1: required binary name,
    2: optional binary value,
-   3: optional i64 timestamp,
-   4: optional i32 ttl,
-   5: optional i64 deleted_time,
-   6: optional i64 earliest_valid_time,
-   7: optional i64 latest_valid_time,
-   8: optional binary transactionCoordinatorKey,
-   9: optional bool first_round_was_valid,
+   3: optional byte sourceReplica,
+   4: optional VectorClock DV
 }
 
 /** A named list of columns.
@@ -533,7 +529,7 @@ struct GetCountResult {
 }
 struct MultigetSliceResult {
     1: map<binary,list<ColumnOrSuperColumn>> value,
-    2: LamportTimestamp lts,
+    2: VectorClock dv,
 }
 struct CountWithMetadata {
     1: i32 count,
@@ -625,7 +621,7 @@ service Cassandra {
                 4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
                 5:required i64 transactionId,
                 6:required list<binary> remoteKeys,
-                99: LamportTimestamp lts)
+                7: VectorClock dvc)
      throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
   MultigetSliceResult rot_cohort(1: required list<binary> keys,
@@ -633,8 +629,15 @@ service Cassandra {
                   3:required SlicePredicate predicate,
                   4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
                   5:required i64 transactionId,
-                  99: LamportTimestamp lts)       //HL: add transaction id into Thrift arguments
+                  6: VectorClock dvc)       //HL: add transaction id into Thrift arguments
     throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
+
+    LamportTimestamp put(1:required binary key,
+                    2:required string column_family,
+                    3:required Mutation mutation,
+                    4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
+                    5: VectorClock dvc)
+       throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
    MultigetSliceResult multiget_slice_by_time(1:required list<binary> keys,
                 2:required ColumnParent column_parent, 

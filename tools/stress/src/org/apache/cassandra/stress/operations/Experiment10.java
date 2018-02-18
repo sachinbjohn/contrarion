@@ -164,12 +164,12 @@ public class Experiment10 extends Operation {
         if (value == null)
             value = generateValue();
         Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(value).setTimestamp(FBUtilities.timestampMicros());
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+
 
         int srvID = Stress.randomizer.nextInt(totalServers);
 
         ByteBuffer key = getZipfGeneratedKey(srvID);
-        record.put(key, getColumnMutationMap(column));
+        Mutation mut = getColumnMutation(column);
 
         long startNano = System.nanoTime();
 
@@ -180,7 +180,7 @@ public class Experiment10 extends Operation {
             if (success)
                 break;
             try {
-                clientLibrary.batch_mutate(record);
+                clientLibrary.put(key, "Standard1", mut);
                 success = true;
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
@@ -207,18 +207,9 @@ public class Experiment10 extends Operation {
         }
     }
 
-    private Map<String, List<Mutation>> getColumnMutationMap(Column c) {
-        List<Mutation> mutations = new ArrayList<Mutation>();
-        Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>();
-
-
+    private Mutation getColumnMutation(Column c) {
         ColumnOrSuperColumn column = new ColumnOrSuperColumn().setColumn(c);
-        mutations.add(new Mutation().setColumn_or_supercolumn(column));
-
-
-        mutationMap.put("Standard1", mutations);
-
-        return mutationMap;
+        return new Mutation().setColumn_or_supercolumn(column);
     }
 
 }

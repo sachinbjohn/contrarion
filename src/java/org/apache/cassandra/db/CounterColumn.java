@@ -55,14 +55,14 @@ public class CounterColumn extends Column
     public CounterColumn(ByteBuffer name, ByteBuffer value, long timestamp,
             Long lastAccessTime, Long previousVersionLastAccessTime, Long earliestValidTime, Long latestValidTime, NavigableSet<IColumn> previousVersions)
     {
-        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, null);
+        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, null, (byte) 0, null );
         this.timestampOfLastDelete = Long.MIN_VALUE;
     }
 
     public CounterColumn(ByteBuffer name, ByteBuffer value, long timestamp, long timestampOfLastDelete,
             Long lastAccessTime, Long previousVersionLastAccessTime, Long earliestValidTime, Long latestValidTime, NavigableSet<IColumn> previousVersions)
     {
-        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, null);
+        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, null, (byte) 0, null );
 
         this.timestampOfLastDelete = timestampOfLastDelete;
     }

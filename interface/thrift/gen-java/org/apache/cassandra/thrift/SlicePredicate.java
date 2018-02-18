@@ -379,13 +379,13 @@ public class SlicePredicate implements org.apache.thrift.TBase<SlicePredicate, S
         case 1: // COLUMN_NAMES
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list13 = iprot.readListBegin();
-              this.column_names = new ArrayList<ByteBuffer>(_list13.size);
-              for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+              org.apache.thrift.protocol.TList _list17 = iprot.readListBegin();
+              this.column_names = new ArrayList<ByteBuffer>(_list17.size);
+              for (int _i18 = 0; _i18 < _list17.size; ++_i18)
               {
-                ByteBuffer _elem15; // required
-                _elem15 = iprot.readBinary();
-                this.column_names.add(_elem15);
+                ByteBuffer _elem19; // required
+                _elem19 = iprot.readBinary();
+                this.column_names.add(_elem19);
               }
               iprot.readListEnd();
             }
@@ -421,9 +421,9 @@ public class SlicePredicate implements org.apache.thrift.TBase<SlicePredicate, S
         oprot.writeFieldBegin(COLUMN_NAMES_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.column_names.size()));
-          for (ByteBuffer _iter16 : this.column_names)
+          for (ByteBuffer _iter20 : this.column_names)
           {
-            oprot.writeBinary(_iter16);
+            oprot.writeBinary(_iter20);
           }
           oprot.writeListEnd();
         }

@@ -100,11 +100,6 @@ public class LamportClock {
         return tmax;
     }
 
-    public static synchronized void setLocalTime(long lts) {
-        if(lts > logicalTime)
-            logicalTime = lts;
-    }
-
     public static void setLocalId(short localId2) {
         localId = localId2;
     }
@@ -131,9 +126,8 @@ public class LamportClock {
 
     }
 
-    public static synchronized long sendTranId() throws Exception {
-        long localTime = ++logicalTime;
-        long tranId = (localTime << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
+    public static long sendTranId(int ts) throws Exception {
+        long tranId = (ts << 16) + parseToLong(InetAddress.getLocalHost().getHostAddress());
         return tranId;
     }
 }

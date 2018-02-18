@@ -40,7 +40,7 @@ public class PendingTransactionColumn extends Column
 
     public PendingTransactionColumn(ByteBuffer name, ByteBuffer value, long timestamp, Long lastAccessTime, Long previousVersionLastAccessTime, Long earliestValidTime, Long latestValidTime, NavigableSet<IColumn> previousVersions, ByteBuffer transactionCoordinatorKey)
     {
-        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey);
+        super(name, value, timestamp, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey, (byte) 0, null );
     }
 
     @Override

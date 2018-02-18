@@ -1425,31 +1425,7 @@ public class StorageProxy implements StorageProxyMBean
      */
     public static void checkDependencies(String keyspace, ByteBuffer locatorKey, long timestamp, Set<Dependency> deps, ICompletable completable, long chosenTime)
     {
-        if (logger.isDebugEnabled())
-            logger.debug("Checking deps for " + completable);
-
-        AppliedOperations.addPendingOp(locatorKey, timestamp);
-
-        //Send out all dep_checks in parallel
-        // use a map to group deps into each endpoint
-        ConcurrentHashMap<InetAddress, ArrayList<Dependency>> GroupedDeps = new ConcurrentHashMap<InetAddress, ArrayList<Dependency>>();
-        for (Dependency dep : deps) {
-            List<InetAddress> localEndpoints = StorageService.instance.getLocalLiveNaturalEndpoints(keyspace, dep.getLocatorKey());
-            assert localEndpoints.size() == 1 : "Assumed for now";
-            InetAddress localEndpoint = localEndpoints.get(0);
-            if (GroupedDeps.get(localEndpoint) != null) {
-                GroupedDeps.get(localEndpoint).add(dep);
-            } else {
-                ArrayList<Dependency> depList = new ArrayList<Dependency>();
-                depList.add(dep);
-                GroupedDeps.put(localEndpoint, depList);
-            }
-        }
-        //HL TODO: as said in previous line, like checkFakeDependencies
-        DepCheckCallback depCheckCallback = new DepCheckCallback(completable, locatorKey, chosenTime, GroupedDeps.size());
-        for (InetAddress ep : GroupedDeps.keySet()) {
-            MessagingService.instance().sendRR(new DependencyCheck(GroupedDeps.get(ep)), ep, depCheckCallback);
-        }
+      throw new UnsupportedOperationException();
         //DepCheckCallback will gather the responses and then complete the blocked action
     }
 }

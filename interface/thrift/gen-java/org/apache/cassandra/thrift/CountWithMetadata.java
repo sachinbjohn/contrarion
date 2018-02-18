@@ -549,14 +549,14 @@ public class CountWithMetadata implements org.apache.thrift.TBase<CountWithMetad
         case 4: // DEPS
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set109 = iprot.readSetBegin();
-              this.deps = new HashSet<Dep>(2*_set109.size);
-              for (int _i110 = 0; _i110 < _set109.size; ++_i110)
+              org.apache.thrift.protocol.TSet _set117 = iprot.readSetBegin();
+              this.deps = new HashSet<Dep>(2*_set117.size);
+              for (int _i118 = 0; _i118 < _set117.size; ++_i118)
               {
-                Dep _elem111; // required
-                _elem111 = new Dep();
-                _elem111.read(iprot);
-                this.deps.add(_elem111);
+                Dep _elem119; // required
+                _elem119 = new Dep();
+                _elem119.read(iprot);
+                this.deps.add(_elem119);
               }
               iprot.readSetEnd();
             }
@@ -592,9 +592,9 @@ public class CountWithMetadata implements org.apache.thrift.TBase<CountWithMetad
       oprot.writeFieldBegin(DEPS_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRUCT, this.deps.size()));
-        for (Dep _iter112 : this.deps)
+        for (Dep _iter120 : this.deps)
         {
-          _iter112.write(oprot);
+          _iter120.write(oprot);
         }
         oprot.writeSetEnd();
       }

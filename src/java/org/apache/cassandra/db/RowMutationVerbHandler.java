@@ -31,6 +31,7 @@ import org.apache.cassandra.service.StorageProxy;
 import org.apache.cassandra.utils.LamportClock;
 import org.apache.cassandra.utils.ShortNodeId;
 import org.apache.cassandra.utils.VersionUtil;
+import org.apache.cassandra.utils.VersionVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,27 +44,27 @@ public class RowMutationVerbHandler implements IVerbHandler
     {
         //HL: When we receive a replicated mutation, record current version on this server used for
         //read by time later if needed
-        long chosenTime = LamportClock.currentVersion();
+        byte sourceDC =  ShortNodeId.getDC(message.getFrom());
+
+
         try
         {
             RowMutation rm = RowMutation.fromBytes(message.getMessageBody(), message.getVersion());
+            long ut = rm.extractTimestamp();
+            VersionVector.updateVV(sourceDC, ut);
             if (logger_.isDebugEnabled())
               logger_.debug("Deserialized " + rm);
+
 
             // Check if there were any forwarding headers in this message
             byte[] forwardBytes = message.getHeader(RowMutation.FORWARD_HEADER);
             if (forwardBytes != null && message.getVersion() >= MessagingService.VERSION_11)
                 forwardToLocalNodes(message, forwardBytes);
 
-            //Check Dependencies
+
             assert VersionUtil.extractDatacenter(rm.extractTimestamp()) != ShortNodeId.getLocalDC() : "Do not expect replication mutations from the localDC (yet)";
-            if (rm.getDependencies().size() > 0) {
-                // If we check dependencies, the final response will call applyAndRespond
-                StorageProxy.checkDependencies(rm.getTable(), rm.key(), rm.extractTimestamp(), rm.getDependencies(), new RowMutationCompletion(message, id, rm), chosenTime);
-            } else {
-                // No deps to check, applyAndRespond immediately
-                applyAndRespond(message, id, rm);
-            }
+            applyAndRespond(message, id, rm);
+
         }
         catch (IOException e)
         {

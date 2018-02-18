@@ -21,7 +21,6 @@ package org.apache.cassandra.thrift;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -29,14 +28,14 @@ import java.nio.charset.CharacterCodingException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.sun.org.apache.bcel.internal.generic.IMUL;
 import org.antlr.runtime.RecognitionException;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.client.ClientContext;
 import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.concurrent.StageManager;
 import org.apache.cassandra.config.*;
@@ -59,11 +58,8 @@ import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.scheduler.IRequestScheduler;
 import org.apache.cassandra.service.*;
 import org.apache.cassandra.thrift.ThriftConverter.ChosenColumnResult;
-import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.cassandra.utils.ColumnOrSuperColumnHelper;
+import org.apache.cassandra.utils.*;
 import org.apache.cassandra.utils.ColumnOrSuperColumnHelper.EvtAndLvt;
-import org.apache.cassandra.utils.LamportClock;
-import org.apache.cassandra.utils.Pair;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,13 +223,13 @@ public class CassandraServer implements Cassandra.Iface
         return new GetSliceResult(result, LamportClock.sendTimestamp());
     }
 
-    private void sendTxnTs(String keyspace, List<ByteBuffer> remoteKeys, long txnid, long lts) {
+    private void sendTxnTs(String keyspace, List<ByteBuffer> remoteKeys, long txnid, long[] tv) {
         for (ByteBuffer key : remoteKeys) {
             List<InetAddress> localEndpoints = StorageService.instance.getLocalLiveNaturalEndpoints(keyspace, key);
             assert localEndpoints.size() == 1 : "Assumed for now";
             InetAddress localEndpoint = localEndpoints.get(0);
             try {
-                Message msg = new SendTxnTS(txnid, lts).getMessage(Gossiper.instance.getVersion(localEndpoint));
+                Message msg = new SendTxnTS(txnid, tv).getMessage(Gossiper.instance.getVersion(localEndpoint));
                 MessagingService.instance().sendOneWay(msg, localEndpoint);
             } catch (IOException ex) {
                 throw new IOError(ex);
@@ -242,20 +238,24 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, long lts)
+    public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
-            long chosenTime = LamportClock.updateLocalTime(lts);
+            VersionVector.updateGSVFromClient(dvc);
+            int localDCid = ShortNodeId.getLocalDC();
+            long localTime = LamportClock.updateLocalTime(dvc.get(localDCid));
+            VersionVector.GSV[localDCid] = localTime;
+            long[] chosenTime = VersionVector.GSV.clone();
 
             if(logger.isTraceEnabled()) {
                 String keyStr = "";
                 for (ByteBuffer key : keys)
                     keyStr += ByteBufferUtil.string(key) + ";";
-                logger.trace("Transaction {} :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{transactionId, keys.size(), keyStr, lts, chosenTime});
+                logger.trace("Transaction {} :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{transactionId, keys.size(), keyStr, localTime, chosenTime});
             }
 
             String keyspace = state().getKeyspace();
-            sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn timestamp to cohorts
+            sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn vector to cohorts
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
@@ -265,12 +265,13 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
             Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
             //pendingTransactions for now is always null -- we don't consider WOT for now
-            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
+            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns);
 
             // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
             //     logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             // }
-            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
+            List<Long> chosenTimeAsList = LongStream.of(chosenTime).boxed().collect(Collectors.toList());
+            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTimeAsList);
             return result;
 
         } catch (Exception ex) {
@@ -280,19 +281,21 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, long  lts)
+    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
             String keyStr = "";
             if (logger.isTraceEnabled()) {
                 for (ByteBuffer key : keys)
                     keyStr += ByteBufferUtil.string(key) + ";";
-                logger.trace("Transaction {} ::  cohort size={}  key={} lts={}", new Object[]{transactionId, keys.size(), keyStr, lts});
+                logger.trace("Transaction {} ::  cohort size={}  key={} lts={}", new Object[]{transactionId, keys.size(), keyStr, dvc});
             }
 
             //Wait until it receives timestamp from coordinator
-            long chosenTime = ROTCohort.getTimestamp(transactionId);
-            long lamport = LamportClock.updateLocalTime(chosenTime);
+            long[] chosenTime = ROTCohort.getTV(transactionId);
+            int localDCid = ShortNodeId.getLocalDC();
+            long lamport = LamportClock.updateLocalTime(chosenTime[localDCid]);
+            VersionVector.updateGSVFromCoordinator(chosenTime);
 
             if (logger.isTraceEnabled()) {
                 logger.trace("Transaction {} ::  cohort chosen time ={}", new Object[]{transactionId, chosenTime});
@@ -304,14 +307,14 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
             //select results for each key that were visible at the chosen_time
             Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-            Set<Long> pendingTransactionIds = new HashSet<Long>(); //SBJ: Dummy
             //pendingTransactions for now is always null -- we don't consider WOT for now
-            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns, pendingTransactionIds);
+            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns);
 
             // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
             //     logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             // }
-            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTime);
+
+            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, null); //SBJ No need to send TV from cohorts
             return result;
 
         } catch (Exception ex) {
@@ -336,7 +339,7 @@ public class CassandraServer implements Cassandra.Iface
     }
 
 
-    private void selectChosenResults(Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily, SlicePredicate predicate, long chosen_time, Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns, Set<Long> pendingTransactionIds)
+    private void selectChosenResults(Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily, SlicePredicate predicate, long[] chosen_time, Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns)
     {
         for(Entry<ByteBuffer, Collection<IColumn>> entry : keyToColumnFamily.entrySet()) {
             ByteBuffer key = entry.getKey();
@@ -346,7 +349,7 @@ public class CassandraServer implements Cassandra.Iface
             for (IColumn column : columns) {
                 ChosenColumnResult ccr = ThriftConverter.selectChosenColumn(column, chosen_time);
                 if (ccr.pendingTransaction) {
-                    pendingTransactionIds.addAll(ccr.transactionIds);
+                    throw new IllegalStateException("Pending transaction");
                 } else {
                     chosenColumns.add(ccr.cosc);
                 }
@@ -365,49 +368,7 @@ public class CassandraServer implements Cassandra.Iface
     SlicePredicate predicate, ConsistencyLevel consistency_level, long chosen_time, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException, TException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("multiget_slice_by_time");
-
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-
-        //do the multiget but dont convert to thrift so we can still access the previous values
-        ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
-        assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
-        Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
-
-        //select results for each key that were visible at the chosen_time
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        Set<Long> pendingTransactionIds = new HashSet<Long>();
-        selectChosenResults(keyToColumnFamily, predicate, chosen_time, keyToChosenColumns, pendingTransactionIds);
-
-        if (pendingTransactionIds.size() > 0) {
-            //There are pending transactions, we need to determine if they've happened yet and then compute the real result
-            try {
-                TransactionProxy.checkTransactions(state().getKeyspace(), pendingTransactionIds, chosen_time);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-            pendingTransactionIds = new HashSet<Long>();
-            selectChosenResults(keyToColumnFamily, predicate, chosen_time, keyToChosenColumns, pendingTransactionIds);
-            assert pendingTransactionIds.size() == 0 : "Should have resolved all pending transaction";
-        }
-
-        if (DatabaseDescriptor.isForcedByTimeReadIndirection() && pendingTransactionIds.size() == 0) {
-            logger.trace("Forcing an indirection on a multiget_slice_by_time.");
-
-            try {
-                TransactionProxy.forceCheckTransaction(state().getKeyspace(), chosen_time);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        if (logger.isTraceEnabled()) {
-            logger.trace("multiget_slice_by_time({}, {}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, chosen_time, lts, keyToChosenColumns});
-        }
-        return new MultigetSliceResult(keyToChosenColumns, LamportClock.sendTimestamp());
+      throw new UnsupportedOperationException();
     }
 
     private Map<ByteBuffer, List<ColumnOrSuperColumn>> multigetSliceInternal(String keyspace, List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level)
@@ -496,107 +457,7 @@ public class CassandraServer implements Cassandra.Iface
     public GetCountResult get_count(ByteBuffer key, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("get_count");
-
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-        Table table = Table.open(state().getKeyspace());
-        ColumnFamilyStore cfs = table.getColumnFamilyStore(column_parent.column_family);
-
-        if (predicate.column_names != null) {
-            GetSliceResult result = get_slice(key, column_parent, predicate, consistency_level, LamportClock.NO_CLOCK_TICK);
-            //we use a ClientContext to simplify determining dependencies
-            //filter out deleted columns, but keep dependencies on them
-            ClientContext countContext = new ClientContext();
-            for (Iterator<ColumnOrSuperColumn> cosc_it = result.value.iterator(); cosc_it.hasNext(); ) {
-                ColumnOrSuperColumn cosc = cosc_it.next();
-                try {
-                    countContext.addDep(key, cosc);
-                } catch (NotFoundException nfe) {
-                    cosc_it.remove();
-                }
-            }
-            return new GetCountResult(result.value.size(), countContext.getDeps(), LamportClock.sendTimestamp());
-        }
-
-        int pageSize;
-        // request by page if this is a large row
-        if (cfs.getMeanColumns() > 0)
-        {
-            int averageColumnSize = (int) (cfs.getMeanRowSize() / cfs.getMeanColumns());
-            pageSize = Math.min(COUNT_PAGE_SIZE,
-                                DatabaseDescriptor.getInMemoryCompactionLimit() / averageColumnSize);
-            pageSize = Math.max(2, pageSize);
-            logger.debug("average row column size is {}; using pageSize of {}", averageColumnSize, pageSize);
-        }
-        else
-        {
-            pageSize = COUNT_PAGE_SIZE;
-        }
-
-        int totalCount = 0;
-        List<ColumnOrSuperColumn> columns;
-
-        if (predicate.slice_range == null)
-        {
-            predicate.slice_range = new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER,
-                                                   ByteBufferUtil.EMPTY_BYTE_BUFFER,
-                                                   false,
-                                                   Integer.MAX_VALUE);
-        }
-
-        //we use a ClientContext to simplify determining dependencies
-        ClientContext countContext = new ClientContext();
-        int requestedCount = predicate.slice_range.count;
-        while (true)
-        {
-            predicate.slice_range.count = Math.min(pageSize, requestedCount);
-            GetSliceResult result = get_slice(key, column_parent, predicate, consistency_level, LamportClock.NO_CLOCK_TICK);
-            if (result.value.isEmpty())
-                break;
-
-            ColumnOrSuperColumn lastColumn = result.value.get(result.value.size() - 1);
-
-            //filter out deleted columns, but keep dependencies on them
-            boolean lastResultDeleted = false;
-            for (Iterator<ColumnOrSuperColumn> cosc_it = result.value.iterator(); cosc_it.hasNext(); ) {
-                ColumnOrSuperColumn cosc = cosc_it.next();
-                try {
-                    countContext.addDep(key, cosc);
-                    lastResultDeleted = false;
-                } catch (NotFoundException nfe) {
-                    cosc_it.remove();
-                    lastResultDeleted = true;
-                }
-            }
-
-            columns = result.value;
-
-            totalCount += columns.size();
-            requestedCount -= columns.size();
-            ByteBuffer lastName =
-                    lastColumn.isSetSuper_column() ? lastColumn.super_column.name :
-                        (lastColumn.isSetColumn() ? lastColumn.column.name :
-                            (lastColumn.isSetCounter_column() ? lastColumn.counter_column.name : lastColumn.counter_super_column.name));
-            if ((requestedCount == 0) || ((columns.size() <= 1) && (lastName.equals(predicate.slice_range.start))))
-            {
-                break;
-            }
-            else
-            {
-                predicate.slice_range.start = lastName;
-                // remove the count for the column that starts the next slice (unless it's a deleted result)
-                if (!lastResultDeleted) {
-                    totalCount--;
-                    requestedCount++;
-                }
-            }
-        }
-
-        if (logger.isTraceEnabled()) {
-            logger.trace("get_count({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.bytesToHex(key), column_parent, predicate, consistency_level, lts, totalCount});
-        }
-        return new GetCountResult(totalCount, countContext.getDeps(), LamportClock.sendTimestamp());
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -658,225 +519,134 @@ public class CassandraServer implements Cassandra.Iface
     public MultigetCountResult multiget_count(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("multiget_count");
-
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-        String keyspace = state().getKeyspace();
-
-        Map<ByteBuffer, CountWithMetadata> results = new HashMap<ByteBuffer, CountWithMetadata>();
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> columnFamiliesMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level);
-
-        for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> cf : columnFamiliesMap.entrySet()) {
-            //excludes deleted columns from the count; calculates dependencies (including deleted columns), evt, and lvt
-            ClientContext countContext = new ClientContext(); //use a clientContext to simplify calculating deps
-            long maxEarliestValidTime = Long.MIN_VALUE;
-            long minLatestValidTime = Long.MAX_VALUE;
-            for (Iterator<ColumnOrSuperColumn> cosc_it = cf.getValue().iterator(); cosc_it.hasNext(); ) {
-                ColumnOrSuperColumn cosc = cosc_it.next();
-                EvtAndLvt evtAndLvt = ColumnOrSuperColumnHelper.extractEvtAndLvt(cosc);
-                maxEarliestValidTime = Math.max(maxEarliestValidTime, evtAndLvt.getEarliestValidTime());
-                minLatestValidTime = Math.min(minLatestValidTime, evtAndLvt.getLatestValidTime());
-                try {
-                    countContext.addDep(cf.getKey(), cosc);
-                } catch (NotFoundException nfe) {
-                    cosc_it.remove();
-                }
-            }
-
-            results.put(cf.getKey(), new CountWithMetadata(cf.getValue().size(), maxEarliestValidTime, minLatestValidTime, countContext.getDeps()));
-        }
-
-        if (logger.isTraceEnabled()) {
-            logger.trace("multiget_count({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, lts, results});
-        }
-        return new MultigetCountResult(results, LamportClock.sendTimestamp());
+       throw new UnsupportedOperationException();
     }
 
     private void internal_insert(ByteBuffer key, ColumnParent column_parent, Column column, ConsistencyLevel consistency_level, Set<Dep> deps, long chosenTime)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.WRITE);
-
-        CFMetaData metadata = ThriftValidation.validateColumnFamily(state().getKeyspace(), column_parent.column_family, false);
-        ThriftValidation.validateKey(metadata, key);
-        ThriftValidation.validateColumnParent(metadata, column_parent);
-        // SuperColumn field is usually optional, but not when we're inserting
-        if (metadata.cfType == ColumnFamilyType.Super && column_parent.super_column == null)
-        {
-            throw new InvalidRequestException("missing mandatory super column name for super CF " + column_parent.column_family);
-        }
-        ThriftValidation.validateColumnNames(metadata, column_parent, Arrays.asList(column.name));
-        ThriftValidation.validateColumnData(metadata, column, column_parent.super_column != null);
-
-        //TODO this thrift-related function will only be called at the accepting datacenter, don't need this check
-        // At the accepting (local) datacenter, the timestamp (version) should
-        // be 0 when sent to us, and we'll set it here.
-        if (column.timestamp == 0) {
-            column.timestamp = LamportClock.getVersion();
-            logger.debug("Setting timestamp to {}", column.timestamp);
-        }
-
-        Set<Dependency> dependencies = new HashSet<Dependency>();
-        for (Dep dep : deps) {
-            dependencies.add(new Dependency(dep));
-        }
-        RowMutation rm = new RowMutation(state().getKeyspace(), key, dependencies);
-        try
-        {
-            rm.add(new QueryPath(column_parent.column_family, column_parent.super_column, column.name), column.value, column.timestamp, column.ttl);
-        }
-        catch (MarshalException e)
-        {
-            throw new InvalidRequestException(e.getMessage());
-        }
-
-        doInsert(consistency_level, Arrays.asList(rm));
+       throw new UnsupportedOperationException();
     }
 
     @Override
     public WriteResult insert(ByteBuffer key, ColumnParent column_parent, Column column, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        //HL: record chosenTime for later ROT use
-        long chosenTime = LamportClock.currentVersion();
+       throw new UnsupportedOperationException();
+    }
 
-        LamportClock.updateTime(lts);
-        logger.debug("insert");
-
-        internal_insert(key, column_parent, column, consistency_level, deps, chosenTime);
-        assert column.timestamp != 0 : "Column timestamp must have been set by now";
-        if (logger.isTraceEnabled()) {
-            logger.trace("insert({}, {}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.bytesToHex(key), column_parent, column, consistency_level, deps, lts, column.timestamp});
+    @Override
+    public long put(ByteBuffer key, String cfName, Mutation mutation, ConsistencyLevel consistency_level, List<Long> dvc) throws InvalidRequestException, UnavailableException, TimedOutException, TException {
+        VersionVector.updateGSVFromClient(dvc);
+        String keyspace = state().getKeyspace();
+        long dvcmax = dvc.get(0);
+        for (int i = 1; i < dvc.size(); ++i) {
+            if (dvc.get(i) > dvcmax)
+                dvcmax = dvc.get(i);
         }
-        return new WriteResult(column.timestamp, LamportClock.sendTimestamp());
+        long ut = LamportClock.updateLocalTimeIncr(dvcmax);
+        long[] DV = VersionVector.GSV.clone();
+        byte dc = ShortNodeId.getLocalDC();
+        DV[dc] = ut;
+        VersionVector.updateVV(dc, ut);
+        state().hasColumnFamilyAccess(cfName, Permission.WRITE);
+
+        CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
+        ThriftValidation.validateKey(metadata, key);
+
+        RowMutation rm = new RowMutation(keyspace, key);
+        ThriftValidation.validateMutation(metadata, mutation);
+        rm.addColumnOrSuperColumn(cfName, mutation.column_or_supercolumn, dc, DV);
+
+        doInsert(consistency_level, Arrays.asList(rm));
+        return LamportClock.getCurrentTime();
+
     }
 
     private void internal_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, long opTimestamp)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        List<String> cfamsSeen = new ArrayList<String>();
-        List<IMutation> rowMutations = new ArrayList<IMutation>();
-        String keyspace = state().getKeyspace();
-
-        Set<Dependency> dependencies = new HashSet<Dependency>(); //SBJ: Dummy
-        //Note, we're assuming here the entire mutation is resident on this node, (all storageProxy calls are local)
-        //the returnDeps are what we return to the client, for them to depend on after this call
-
-        for (Map.Entry<ByteBuffer, Map<String, List<Mutation>>> mutationEntry: mutation_map.entrySet())
-        {
-            ByteBuffer key = mutationEntry.getKey();
-
-            // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
-            // CounterMutation) because it doesn't follow the same code path
-            RowMutation rmStandard = null;
-            RowMutation rmCounter = null;
-
-            Map<String, List<Mutation>> columnFamilyToMutations = mutationEntry.getValue();
-            for (Map.Entry<String, List<Mutation>> columnFamilyMutations : columnFamilyToMutations.entrySet())
-            {
-                String cfName = columnFamilyMutations.getKey();
-
-                // Avoid unneeded authorizations
-                if (!(cfamsSeen.contains(cfName)))
-                {
-                    state().hasColumnFamilyAccess(cfName, Permission.WRITE);
-                    cfamsSeen.add(cfName);
-                }
-
-                CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
-                ThriftValidation.validateKey(metadata, key);
-
-                RowMutation rm;
-                if (metadata.getDefaultValidator().isCommutative())
-                {
-                    ThriftValidation.validateCommutativeForWrite(metadata, consistency_level);
-                    rmCounter = rmCounter == null ? new RowMutation(keyspace, key, dependencies) : rmCounter;
-                    rm = rmCounter;
-                }
-                else
-                {
-                    rmStandard = rmStandard == null ? new RowMutation(keyspace, key, dependencies) : rmStandard;
-                    rm = rmStandard;
-                }
-
-                for (Mutation mutation : columnFamilyMutations.getValue())
-                {
-                    // try {
-                    //     logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} now = {} logicalTime = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp, System.currentTimeMillis(), LamportClock.getCurrentTime()});
-                    // }catch (Exception ex) {}
-                    ThriftValidation.validateMutation(metadata, mutation);
-
-                    if (mutation.deletion != null)
-                    {
-                        rm.deleteColumnOrSuperColumn(cfName, mutation.deletion, opTimestamp, opTimestamp);
-                    }
-                    if (mutation.column_or_supercolumn != null)
-                    {
-                        rm.addColumnOrSuperColumn(cfName, mutation.column_or_supercolumn, opTimestamp, opTimestamp);
-                    }
-                }
-            }
-            if (rmStandard != null && !rmStandard.isEmpty())
-                rowMutations.add(rmStandard);
-            if (rmCounter != null && !rmCounter.isEmpty())
-                rowMutations.add(new org.apache.cassandra.db.CounterMutation(rmCounter, consistency_level));
-        }
-
-        doInsert(consistency_level, rowMutations);
+        // List<String> cfamsSeen = new ArrayList<String>();
+        // List<IMutation> rowMutations = new ArrayList<IMutation>();
+        // String keyspace = state().getKeyspace();
+        //
+        // Set<Dependency> dependencies = new HashSet<Dependency>(); //SBJ: Dummy
+        // //Note, we're assuming here the entire mutation is resident on this node, (all storageProxy calls are local)
+        // //the returnDeps are what we return to the client, for them to depend on after this call
+        //
+        // for (Map.Entry<ByteBuffer, Map<String, List<Mutation>>> mutationEntry: mutation_map.entrySet())
+        // {
+        //     ByteBuffer key = mutationEntry.getKey();
+        //
+        //     // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
+        //     // CounterMutation) because it doesn't follow the same code path
+        //     RowMutation rmStandard = null;
+        //     RowMutation rmCounter = null;
+        //
+        //     Map<String, List<Mutation>> columnFamilyToMutations = mutationEntry.getValue();
+        //     for (Map.Entry<String, List<Mutation>> columnFamilyMutations : columnFamilyToMutations.entrySet())
+        //     {
+        //         String cfName = columnFamilyMutations.getKey();
+        //
+        //         // Avoid unneeded authorizations
+        //         if (!(cfamsSeen.contains(cfName)))
+        //         {
+        //             state().hasColumnFamilyAccess(cfName, Permission.WRITE);
+        //             cfamsSeen.add(cfName);
+        //         }
+        //
+        //         CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
+        //         ThriftValidation.validateKey(metadata, key);
+        //
+        //         RowMutation rm;
+        //         if (metadata.getDefaultValidator().isCommutative())
+        //         {
+        //             ThriftValidation.validateCommutativeForWrite(metadata, consistency_level);
+        //             rmCounter = rmCounter == null ? new RowMutation(keyspace, key, dependencies) : rmCounter;
+        //             rm = rmCounter;
+        //         }
+        //         else
+        //         {
+        //             rmStandard = rmStandard == null ? new RowMutation(keyspace, key, dependencies) : rmStandard;
+        //             rm = rmStandard;
+        //         }
+        //
+        //         for (Mutation mutation : columnFamilyMutations.getValue())
+        //         {
+        //             // try {
+        //             //     logger.error("Batch_Mutate : key={}, mutation={} opTimestamp = {} now = {} logicalTime = {} ", new Object[]{ByteBufferUtil.string(key), mutation, opTimestamp, System.currentTimeMillis(), LamportClock.getCurrentTime()});
+        //             // }catch (Exception ex) {}
+        //             ThriftValidation.validateMutation(metadata, mutation);
+        //
+        //             if (mutation.deletion != null)
+        //             {
+        //                 rm.deleteColumnOrSuperColumn(cfName, mutation.deletion, opTimestamp, opTimestamp);
+        //             }
+        //             if (mutation.column_or_supercolumn != null)
+        //             {
+        //                 rm.addColumnOrSuperColumn(cfName, mutation.column_or_supercolumn, opTimestamp, opTimestamp);
+        //             }
+        //         }
+        //     }
+        //     if (rmStandard != null && !rmStandard.isEmpty())
+        //         rowMutations.add(rmStandard);
+        //     if (rmCounter != null && !rmCounter.isEmpty())
+        //         rowMutations.add(new org.apache.cassandra.db.CounterMutation(rmCounter, consistency_level));
+        // }
+        //
+        // doInsert(consistency_level, rowMutations);
     }
 
     @Override
     public BatchMutateResult batch_mutate(Map<ByteBuffer, Map<String, List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
             throws InvalidRequestException, UnavailableException, TimedOutException {
-        try {
-
-            if(logger.isTraceEnabled()) {
-                logger.trace("Insert " + ByteBufferUtil.string(mutation_map.keySet().iterator().next()));
-            }
-
-            long chosenTime = LamportClock.updateLocalTimeIncr(lts);
-            internal_batch_mutate(mutation_map, consistency_level, chosenTime);
-            return new BatchMutateResult(deps, LamportClock.getCurrentTime());
-
-        } catch (Exception ex) {
-            logger.error("batch_mutate has exception", ex);
-            throw new InvalidRequestException(ex.getLocalizedMessage());
-        }
+       throw new UnsupportedOperationException();
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        state().hasColumnFamilyAccess(column_path.column_family, Permission.WRITE);
-
-        CFMetaData metadata = ThriftValidation.validateColumnFamily(state().getKeyspace(), column_path.column_family, isCommutativeOp);
-        ThriftValidation.validateKey(metadata, key);
-        ThriftValidation.validateColumnPathOrParent(metadata, column_path);
-        if (isCommutativeOp)
-            ThriftValidation.validateCommutativeForWrite(metadata, consistency_level);
-
-        // At the accepting (local) datacenter, the timestamp (version) should
-        // be 0 when sent to us, and we'll set it here.
-        if (timestamp == 0) {
-            timestamp = LamportClock.getVersion();
-            logger.debug("Setting timestamp to {}", timestamp);
-        }
-
-        Set<Dependency> dependencies = new HashSet<Dependency>();
-        for (Dep dep : deps) {
-            dependencies.add(new Dependency(dep));
-        }
-
-        RowMutation rm = new RowMutation(state().getKeyspace(), key, dependencies);
-        rm.delete(new QueryPath(column_path), timestamp);
-
-        if (isCommutativeOp)
-            doInsert(consistency_level, Arrays.asList(new CounterMutation(rm, consistency_level)));
-        else
-            doInsert(consistency_level, Arrays.asList(rm));
-
-        return timestamp;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -1462,80 +1232,14 @@ public class CassandraServer implements Cassandra.Iface
     public WriteResult add(ByteBuffer key, ColumnParent column_parent, CounterColumn column, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
             throws InvalidRequestException, UnavailableException, TimedOutException, TException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("add");
-
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.WRITE);
-        String keyspace = state().getKeyspace();
-
-        CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, column_parent.column_family, true);
-        ThriftValidation.validateKey(metadata, key);
-        ThriftValidation.validateCommutativeForWrite(metadata, consistency_level);
-        ThriftValidation.validateColumnParent(metadata, column_parent);
-        // SuperColumn field is usually optional, but not when we're adding
-        if (metadata.cfType == ColumnFamilyType.Super && column_parent.super_column == null)
-        {
-            throw new InvalidRequestException("missing mandatory super column name for super CF " + column_parent.column_family);
-        }
-        ThriftValidation.validateColumnNames(metadata, column_parent, Arrays.asList(column.name));
-
-        Set<Dependency> dependencies = new HashSet<Dependency>();
-        for (Dep dep : deps) {
-            dependencies.add(new Dependency(dep));
-        }
-
-        //TODO: Make this faster and more elegant
-        //add operations also need a dependency on the previous value for this datacenter
-        try {
-            ColumnOrSuperColumn cosc = this.internal_get(key, new ColumnPath(column_parent.column_family).setSuper_column(column_parent.super_column).setColumn(column.name), ConsistencyLevel.ONE);
-            if (cosc.isSetColumn()) {
-                //WL TODO: Maybe allow looser use of countercolumn and then add a dep on the delete here
-                //note, if the deleted time was set, then the countercolumn was deleted.  we don't need to depend
-                //on that delete because clients have to wait until it reaches all nodes before resurrecting it
-                assert cosc.column.isSetDeleted_time();
-            } else {
-                ClientContext tmpContext = new ClientContext();
-                tmpContext.addDep(key, cosc);
-                if (tmpContext.getDeps().size() > 0) {
-                    Dependency newDep = new Dependency(tmpContext.getDeps().iterator().next());
-                    dependencies.add(newDep);
-                    logger.debug("Adding a dependency on the previous value from this dc: " + newDep);
-                }
-            }
-        } catch (NotFoundException e1) {
-            //this is fine, it's the first add for this datacenter, no dep needed
-        }
-
-        RowMutation rm = new RowMutation(keyspace, key, dependencies);
-        long timestamp = LamportClock.getVersion();
-        try
-        {
-            rm.addCounter(new QueryPath(column_parent.column_family, column_parent.super_column, column.name), column.value, timestamp, timestamp, null);
-        }
-        catch (MarshalException e)
-        {
-            throw new InvalidRequestException(e.getMessage());
-        }
-        doInsert(consistency_level, Arrays.asList(new CounterMutation(rm, consistency_level)));
-
-        if (logger.isTraceEnabled()) {
-            logger.trace("add({}, {}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.bytesToHex(key), column_parent, column, consistency_level, deps, lts, timestamp});
-        }
-        return new WriteResult(timestamp, LamportClock.sendTimestamp());
+       throw new UnsupportedOperationException();
     }
 
     @Override
     public WriteResult remove_counter(ByteBuffer key, ColumnPath path, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
             throws InvalidRequestException, UnavailableException, TimedOutException, TException
     {
-        logger.debug("remove_counter");
-
-        long remove_timestamp = internal_remove(key, path, LamportClock.getVersion(), consistency_level, deps, true);
-        assert remove_timestamp > 0;
-        if (logger.isTraceEnabled()) {
-            logger.trace("remove_counter({}, {}, {}, {}, {}) = {}", new Object[]{key, path, consistency_level, deps, lts, remove_timestamp});
-        }
-        return new WriteResult(remove_timestamp, LamportClock.sendTimestamp());
+        throw new UnsupportedOperationException();
     }
 
     private static String uncompress(ByteBuffer query, Compression compression) throws InvalidRequestException

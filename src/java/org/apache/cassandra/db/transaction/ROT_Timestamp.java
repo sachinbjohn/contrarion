@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class ROT_Timestamp {
-    long lts;
+    long[] tv;
     SimpleCondition cv;
     ROT_Timestamp() {
         cv = new SimpleCondition();

@@ -2,6 +2,8 @@ package org.apache.cassandra.thrift;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.context.CounterContext;
@@ -36,14 +38,7 @@ public class ThriftConverter
 
     private static Column thriftifyDeletedColumn(org.apache.cassandra.db.DeletedColumn column)
     {
-        Column deleted_column = new Column(column.name()).setDeleted_time(column.getMarkedForDeleteAt());
-        deleted_column.setEarliest_valid_time(column.earliestValidTime());
-        deleted_column.setLatest_valid_time(column.isSetLatestValidTime() ? column.latestValidTime() : LamportClock.getVersion());
-        ByteBuffer transactionCoordinatorKey = column.transactionCoordinatorKey();
-        if (transactionCoordinatorKey != null) {
-            deleted_column.setTransactionCoordinatorKey(transactionCoordinatorKey);
-        }
-        return deleted_column;
+        throw new UnsupportedOperationException();
     }
 
     private static Column thriftifyPendingTransactionColumn(PendingTransactionColumn column)
@@ -60,24 +55,20 @@ public class ThriftConverter
             return thriftifyDeletedColumn((DeletedColumn) column);
         }
 
-        Column thrift_column = new Column(column.name()).setValue(column.value()).setTimestamp(column.timestamp());
-        thrift_column.setEarliest_valid_time(column.earliestValidTime());
-        thrift_column.setLatest_valid_time(column.isSetLatestValidTime() ? column.latestValidTime() : LamportClock.getVersion());
-        if (column instanceof ExpiringColumn) {
-            thrift_column.setTtl(((ExpiringColumn) column).getTimeToLive());
-        }
-        ByteBuffer transactionCoordinatorKey = column.transactionCoordinatorKey();
-        if (transactionCoordinatorKey != null) {
-            thrift_column.setTransactionCoordinatorKey(transactionCoordinatorKey);
-        }
+
+        List<Long> dvList = LongStream.of(column.DV).boxed().collect(Collectors.toList());
+        Column thrift_column = new Column(column.name()).setValue(column.value());
+        thrift_column.setDV(dvList);
+        thrift_column.setSourceReplica(column.sourceReplica);
+
         return thrift_column;
     }
 
     private static ColumnOrSuperColumn markFirstRoundResultAsValid(org.apache.cassandra.db.Column currentColumn)
     {
         Column thrift_column = new Column(currentColumn.name());
-        thrift_column.setFirst_round_was_valid(true);
-        thrift_column.setLatest_valid_time(currentColumn.earliestValidTime()-1);
+        // thrift_column.setFirst_round_was_valid(true);
+        // thrift_column.setLatest_valid_time(currentColumn.earliestValidTime()-1);
         return wrapInCOSC(thrift_column);
     }
 
@@ -163,30 +154,7 @@ public class ThriftConverter
 
     public static List<ColumnOrSuperColumn> thriftifyColumnFamily(ColumnFamily cf, boolean subcolumnsOnly, boolean reverseOrder)
     {
-        if (cf == null || cf.isEmpty()) {
-            if (cf != null && cf.isMarkedForDelete()) {
-                return Collections.singletonList(wrapInCOSC(new Column(ByteBufferUtil.bytes("ColumnFamily")).setDeleted_time(cf.getMarkedForDeleteAt())));
-            }
-            return EMPTY_COLUMNS;
-        } else if (subcolumnsOnly){
-            IColumn column = cf.iterator().next();
-            Collection<IColumn> subcolumns = column.getSubColumns();
-            if (subcolumns == null || subcolumns.isEmpty()) {
-                if (column.isMarkedForDelete()) {
-                    return Collections.singletonList(wrapInCOSC(new Column(column.name()).setDeleted_time(column.getMarkedForDeleteAt())));
-                } else {
-                    return EMPTY_COLUMNS;
-                }
-            }
-            else {
-                return thriftifyIColumns(subcolumns, reverseOrder);
-            }
-        } else if (cf.isSuper()){
-            boolean isCounterCF = cf.metadata().getDefaultValidator().isCommutative();
-            return thriftifySuperColumns(cf.getSortedColumns(), reverseOrder, isCounterCF);
-        } else {
-            return thriftifyIColumns(cf.getSortedColumns(), reverseOrder);
-        }
+        throw new UnsupportedOperationException();
     }
 
     public static List<ColumnOrSuperColumn> thriftifyColumnFamilyAtTime(ColumnFamily cf, boolean subcolumnsOnly, boolean reverseOrder, long chosenTime)
@@ -289,92 +257,92 @@ public class ThriftConverter
      * @param currentlyVisibleColumn This is not necessary the chosen column, it contains the list of previousVersions
      * @return Relevant pending transactionIds, or null if none
      */
-    private static Set<Long> findAndUpdatePendingTransactions(org.apache.cassandra.db.Column chosenColumn, long chosenTime, org.apache.cassandra.db.Column currentlyVisibleColumn)
-    {
-        if (!(chosenColumn instanceof PendingTransactionColumn) &&
-                (!chosenColumn.isSetLatestValidTime() || chosenTime <= chosenColumn.latestValidTime())) {
-            //if the chosenColumn isn't a PTC and EVT < chosen < LVT then no pending transactions
-            assert chosenColumn.earliestValidTime() <= chosenTime;
-            return null;
-        } else {
-            Set<Long> pendingTransactionIds = new HashSet<Long>();
-            //lock for use of previousVersions
-            synchronized (currentlyVisibleColumn) {
-                for (IColumn oldColumn : currentlyVisibleColumn.previousVersions()) {
-                    if (oldColumn.earliestValidTime() > chosenTime) {
-                        continue;
-                    } else {
-                        if (oldColumn instanceof PendingTransactionColumn) {
-                            long transactionId = ((PendingTransactionColumn) oldColumn).getTransactionId();
-                            CommitOrNotYetTime checkResult = BatchMutateTransactionUtil.findCheckedTransactionResult(transactionId);
-                            if (checkResult == null) {
-                                pendingTransactionIds.add(transactionId);
-                            } else {
-                                applyCheckTransactionUpdate(currentlyVisibleColumn, transactionId, checkResult);
-                            }
-                        }
-                    }
-                }
-            }
-            return pendingTransactionIds.size() == 0 ? null : pendingTransactionIds;
-        }
-    }
+    // private static Set<Long> findAndUpdatePendingTransactions(org.apache.cassandra.db.Column chosenColumn, long chosenTime, org.apache.cassandra.db.Column currentlyVisibleColumn)
+    // {
+    //     if (!(chosenColumn instanceof PendingTransactionColumn) &&
+    //             (!chosenColumn.isSetLatestValidTime() || chosenTime <= chosenColumn.latestValidTime())) {
+    //         //if the chosenColumn isn't a PTC and EVT < chosen < LVT then no pending transactions
+    //         assert chosenColumn.earliestValidTime() <= chosenTime;
+    //         return null;
+    //     } else {
+    //         Set<Long> pendingTransactionIds = new HashSet<Long>();
+    //         //lock for use of previousVersions
+    //         synchronized (currentlyVisibleColumn) {
+    //             for (IColumn oldColumn : currentlyVisibleColumn.previousVersions()) {
+    //                 if (oldColumn.earliestValidTime() > chosenTime) {
+    //                     continue;
+    //                 } else {
+    //                     if (oldColumn instanceof PendingTransactionColumn) {
+    //                         long transactionId = ((PendingTransactionColumn) oldColumn).getTransactionId();
+    //                         CommitOrNotYetTime checkResult = BatchMutateTransactionUtil.findCheckedTransactionResult(transactionId);
+    //                         if (checkResult == null) {
+    //                             pendingTransactionIds.add(transactionId);
+    //                         } else {
+    //                             applyCheckTransactionUpdate(currentlyVisibleColumn, transactionId, checkResult);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         return pendingTransactionIds.size() == 0 ? null : pendingTransactionIds;
+    //     }
+    // }
 
     //Assumes the lock on currentlyVisibleColumn is already held, so we can update it's previousVersions
-    private static void applyCheckTransactionUpdate(org.apache.cassandra.db.Column currentlyVisibleColumn, long transactionId, CommitOrNotYetTime checkResult)
-    {
-        long newEarliestValidTime = checkResult.commitTime != null ? checkResult.commitTime : checkResult.notYetCommittedTime;
-
-        //To simplify this code I'll temporarily add the current versions to previousVersions to get all versions
-        //but it must be removed before the function returns
-        NavigableSet<IColumn> allVersions = currentlyVisibleColumn.previousVersions();
-        allVersions.add(currentlyVisibleColumn);
-
-        //first pass, find the update PTC and determine the minimumPendingTransactionTIme
-        PendingTransactionColumn updatedColumn = null;
-        Long minPendingTransactionTime = Long.MAX_VALUE;
-        for (IColumn column : allVersions.descendingSet()) {
-            if (column instanceof PendingTransactionColumn) {
-                if (((PendingTransactionColumn) column).getTransactionId() == transactionId) {
-                    updatedColumn = (PendingTransactionColumn) column;
-                    if (checkResult.commitTime == null) {
-                        minPendingTransactionTime = Math.min(checkResult.notYetCommittedTime, minPendingTransactionTime);
-                    }
-                } else {
-                    minPendingTransactionTime = Math.min(column.earliestValidTime(), minPendingTransactionTime);
-                }
-            }
-        }
-        //TODO just return if updatedColumn is null
-        assert updatedColumn != null : "This is actually fine, but don't expect this initially";
-
-        //only do the update if we're actually moving the evt forward
-        if (updatedColumn != null && newEarliestValidTime > updatedColumn.earliestValidTime()) {
-
-            //remove the updatedColumn and reinsert it with its new EVT
-            boolean removed = allVersions.remove(updatedColumn);
-            assert removed == true;
-            updatedColumn.setEarliestValidTime(newEarliestValidTime);
-            allVersions.add(updatedColumn);
-
-            //second pass, update all LVTs
-            Long previousEVT = null;
-            for (IColumn column : allVersions) {
-                if (minPendingTransactionTime == Long.MAX_VALUE) {
-                    column.setLatestValidTime(previousEVT);
-                } else if (minPendingTransactionTime <= column.earliestValidTime()) {
-                    column.setLatestValidTime(column.earliestValidTime());
-                } else {
-                    assert minPendingTransactionTime > column.earliestValidTime();
-                    column.setLatestValidTime(Math.min(minPendingTransactionTime, previousEVT));
-                }
-                previousEVT = column.earliestValidTime();
-            }
-        }
-
-        //remove the visible version from previousVersion before returning
-        allVersions.remove(currentlyVisibleColumn);
-    }
+    // private static void applyCheckTransactionUpdate(org.apache.cassandra.db.Column currentlyVisibleColumn, long transactionId, CommitOrNotYetTime checkResult)
+    // {
+    //     long newEarliestValidTime = checkResult.commitTime != null ? checkResult.commitTime : checkResult.notYetCommittedTime;
+    //
+    //     //To simplify this code I'll temporarily add the current versions to previousVersions to get all versions
+    //     //but it must be removed before the function returns
+    //     NavigableSet<IColumn> allVersions = currentlyVisibleColumn.previousVersions();
+    //     allVersions.add(currentlyVisibleColumn);
+    //
+    //     //first pass, find the update PTC and determine the minimumPendingTransactionTIme
+    //     PendingTransactionColumn updatedColumn = null;
+    //     Long minPendingTransactionTime = Long.MAX_VALUE;
+    //     for (IColumn column : allVersions.descendingSet()) {
+    //         if (column instanceof PendingTransactionColumn) {
+    //             if (((PendingTransactionColumn) column).getTransactionId() == transactionId) {
+    //                 updatedColumn = (PendingTransactionColumn) column;
+    //                 if (checkResult.commitTime == null) {
+    //                     minPendingTransactionTime = Math.min(checkResult.notYetCommittedTime, minPendingTransactionTime);
+    //                 }
+    //             } else {
+    //                 minPendingTransactionTime = Math.min(column.earliestValidTime(), minPendingTransactionTime);
+    //             }
+    //         }
+    //     }
+    //     //TODO just return if updatedColumn is null
+    //     assert updatedColumn != null : "This is actually fine, but don't expect this initially";
+    //
+    //     //only do the update if we're actually moving the evt forward
+    //     if (updatedColumn != null && newEarliestValidTime > updatedColumn.earliestValidTime()) {
+    //
+    //         //remove the updatedColumn and reinsert it with its new EVT
+    //         boolean removed = allVersions.remove(updatedColumn);
+    //         assert removed == true;
+    //         updatedColumn.setEarliestValidTime(newEarliestValidTime);
+    //         allVersions.add(updatedColumn);
+    //
+    //         //second pass, update all LVTs
+    //         Long previousEVT = null;
+    //         for (IColumn column : allVersions) {
+    //             if (minPendingTransactionTime == Long.MAX_VALUE) {
+    //                 column.setLatestValidTime(previousEVT);
+    //             } else if (minPendingTransactionTime <= column.earliestValidTime()) {
+    //                 column.setLatestValidTime(column.earliestValidTime());
+    //             } else {
+    //                 assert minPendingTransactionTime > column.earliestValidTime();
+    //                 column.setLatestValidTime(Math.min(minPendingTransactionTime, previousEVT));
+    //             }
+    //             previousEVT = column.earliestValidTime();
+    //         }
+    //     }
+    //
+    //     //remove the visible version from previousVersion before returning
+    //     allVersions.remove(currentlyVisibleColumn);
+    // }
 
     public static class ChosenColumnResult
     {
@@ -401,7 +369,7 @@ public class ThriftConverter
     * @param chosenTime
     * @return thriftified version of the column valid at the chosenTime
     */
-   public static ChosenColumnResult selectChosenColumn(IColumn column, long chosenTime)
+   public static ChosenColumnResult selectChosenColumn(IColumn column, long[] chosenTime)
    {
        if (column instanceof org.apache.cassandra.db.SuperColumn) {
            List<Column> chosenSubcolumns = new ArrayList<Column>();
@@ -418,7 +386,7 @@ public class ThriftConverter
            assert column instanceof org.apache.cassandra.db.Column;
            org.apache.cassandra.db.Column currentlyVisibleColumn = (org.apache.cassandra.db.Column) column;
 
-           assert chosenTime < LamportClock.getVersion() : "Client can't chose a logical time in the future";
+           //assert chosenTime < LamportClock.getVersion() : "Client can't chose a logical time in the future";
 
            if (logger.isTraceEnabled()) {
                if (column.previousVersions() != null) {
@@ -436,7 +404,7 @@ public class ThriftConverter
            }
 
 
-           if (column.earliestValidTime() <= chosenTime) {
+           if (column.isVisible(chosenTime)) {
                Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) column, chosenTime, currentlyVisibleColumn);
                return new ChosenColumnResult(thriftifyIColumn(column), pendingTransactionIds);
            } else {
@@ -444,7 +412,7 @@ public class ThriftConverter
                    if (column.previousVersions() != null) {
                        for (IColumn oldColumn : column.previousVersions()) {
                            // goes through column by most recent first
-                           if (oldColumn.earliestValidTime() <= chosenTime) {
+                           if (oldColumn.isVisible(chosenTime)) {
                                Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
                                return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
                            }

@@ -1931,14 +1931,14 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         case 13: // COLUMN_METADATA
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list51 = iprot.readListBegin();
-              this.column_metadata = new ArrayList<ColumnDef>(_list51.size);
-              for (int _i52 = 0; _i52 < _list51.size; ++_i52)
+              org.apache.thrift.protocol.TList _list55 = iprot.readListBegin();
+              this.column_metadata = new ArrayList<ColumnDef>(_list55.size);
+              for (int _i56 = 0; _i56 < _list55.size; ++_i56)
               {
-                ColumnDef _elem53; // required
-                _elem53 = new ColumnDef();
-                _elem53.read(iprot);
-                this.column_metadata.add(_elem53);
+                ColumnDef _elem57; // required
+                _elem57 = new ColumnDef();
+                _elem57.read(iprot);
+                this.column_metadata.add(_elem57);
               }
               iprot.readListEnd();
             }
@@ -2025,15 +2025,15 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         case 30: // COMPACTION_STRATEGY_OPTIONS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map54 = iprot.readMapBegin();
-              this.compaction_strategy_options = new HashMap<String,String>(2*_map54.size);
-              for (int _i55 = 0; _i55 < _map54.size; ++_i55)
+              org.apache.thrift.protocol.TMap _map58 = iprot.readMapBegin();
+              this.compaction_strategy_options = new HashMap<String,String>(2*_map58.size);
+              for (int _i59 = 0; _i59 < _map58.size; ++_i59)
               {
-                String _key56; // required
-                String _val57; // required
-                _key56 = iprot.readString();
-                _val57 = iprot.readString();
-                this.compaction_strategy_options.put(_key56, _val57);
+                String _key60; // required
+                String _val61; // required
+                _key60 = iprot.readString();
+                _val61 = iprot.readString();
+                this.compaction_strategy_options.put(_key60, _val61);
               }
               iprot.readMapEnd();
             }
@@ -2044,15 +2044,15 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         case 32: // COMPRESSION_OPTIONS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map58 = iprot.readMapBegin();
-              this.compression_options = new HashMap<String,String>(2*_map58.size);
-              for (int _i59 = 0; _i59 < _map58.size; ++_i59)
+              org.apache.thrift.protocol.TMap _map62 = iprot.readMapBegin();
+              this.compression_options = new HashMap<String,String>(2*_map62.size);
+              for (int _i63 = 0; _i63 < _map62.size; ++_i63)
               {
-                String _key60; // required
-                String _val61; // required
-                _key60 = iprot.readString();
-                _val61 = iprot.readString();
-                this.compression_options.put(_key60, _val61);
+                String _key64; // required
+                String _val65; // required
+                _key64 = iprot.readString();
+                _val65 = iprot.readString();
+                this.compression_options.put(_key64, _val65);
               }
               iprot.readMapEnd();
             }
@@ -2138,9 +2138,9 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         oprot.writeFieldBegin(COLUMN_METADATA_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.column_metadata.size()));
-          for (ColumnDef _iter62 : this.column_metadata)
+          for (ColumnDef _iter66 : this.column_metadata)
           {
-            _iter62.write(oprot);
+            _iter66.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -2210,10 +2210,10 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         oprot.writeFieldBegin(COMPACTION_STRATEGY_OPTIONS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.compaction_strategy_options.size()));
-          for (Map.Entry<String, String> _iter63 : this.compaction_strategy_options.entrySet())
+          for (Map.Entry<String, String> _iter67 : this.compaction_strategy_options.entrySet())
           {
-            oprot.writeString(_iter63.getKey());
-            oprot.writeString(_iter63.getValue());
+            oprot.writeString(_iter67.getKey());
+            oprot.writeString(_iter67.getValue());
           }
           oprot.writeMapEnd();
         }
@@ -2225,10 +2225,10 @@ public class CfDef implements org.apache.thrift.TBase<CfDef, CfDef._Fields>, jav
         oprot.writeFieldBegin(COMPRESSION_OPTIONS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.compression_options.size()));
-          for (Map.Entry<String, String> _iter64 : this.compression_options.entrySet())
+          for (Map.Entry<String, String> _iter68 : this.compression_options.entrySet())
           {
-            oprot.writeString(_iter64.getKey());
-            oprot.writeString(_iter64.getValue());
+            oprot.writeString(_iter68.getKey());
+            oprot.writeString(_iter68.getValue());
           }
           oprot.writeMapEnd();
         }

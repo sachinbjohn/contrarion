@@ -119,7 +119,8 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         TRANSACTION_COHORT,
         //FAKE_DEPENDENCY_CHECK,   //HL: for fake dep_check of local writes
         FETCH_TXNIDS,        // use this instead of fake depcheck
-        SEND_TXN_TS
+        SEND_TXN_TS,
+        VERSION_GOSSIP
         ;
         // remember to add new verbs at the end, since we serialize by ordinal
     }
@@ -160,6 +161,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         //put(Verb.FAKE_DEPENDENCY_CHECK, Stage.MISC);  //HL
         put(Verb.FETCH_TXNIDS, Stage.FETCHID); //HL
         put(Verb.SEND_TXN_TS, Stage.SENDTXNTS); //SBJ
+        put(Verb.VERSION_GOSSIP, Stage.VERSION_GOSSIP);
     }};
 
     private static int getRingDelay()
@@ -306,6 +308,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         //MessagingService.instance().registerVerbHandlers(Verb.FAKE_DEPENDENCY_CHECK, new FakeDependencyCheckVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.FETCH_TXNIDS, new FetchTxnIdsVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.SEND_TXN_TS, new SendTxnTSVerbHandler());
+        MessagingService.instance().registerVerbHandlers(Verb.VERSION_GOSSIP, new VersionGossipVerbHandler());
 
         // spin up the streaming service so it is available for jmx tools.
         if (StreamingService.instance == null)

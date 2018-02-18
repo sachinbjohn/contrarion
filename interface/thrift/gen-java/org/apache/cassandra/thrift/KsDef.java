@@ -718,15 +718,15 @@ public class KsDef implements org.apache.thrift.TBase<KsDef, KsDef._Fields>, jav
         case 3: // STRATEGY_OPTIONS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map65 = iprot.readMapBegin();
-              this.strategy_options = new HashMap<String,String>(2*_map65.size);
-              for (int _i66 = 0; _i66 < _map65.size; ++_i66)
+              org.apache.thrift.protocol.TMap _map69 = iprot.readMapBegin();
+              this.strategy_options = new HashMap<String,String>(2*_map69.size);
+              for (int _i70 = 0; _i70 < _map69.size; ++_i70)
               {
-                String _key67; // required
-                String _val68; // required
-                _key67 = iprot.readString();
-                _val68 = iprot.readString();
-                this.strategy_options.put(_key67, _val68);
+                String _key71; // required
+                String _val72; // required
+                _key71 = iprot.readString();
+                _val72 = iprot.readString();
+                this.strategy_options.put(_key71, _val72);
               }
               iprot.readMapEnd();
             }
@@ -745,14 +745,14 @@ public class KsDef implements org.apache.thrift.TBase<KsDef, KsDef._Fields>, jav
         case 5: // CF_DEFS
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list69 = iprot.readListBegin();
-              this.cf_defs = new ArrayList<CfDef>(_list69.size);
-              for (int _i70 = 0; _i70 < _list69.size; ++_i70)
+              org.apache.thrift.protocol.TList _list73 = iprot.readListBegin();
+              this.cf_defs = new ArrayList<CfDef>(_list73.size);
+              for (int _i74 = 0; _i74 < _list73.size; ++_i74)
               {
-                CfDef _elem71; // required
-                _elem71 = new CfDef();
-                _elem71.read(iprot);
-                this.cf_defs.add(_elem71);
+                CfDef _elem75; // required
+                _elem75 = new CfDef();
+                _elem75.read(iprot);
+                this.cf_defs.add(_elem75);
               }
               iprot.readListEnd();
             }
@@ -798,10 +798,10 @@ public class KsDef implements org.apache.thrift.TBase<KsDef, KsDef._Fields>, jav
         oprot.writeFieldBegin(STRATEGY_OPTIONS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.strategy_options.size()));
-          for (Map.Entry<String, String> _iter72 : this.strategy_options.entrySet())
+          for (Map.Entry<String, String> _iter76 : this.strategy_options.entrySet())
           {
-            oprot.writeString(_iter72.getKey());
-            oprot.writeString(_iter72.getValue());
+            oprot.writeString(_iter76.getKey());
+            oprot.writeString(_iter76.getValue());
           }
           oprot.writeMapEnd();
         }
@@ -817,9 +817,9 @@ public class KsDef implements org.apache.thrift.TBase<KsDef, KsDef._Fields>, jav
       oprot.writeFieldBegin(CF_DEFS_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cf_defs.size()));
-        for (CfDef _iter73 : this.cf_defs)
+        for (CfDef _iter77 : this.cf_defs)
         {
-          _iter73.write(oprot);
+          _iter77.write(oprot);
         }
         oprot.writeListEnd();
       }

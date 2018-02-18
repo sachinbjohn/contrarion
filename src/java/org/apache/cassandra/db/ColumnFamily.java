@@ -137,18 +137,18 @@ public class ColumnFamily extends AbstractColumnContainer
         return getType() == ColumnFamilyType.Super;
     }
 
-    public void addColumn(QueryPath path, ByteBuffer value, long timestamp)
-    {
-        addColumn(path, value, timestamp, timestamp, 0, null);
-    }
+    // public void addColumn(QueryPath path, ByteBuffer value, long timestamp)
+    // {
+    //     addColumn(path, value, timestamp, timestamp, 0, null);
+    // }
+    //
+    // public void addColumn(QueryPath path, ByteBuffer value, long timestamp, int timeToLive)
+    // {
+    //     addColumn(path, value, timestamp, timestamp, timeToLive, null);
+    // }
 
-    public void addColumn(QueryPath path, ByteBuffer value, long timestamp, int timeToLive)
-    {
-        addColumn(path, value, timestamp, timestamp, timeToLive, null);
-    }
-
-    public void addColumn(QueryPath path, ByteBuffer value, long timestamp, long earliestValidTime, int timeToLive, ByteBuffer transactionCoordinatorKey)
-    {
+    //SBJ: Backward compatibility for System tables
+    public void addColumn(QueryPath path, ByteBuffer value, long timestamp, long earliestValidTime, int timeToLive, ByteBuffer transactionCoordinatorKey) {
         assert path.columnName != null : path;
         assert !metadata().getDefaultValidator().isCommutative();
         Column column;
@@ -157,6 +157,14 @@ public class ColumnFamily extends AbstractColumnContainer
         else
             column = new Column(path.columnName, value, timestamp, transactionCoordinatorKey);
         column.setEarliestValidTime(earliestValidTime);
+        addColumn(path.superColumnName, column);
+    }
+
+    public void addColumn(QueryPath path, ByteBuffer value, byte sr, long[] DV) {
+        assert path.columnName != null : path;
+        assert !metadata().getDefaultValidator().isCommutative();
+        Column column = new Column(path.columnName, value, sr, DV);
+        // column.setEarliestValidTime(earliestValidTime);
         addColumn(path.superColumnName, column);
     }
 

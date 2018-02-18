@@ -154,6 +154,7 @@ public class RowMutation implements IMutation, MessageProducer
      */
     public static RowMutation hintFor(RowMutation mutation, ByteBuffer token) throws IOException
     {
+        /*
         RowMutation rm = new RowMutation(Table.SYSTEM_TABLE, token);
         ByteBuffer hintId = ByteBuffer.wrap(UUIDGen.getTimeUUIDBytes());
 
@@ -180,7 +181,8 @@ public class RowMutation implements IMutation, MessageProducer
         path = new QueryPath(HintedHandOffManager.HINTS_CF, hintId, ByteBufferUtil.bytes("key"));
         rm.add(path, mutation.key(), System.currentTimeMillis(), System.currentTimeMillis(), ttl, null);
 
-        return rm;
+        return rm;*/
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -216,22 +218,31 @@ public class RowMutation implements IMutation, MessageProducer
      * param @ timestamp - timestamp associated with this data.
      * param @ timeToLive - ttl for the column, 0 for standard (non expiring) columns
      */
-    public void add(QueryPath path, ByteBuffer value, long timestamp, int timeToLive)
-    {
-        add(path, value, timestamp, timestamp, timeToLive, null);
+
+    public void add(QueryPath path, ByteBuffer value, long timestamp, int timeToLive) {
+        throw new UnsupportedOperationException();
+        // add(path, value, timestamp, timestamp, timeToLive, null);
     }
 
-
-    public void add(QueryPath path, ByteBuffer value, long timestamp, long earliestValidTime, int timeToLive, ByteBuffer transactionCoordinatorKey)
-    {
+    //SBJ: Backward compatibility for System tables
+    public void add(QueryPath path, ByteBuffer value, long timestamp, long earliestValidTime, int timeToLive, ByteBuffer transactionCoordinatorKey) {
         Integer id = Schema.instance.getId(table_, path.columnFamilyName);
         ColumnFamily columnFamily = modifications_.get(id);
-        if (columnFamily == null)
-        {
+        if (columnFamily == null) {
             columnFamily = ColumnFamily.create(table_, path.columnFamilyName);
             modifications_.put(id, columnFamily);
         }
         columnFamily.addColumn(path, value, timestamp, earliestValidTime, timeToLive, transactionCoordinatorKey);
+    }
+
+    public void add(QueryPath path, ByteBuffer value, byte sr, long[] DV) {
+        Integer id = Schema.instance.getId(table_, path.columnFamilyName);
+        ColumnFamily columnFamily = modifications_.get(id);
+        if (columnFamily == null) {
+            columnFamily = ColumnFamily.create(table_, path.columnFamilyName);
+            modifications_.put(id, columnFamily);
+        }
+        columnFamily.addColumn(path, value, sr, DV);
     }
 
     public void addCounter(QueryPath path, long value)
@@ -253,8 +264,7 @@ public class RowMutation implements IMutation, MessageProducer
         columnFamily.addCounter(path, value, timestamp, earliestValidTime, transactionCoordinatorKey);
     }
 
-    public void add(QueryPath path, ByteBuffer value, long timestamp)
-    {
+    public void add(QueryPath path, ByteBuffer value, long timestamp) {
         add(path, value, timestamp, timestamp, 0, null);
     }
 
@@ -419,38 +429,24 @@ public class RowMutation implements IMutation, MessageProducer
         return buff.append("])").toString();
     }
 
-    public void addColumnOrSuperColumn(String cfName, ColumnOrSuperColumn cosc, long timestamp, long localCommitTime)
-    {
-        addColumnOrSuperColumn(cfName, cosc, timestamp, localCommitTime, null);
-    }
+    // public void addColumnOrSuperColumn(String cfName, ColumnOrSuperColumn cosc, long timestamp, long localCommitTime)
+    // {
+    //     addColumnOrSuperColumn(cfName, cosc, timestamp, localCommitTime, null);
+    // }
 
-    public void addColumnOrSuperColumn(String cfName, ColumnOrSuperColumn cosc, long timestamp, long localCommitTime, ByteBuffer transactionCoordinatorKey)
-    {
-        if (cosc.super_column != null)
-        {
-            for (org.apache.cassandra.thrift.Column column : cosc.super_column.columns)
-            {
+    public void addColumnOrSuperColumn(String cfName, ColumnOrSuperColumn cosc, byte sr, long[] DV) {
+        if (cosc.super_column != null) {
+            for (org.apache.cassandra.thrift.Column column : cosc.super_column.columns) {
                 //TODO: Make sure stress tester isn't setting the timestamps and reassert this
                 //assert column.timestamp == 0;
-                add(new QueryPath(cfName, cosc.super_column.name, column.name), column.value, timestamp, localCommitTime, column.ttl, transactionCoordinatorKey);
+                add(new QueryPath(cfName, cosc.super_column.name, column.name), column.value, sr, DV);
             }
-        }
-        else if (cosc.column != null)
-        {
+        } else if (cosc.column != null) {
             //TODO: Make sure stress tester isn't setting the timestamps and reassert this
             //assert cosc.column.timestamp == 0;
-            add(new QueryPath(cfName, null, cosc.column.name), cosc.column.value, timestamp, localCommitTime, cosc.column.ttl, transactionCoordinatorKey);
-        }
-        else if (cosc.counter_super_column != null)
-        {
-            for (org.apache.cassandra.thrift.CounterColumn column : cosc.counter_super_column.columns)
-            {
-                addCounter(new QueryPath(cfName, cosc.counter_super_column.name, column.name), column.value, timestamp, localCommitTime, transactionCoordinatorKey);
-            }
-        }
-        else // cosc.counter_column != null
-        {
-            addCounter(new QueryPath(cfName, null, cosc.counter_column.name), cosc.counter_column.value, timestamp, localCommitTime, transactionCoordinatorKey);
+            add(new QueryPath(cfName, null, cosc.column.name), cosc.column.value, sr, DV);
+        } else {
+            throw new UnsupportedOperationException("Counters Columns");
         }
     }
 

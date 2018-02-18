@@ -13,16 +13,19 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+
+import org.apache.cassandra.utils.ShortNodeId;
 import org.xerial.snappy.Snappy;
 
 public class SendTxnTS implements MessageProducer {
     private final long transactionId;
-    private final long lts;
+    private final long[] tv;
     public static SendTxnTSSerializer serializer_ = new SendTxnTSSerializer();
 
     public static SendTxnTS fromBytes(byte[] raw, int version) throws IOException {
         return serializer_.deserialize(new DataInputStream(new FastByteArrayInputStream(raw)), version);
     }
+
     @Override
     public Message getMessage(Integer version) throws IOException {
         DataOutputBuffer dob = new DataOutputBuffer();
@@ -31,37 +34,39 @@ public class SendTxnTS implements MessageProducer {
         return new Message(FBUtilities.getBroadcastAddress(), StorageService.Verb.SEND_TXN_TS, Arrays.copyOf(msg, msg.length), version);
     }
 
-    public long getLts() {
-        return lts;
+    public long[] getTV() {
+        return tv;
     }
 
     public long getTransactionId() {
-
         return transactionId;
     }
 
-    public SendTxnTS(long transactionId, long lts) {
+    public SendTxnTS(long transactionId, long[] tv) {
         this.transactionId = transactionId;
-        this.lts = lts;
+        this.tv = tv;
     }
 
     public static class SendTxnTSSerializer implements IVersionedSerializer<SendTxnTS> {
         @Override
         public void serialize(SendTxnTS sendTxnTS, DataOutput dos, int version) throws IOException {
             dos.writeLong(sendTxnTS.transactionId);
-            dos.writeLong(sendTxnTS.lts);
+            for (int i = 0; i < ShortNodeId.numDCs; ++i)
+                dos.writeLong(sendTxnTS.tv[i]);
         }
 
         @Override
         public SendTxnTS deserialize(DataInput dis, int version) throws IOException {
             long txnid = dis.readLong();
-            long lts = dis.readLong();
-            return new SendTxnTS(txnid, lts);
+            long[] tv = new long[ShortNodeId.numDCs];
+            for (int i = 0; i < tv.length; ++i)
+                tv[i] = dis.readLong();
+            return new SendTxnTS(txnid, tv);
         }
 
         @Override
         public long serializedSize(SendTxnTS sendTxnTS, int version) {
-            return 2*DBConstants.longSize;
+            return (1 + ShortNodeId.numDCs) * DBConstants.longSize;
         }
     }
 }

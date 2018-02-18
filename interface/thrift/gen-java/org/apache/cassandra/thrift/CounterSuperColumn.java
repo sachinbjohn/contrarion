@@ -468,14 +468,14 @@ public class CounterSuperColumn implements org.apache.thrift.TBase<CounterSuperC
         case 2: // COLUMNS
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list9 = iprot.readListBegin();
-              this.columns = new ArrayList<CounterColumn>(_list9.size);
-              for (int _i10 = 0; _i10 < _list9.size; ++_i10)
+              org.apache.thrift.protocol.TList _list13 = iprot.readListBegin();
+              this.columns = new ArrayList<CounterColumn>(_list13.size);
+              for (int _i14 = 0; _i14 < _list13.size; ++_i14)
               {
-                CounterColumn _elem11; // required
-                _elem11 = new CounterColumn();
-                _elem11.read(iprot);
-                this.columns.add(_elem11);
+                CounterColumn _elem15; // required
+                _elem15 = new CounterColumn();
+                _elem15.read(iprot);
+                this.columns.add(_elem15);
               }
               iprot.readListEnd();
             }
@@ -515,9 +515,9 @@ public class CounterSuperColumn implements org.apache.thrift.TBase<CounterSuperC
       oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.columns.size()));
-        for (CounterColumn _iter12 : this.columns)
+        for (CounterColumn _iter16 : this.columns)
         {
-          _iter12.write(oprot);
+          _iter16.write(oprot);
         }
         oprot.writeListEnd();
       }

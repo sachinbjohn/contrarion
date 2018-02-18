@@ -35,7 +35,8 @@ public enum Stage
     READ_REPAIR,
     REPLICATE_ON_WRITE,
     FETCHID,
-    SENDTXNTS;
+    SENDTXNTS,
+    VERSION_GOSSIP;
 
     public String getJmxType()
     {
@@ -47,6 +48,7 @@ public enum Stage
             case MISC:
             case STREAM:
             case INTERNAL_RESPONSE:
+            case VERSION_GOSSIP:
                 return "internal";
             case MUTATION:
             case READ:

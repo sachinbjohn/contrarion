@@ -14,15 +14,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ClientSyncer extends Operation {
     private static Logger logger = LoggerFactory.getLogger(ClientSyncer.class);
     private PrintStream output;
+
     public int getKeyForClient(int i) {
         return session.getNumDifferentKeys() + i + 10;
     }
+
     public ClientSyncer(Session client, int idx, PrintStream out) {
         super(client, idx);
         output = out;
@@ -40,51 +43,39 @@ public class ClientSyncer extends Operation {
         String rawKey = String.format(format, thisClientKey);
         ByteBuffer key = ByteBufferUtil.bytes(rawKey);
 
-        List<Mutation> mutations = new ArrayList<Mutation>();
-        Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>();
-
         Column c = new Column(columnName(0, session.timeUUIDComparator)).setValue(key).setTimestamp(FBUtilities.timestampMicros());
         ColumnOrSuperColumn column = new ColumnOrSuperColumn().setColumn(c);
-        mutations.add(new Mutation().setColumn_or_supercolumn(column));
-        mutationMap.put("Standard1", mutations);
-
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-        record.put(key, mutationMap);
+        Mutation mutation = new Mutation().setColumn_or_supercolumn(column);
 
         boolean success = false;
         String exceptionMessage = null;
-        for (int t = 0; t < session.getRetryTimes(); t++)
-        {
+        for (int t = 0; t < session.getRetryTimes(); t++) {
             if (success)
                 break;
-            try
-            {
+            try {
                 clientLibrary.getContext().clearDeps();
-                clientLibrary.batch_mutate(record);
+                clientLibrary.put(key, "Standard1", mutation);
                 success = true;
-            }
-            catch (Exception e)
-            {
-                logger.error("ClientSyncer write has error",e);
+            } catch (Exception e) {
+                logger.error("ClientSyncer write has error", e);
                 exceptionMessage = getExceptionMessage(e);
                 success = false;
             }
         }
 
-        if (!success)
-        {
+        if (!success) {
             logger.error(String.format("Error inserting unique key %s %s%n",
                     rawKey,
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
 
-        output.println("Client "+session.stressIndex+ " ready. Written key "+rawKey);
+        output.println("Client " + session.stressIndex + " ready. Written key " + rawKey);
         //Wait for all clients to start up
         SlicePredicate nColumnsPredicate = new SlicePredicate().setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER,
                 ByteBufferUtil.EMPTY_BYTE_BUFFER,
                 false, 1));
         ArrayList<ByteBuffer> keys = new ArrayList<>();
-        for(int i = 0; i < session.stressCount; ++i)
+        for (int i = 0; i < session.stressCount; ++i)
             keys.add(ByteBufferUtil.bytes(String.format(format, getKeyForClient(i))));
 
         ColumnParent parent = new ColumnParent("Standard1");
@@ -99,26 +90,26 @@ public class ClientSyncer extends Operation {
                 columnCount = 0;
                 String missingKeys = "";
                 results = clientLibrary.transactional_multiget_slice(keys, parent, nColumnsPredicate);
-                for (Map.Entry<ByteBuffer,List<ColumnOrSuperColumn>> kvs : results.entrySet()) {
+                for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> kvs : results.entrySet()) {
                     List<ColumnOrSuperColumn> result = kvs.getValue();
                     int size = result.size();
                     columnCount += size;
-                    if(size == 0)
+                    if (size == 0)
                         missingKeys += ByteBufferUtil.string(kvs.getKey()) + " ";
                 }
                 success = (columnCount == session.stressCount);
-                output.println("Number of clients ready = "+columnCount+"  Missing ="+missingKeys);
+                output.println("Number of clients ready = " + columnCount + "  Missing =" + missingKeys);
                 if (success)
                     break;
                 Thread.sleep(200);
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
-                logger.error("ClientSyncer write has error",e);
+                logger.error("ClientSyncer write has error", e);
             }
         }
 
         if (!success) {
-            logger.error(String.format("Wait for clients failed  %s!!!!!",  (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
+            logger.error(String.format("Wait for clients failed  %s!!!!!", (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
 
     }

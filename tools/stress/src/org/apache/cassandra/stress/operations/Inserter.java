@@ -56,13 +56,13 @@ public class Inserter extends Operation
         // format used for keys
         String format = "%0" + session.getTotalKeysLength() + "d";
 
-        for (int i = 0; i < session.getColumnsPerKey(); i++)
-        {
-            columns.add(new Column(columnName(i, session.timeUUIDComparator))
-                                .setValue(values.get(i % values.size()))
-                                .setTimestamp(FBUtilities.timestampMicros()));
-        }
-
+        // for (int i = 0; i < session.getColumnsPerKey(); i++)
+        // {
+        //     columns.add(new Column(columnName(i, session.timeUUIDComparator))
+        //                         .setValue(values.get(i % values.size()))
+        //                         .setTimestamp(FBUtilities.timestampMicros()));
+        // }
+        Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(values.get(0)).setTimestamp(FBUtilities.timestampMicros());
         if (session.getColumnFamilyType() == ColumnFamilyType.Super)
         {
             // supers = [SuperColumn('S' + str(j), columns) for j in xrange(supers_per_key)]
@@ -74,11 +74,8 @@ public class Inserter extends Operation
         }
 
         String rawKey = String.format(format, index);
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-
-        record.put(ByteBufferUtil.bytes(rawKey), session.getColumnFamilyType() == ColumnFamilyType.Super
-                                                                                ? getSuperColumnsMutationMap(superColumns)
-                                                                                : getColumnsMutationMap(columns));
+        ByteBuffer key = ByteBufferUtil.bytes(rawKey);
+        Mutation mutation = new Mutation().setColumn_or_supercolumn(new ColumnOrSuperColumn().setColumn(column));
 
         long start = System.currentTimeMillis();
 
@@ -93,8 +90,8 @@ public class Inserter extends Operation
             try
             {
                 // We're just populating the cluster, so we dont care about deps yet
-		clientLibrary.getContext().clearDeps();
-                clientLibrary.batch_mutate(record);
+		        clientLibrary.getContext().clearDeps();
+                clientLibrary.put(key, "Standard1", mutation);
                 success = true;
             }
             catch (Exception e)

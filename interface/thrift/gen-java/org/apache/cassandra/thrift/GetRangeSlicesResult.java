@@ -377,14 +377,14 @@ public class GetRangeSlicesResult implements org.apache.thrift.TBase<GetRangeSli
         case 1: // VALUE
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list118 = iprot.readListBegin();
-              this.value = new ArrayList<KeySlice>(_list118.size);
-              for (int _i119 = 0; _i119 < _list118.size; ++_i119)
+              org.apache.thrift.protocol.TList _list126 = iprot.readListBegin();
+              this.value = new ArrayList<KeySlice>(_list126.size);
+              for (int _i127 = 0; _i127 < _list126.size; ++_i127)
               {
-                KeySlice _elem120; // required
-                _elem120 = new KeySlice();
-                _elem120.read(iprot);
-                this.value.add(_elem120);
+                KeySlice _elem128; // required
+                _elem128 = new KeySlice();
+                _elem128.read(iprot);
+                this.value.add(_elem128);
               }
               iprot.readListEnd();
             }
@@ -419,9 +419,9 @@ public class GetRangeSlicesResult implements org.apache.thrift.TBase<GetRangeSli
       oprot.writeFieldBegin(VALUE_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.value.size()));
-        for (KeySlice _iter121 : this.value)
+        for (KeySlice _iter129 : this.value)
         {
-          _iter121.write(oprot);
+          _iter129.write(oprot);
         }
         oprot.writeListEnd();
       }

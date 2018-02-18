@@ -377,14 +377,14 @@ public class GetSliceResult implements org.apache.thrift.TBase<GetSliceResult, G
         case 1: // VALUE
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list92 = iprot.readListBegin();
-              this.value = new ArrayList<ColumnOrSuperColumn>(_list92.size);
-              for (int _i93 = 0; _i93 < _list92.size; ++_i93)
+              org.apache.thrift.protocol.TList _list96 = iprot.readListBegin();
+              this.value = new ArrayList<ColumnOrSuperColumn>(_list96.size);
+              for (int _i97 = 0; _i97 < _list96.size; ++_i97)
               {
-                ColumnOrSuperColumn _elem94; // required
-                _elem94 = new ColumnOrSuperColumn();
-                _elem94.read(iprot);
-                this.value.add(_elem94);
+                ColumnOrSuperColumn _elem98; // required
+                _elem98 = new ColumnOrSuperColumn();
+                _elem98.read(iprot);
+                this.value.add(_elem98);
               }
               iprot.readListEnd();
             }
@@ -419,9 +419,9 @@ public class GetSliceResult implements org.apache.thrift.TBase<GetSliceResult, G
       oprot.writeFieldBegin(VALUE_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.value.size()));
-        for (ColumnOrSuperColumn _iter95 : this.value)
+        for (ColumnOrSuperColumn _iter99 : this.value)
         {
-          _iter95.write(oprot);
+          _iter99.write(oprot);
         }
         oprot.writeListEnd();
       }

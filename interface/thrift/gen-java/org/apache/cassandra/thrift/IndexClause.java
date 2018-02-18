@@ -467,14 +467,14 @@ public class IndexClause implements org.apache.thrift.TBase<IndexClause, IndexCl
         case 1: // EXPRESSIONS
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list17 = iprot.readListBegin();
-              this.expressions = new ArrayList<IndexExpression>(_list17.size);
-              for (int _i18 = 0; _i18 < _list17.size; ++_i18)
+              org.apache.thrift.protocol.TList _list21 = iprot.readListBegin();
+              this.expressions = new ArrayList<IndexExpression>(_list21.size);
+              for (int _i22 = 0; _i22 < _list21.size; ++_i22)
               {
-                IndexExpression _elem19; // required
-                _elem19 = new IndexExpression();
-                _elem19.read(iprot);
-                this.expressions.add(_elem19);
+                IndexExpression _elem23; // required
+                _elem23 = new IndexExpression();
+                _elem23.read(iprot);
+                this.expressions.add(_elem23);
               }
               iprot.readListEnd();
             }
@@ -519,9 +519,9 @@ public class IndexClause implements org.apache.thrift.TBase<IndexClause, IndexCl
       oprot.writeFieldBegin(EXPRESSIONS_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.expressions.size()));
-        for (IndexExpression _iter20 : this.expressions)
+        for (IndexExpression _iter24 : this.expressions)
         {
-          _iter20.write(oprot);
+          _iter24.write(oprot);
         }
         oprot.writeListEnd();
       }

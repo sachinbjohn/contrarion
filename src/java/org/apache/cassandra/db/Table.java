@@ -361,47 +361,49 @@ public class Table
             //Determine if this is part of a transaction, if it isn't, update AppliedOps, if it is, that's done in the Coordinator/Cohort
 
 
-            boolean inTransaction;
-            if (mutation.getColumnFamilies().size() == 0 || mutation.getColumnFamilies().iterator().next().columns.size() == 0) {
-                inTransaction = false;
-            } else {
-                IColumn firstColumn = mutation.getColumnFamilies().iterator().next().columns.iterator().next();
-                if (firstColumn instanceof SuperColumn) {
-                    if (firstColumn.getSubColumns().size() == 0) {
-                        inTransaction = false;
-                    } else {
-                        inTransaction = firstColumn.getSubColumns().iterator().next().transactionCoordinatorKey() != null;
-                    }
-                } else {
-                    inTransaction = firstColumn.transactionCoordinatorKey() != null;
-                }
-            }
-            if (!inTransaction) {
-                AppliedOperations.addAppliedOp(mutation.key(), mutation.extractTimestamp());
-            }
+            // boolean inTransaction;
+            // if (mutation.getColumnFamilies().size() == 0 || mutation.getColumnFamilies().iterator().next().columns.size() == 0) {
+            //     inTransaction = false;
+            // } else {
+            //     IColumn firstColumn = mutation.getColumnFamilies().iterator().next().columns.iterator().next();
+            //     if (firstColumn instanceof SuperColumn) {
+            //         if (firstColumn.getSubColumns().size() == 0) {
+            //             inTransaction = false;
+            //         } else {
+            //             inTransaction = firstColumn.getSubColumns().iterator().next().transactionCoordinatorKey() != null;
+            //         }
+            //     } else {
+            //         inTransaction = firstColumn.transactionCoordinatorKey() != null;
+            //     }
+            // }
+
+            // if (!inTransaction) {
+            //     AppliedOperations.addAppliedOp(mutation.key(), mutation.extractTimestamp());
+            // }
 
             //Set the earliest_valid_time for all columns in this update
             //if the update originates from this node, it's earliest valid time == timestamp
             //otherwise it's the current logical time
-            long earliestValidTime;
-            if (ShortNodeId.getLocalDC() == VersionUtil.extractDatacenter(mutation.extractTimestamp())) {
-                earliestValidTime = mutation.extractTimestamp();
-            } else {
-                earliestValidTime = LamportClock.getVersion();
-            }
-            for (ColumnFamily cf : mutation.getColumnFamilies()) {
-                for (IColumn column : cf.columns) {
-                   if (column instanceof Column) {
-                       column.setEarliestValidTime(earliestValidTime);
-                   } else {
-                       assert column instanceof SuperColumn;
-                       for (IColumn subcolumn : column.getSubColumns()) {
-                           assert subcolumn instanceof Column;
-                           subcolumn.setEarliestValidTime(earliestValidTime);
-                       }
-                   }
-                }
-            }
+            // long earliestValidTime;
+            // XXX
+            // if (ShortNodeId.getLocalDC() == VersionUtil.extractDatacenter(mutation.extractTimestamp())) {
+            //     earliestValidTime = mutation.extractTimestamp();
+            // } else {
+            //     earliestValidTime = LamportClock.getVersion();
+            // }
+            // for (ColumnFamily cf : mutation.getColumnFamilies()) {
+            //     for (IColumn column : cf.columns) {
+            //        if (column instanceof Column) {
+            //            column.setEarliestValidTime(earliestValidTime);
+            //        } else {
+            //            assert column instanceof SuperColumn;
+            //            for (IColumn subcolumn : column.getSubColumns()) {
+            //                assert subcolumn instanceof Column;
+            //                subcolumn.setEarliestValidTime(earliestValidTime);
+            //            }
+            //        }
+            //     }
+            // }
 
 
             DecoratedKey<?> key = StorageService.getPartitioner().decorateKey(mutation.key());

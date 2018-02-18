@@ -54,35 +54,20 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
 
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)3);
-  private static final org.apache.thrift.protocol.TField TTL_FIELD_DESC = new org.apache.thrift.protocol.TField("ttl", org.apache.thrift.protocol.TType.I32, (short)4);
-  private static final org.apache.thrift.protocol.TField DELETED_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("deleted_time", org.apache.thrift.protocol.TType.I64, (short)5);
-  private static final org.apache.thrift.protocol.TField EARLIEST_VALID_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("earliest_valid_time", org.apache.thrift.protocol.TType.I64, (short)6);
-  private static final org.apache.thrift.protocol.TField LATEST_VALID_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("latest_valid_time", org.apache.thrift.protocol.TType.I64, (short)7);
-  private static final org.apache.thrift.protocol.TField TRANSACTION_COORDINATOR_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionCoordinatorKey", org.apache.thrift.protocol.TType.STRING, (short)8);
-  private static final org.apache.thrift.protocol.TField FIRST_ROUND_WAS_VALID_FIELD_DESC = new org.apache.thrift.protocol.TField("first_round_was_valid", org.apache.thrift.protocol.TType.BOOL, (short)9);
+  private static final org.apache.thrift.protocol.TField SOURCE_REPLICA_FIELD_DESC = new org.apache.thrift.protocol.TField("sourceReplica", org.apache.thrift.protocol.TType.BYTE, (short)3);
+  private static final org.apache.thrift.protocol.TField DV_FIELD_DESC = new org.apache.thrift.protocol.TField("DV", org.apache.thrift.protocol.TType.LIST, (short)4);
 
   public ByteBuffer name; // required
   public ByteBuffer value; // required
-  public long timestamp; // required
-  public int ttl; // required
-  public long deleted_time; // required
-  public long earliest_valid_time; // required
-  public long latest_valid_time; // required
-  public ByteBuffer transactionCoordinatorKey; // required
-  public boolean first_round_was_valid; // required
+  public byte sourceReplica; // required
+  public List<Long> DV; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     NAME((short)1, "name"),
     VALUE((short)2, "value"),
-    TIMESTAMP((short)3, "timestamp"),
-    TTL((short)4, "ttl"),
-    DELETED_TIME((short)5, "deleted_time"),
-    EARLIEST_VALID_TIME((short)6, "earliest_valid_time"),
-    LATEST_VALID_TIME((short)7, "latest_valid_time"),
-    TRANSACTION_COORDINATOR_KEY((short)8, "transactionCoordinatorKey"),
-    FIRST_ROUND_WAS_VALID((short)9, "first_round_was_valid");
+    SOURCE_REPLICA((short)3, "sourceReplica"),
+    DV((short)4, "DV");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -101,20 +86,10 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
           return NAME;
         case 2: // VALUE
           return VALUE;
-        case 3: // TIMESTAMP
-          return TIMESTAMP;
-        case 4: // TTL
-          return TTL;
-        case 5: // DELETED_TIME
-          return DELETED_TIME;
-        case 6: // EARLIEST_VALID_TIME
-          return EARLIEST_VALID_TIME;
-        case 7: // LATEST_VALID_TIME
-          return LATEST_VALID_TIME;
-        case 8: // TRANSACTION_COORDINATOR_KEY
-          return TRANSACTION_COORDINATOR_KEY;
-        case 9: // FIRST_ROUND_WAS_VALID
-          return FIRST_ROUND_WAS_VALID;
+        case 3: // SOURCE_REPLICA
+          return SOURCE_REPLICA;
+        case 4: // DV
+          return DV;
         default:
           return null;
       }
@@ -155,13 +130,8 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
   }
 
   // isset id assignments
-  private static final int __TIMESTAMP_ISSET_ID = 0;
-  private static final int __TTL_ISSET_ID = 1;
-  private static final int __DELETED_TIME_ISSET_ID = 2;
-  private static final int __EARLIEST_VALID_TIME_ISSET_ID = 3;
-  private static final int __LATEST_VALID_TIME_ISSET_ID = 4;
-  private static final int __FIRST_ROUND_WAS_VALID_ISSET_ID = 5;
-  private BitSet __isset_bit_vector = new BitSet(6);
+  private static final int __SOURCEREPLICA_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -170,20 +140,10 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.TTL, new org.apache.thrift.meta_data.FieldMetaData("ttl", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.DELETED_TIME, new org.apache.thrift.meta_data.FieldMetaData("deleted_time", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.EARLIEST_VALID_TIME, new org.apache.thrift.meta_data.FieldMetaData("earliest_valid_time", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.LATEST_VALID_TIME, new org.apache.thrift.meta_data.FieldMetaData("latest_valid_time", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.TRANSACTION_COORDINATOR_KEY, new org.apache.thrift.meta_data.FieldMetaData("transactionCoordinatorKey", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.FIRST_ROUND_WAS_VALID, new org.apache.thrift.meta_data.FieldMetaData("first_round_was_valid", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.SOURCE_REPLICA, new org.apache.thrift.meta_data.FieldMetaData("sourceReplica", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BYTE)));
+    tmpMap.put(_Fields.DV, new org.apache.thrift.meta_data.FieldMetaData("DV", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST        , "VectorClock")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Column.class, metaDataMap);
   }
@@ -212,16 +172,10 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
       this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
 ;
     }
-    this.timestamp = other.timestamp;
-    this.ttl = other.ttl;
-    this.deleted_time = other.deleted_time;
-    this.earliest_valid_time = other.earliest_valid_time;
-    this.latest_valid_time = other.latest_valid_time;
-    if (other.isSetTransactionCoordinatorKey()) {
-      this.transactionCoordinatorKey = org.apache.thrift.TBaseHelper.copyBinary(other.transactionCoordinatorKey);
-;
+    this.sourceReplica = other.sourceReplica;
+    if (other.isSetDV()) {
+      this.DV = other.DV;
     }
-    this.first_round_was_valid = other.first_round_was_valid;
   }
 
   public Column deepCopy() {
@@ -232,19 +186,9 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
   public void clear() {
     this.name = null;
     this.value = null;
-    setTimestampIsSet(false);
-    this.timestamp = 0;
-    setTtlIsSet(false);
-    this.ttl = 0;
-    setDeleted_timeIsSet(false);
-    this.deleted_time = 0;
-    setEarliest_valid_timeIsSet(false);
-    this.earliest_valid_time = 0;
-    setLatest_valid_timeIsSet(false);
-    this.latest_valid_time = 0;
-    this.transactionCoordinatorKey = null;
-    setFirst_round_was_validIsSet(false);
-    this.first_round_was_valid = false;
+    setSourceReplicaIsSet(false);
+    this.sourceReplica = 0;
+    this.DV = null;
   }
 
   public byte[] getName() {
@@ -315,176 +259,66 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
     }
   }
 
-  public long getTimestamp() {
-    return this.timestamp;
+  public byte getSourceReplica() {
+    return this.sourceReplica;
   }
 
-  public Column setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+  public Column setSourceReplica(byte sourceReplica) {
+    this.sourceReplica = sourceReplica;
+    setSourceReplicaIsSet(true);
     return this;
   }
 
-  public void unsetTimestamp() {
-    __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
+  public void unsetSourceReplica() {
+    __isset_bit_vector.clear(__SOURCEREPLICA_ISSET_ID);
   }
 
-  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
-  public boolean isSetTimestamp() {
-    return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
+  /** Returns true if field sourceReplica is set (has been assigned a value) and false otherwise */
+  public boolean isSetSourceReplica() {
+    return __isset_bit_vector.get(__SOURCEREPLICA_ISSET_ID);
   }
 
-  public void setTimestampIsSet(boolean value) {
-    __isset_bit_vector.set(__TIMESTAMP_ISSET_ID, value);
+  public void setSourceReplicaIsSet(boolean value) {
+    __isset_bit_vector.set(__SOURCEREPLICA_ISSET_ID, value);
   }
 
-  public int getTtl() {
-    return this.ttl;
+  public int getDVSize() {
+    return (this.DV == null) ? 0 : this.DV.size();
   }
 
-  public Column setTtl(int ttl) {
-    this.ttl = ttl;
-    setTtlIsSet(true);
-    return this;
+  public java.util.Iterator<Long> getDVIterator() {
+    return (this.DV == null) ? null : this.DV.iterator();
   }
 
-  public void unsetTtl() {
-    __isset_bit_vector.clear(__TTL_ISSET_ID);
-  }
-
-  /** Returns true if field ttl is set (has been assigned a value) and false otherwise */
-  public boolean isSetTtl() {
-    return __isset_bit_vector.get(__TTL_ISSET_ID);
-  }
-
-  public void setTtlIsSet(boolean value) {
-    __isset_bit_vector.set(__TTL_ISSET_ID, value);
-  }
-
-  public long getDeleted_time() {
-    return this.deleted_time;
-  }
-
-  public Column setDeleted_time(long deleted_time) {
-    this.deleted_time = deleted_time;
-    setDeleted_timeIsSet(true);
-    return this;
-  }
-
-  public void unsetDeleted_time() {
-    __isset_bit_vector.clear(__DELETED_TIME_ISSET_ID);
-  }
-
-  /** Returns true if field deleted_time is set (has been assigned a value) and false otherwise */
-  public boolean isSetDeleted_time() {
-    return __isset_bit_vector.get(__DELETED_TIME_ISSET_ID);
-  }
-
-  public void setDeleted_timeIsSet(boolean value) {
-    __isset_bit_vector.set(__DELETED_TIME_ISSET_ID, value);
-  }
-
-  public long getEarliest_valid_time() {
-    return this.earliest_valid_time;
-  }
-
-  public Column setEarliest_valid_time(long earliest_valid_time) {
-    this.earliest_valid_time = earliest_valid_time;
-    setEarliest_valid_timeIsSet(true);
-    return this;
-  }
-
-  public void unsetEarliest_valid_time() {
-    __isset_bit_vector.clear(__EARLIEST_VALID_TIME_ISSET_ID);
-  }
-
-  /** Returns true if field earliest_valid_time is set (has been assigned a value) and false otherwise */
-  public boolean isSetEarliest_valid_time() {
-    return __isset_bit_vector.get(__EARLIEST_VALID_TIME_ISSET_ID);
-  }
-
-  public void setEarliest_valid_timeIsSet(boolean value) {
-    __isset_bit_vector.set(__EARLIEST_VALID_TIME_ISSET_ID, value);
-  }
-
-  public long getLatest_valid_time() {
-    return this.latest_valid_time;
-  }
-
-  public Column setLatest_valid_time(long latest_valid_time) {
-    this.latest_valid_time = latest_valid_time;
-    setLatest_valid_timeIsSet(true);
-    return this;
-  }
-
-  public void unsetLatest_valid_time() {
-    __isset_bit_vector.clear(__LATEST_VALID_TIME_ISSET_ID);
-  }
-
-  /** Returns true if field latest_valid_time is set (has been assigned a value) and false otherwise */
-  public boolean isSetLatest_valid_time() {
-    return __isset_bit_vector.get(__LATEST_VALID_TIME_ISSET_ID);
-  }
-
-  public void setLatest_valid_timeIsSet(boolean value) {
-    __isset_bit_vector.set(__LATEST_VALID_TIME_ISSET_ID, value);
-  }
-
-  public byte[] getTransactionCoordinatorKey() {
-    setTransactionCoordinatorKey(org.apache.thrift.TBaseHelper.rightSize(transactionCoordinatorKey));
-    return transactionCoordinatorKey == null ? null : transactionCoordinatorKey.array();
-  }
-
-  public ByteBuffer bufferForTransactionCoordinatorKey() {
-    return transactionCoordinatorKey;
-  }
-
-  public Column setTransactionCoordinatorKey(byte[] transactionCoordinatorKey) {
-    setTransactionCoordinatorKey(transactionCoordinatorKey == null ? (ByteBuffer)null : ByteBuffer.wrap(transactionCoordinatorKey));
-    return this;
-  }
-
-  public Column setTransactionCoordinatorKey(ByteBuffer transactionCoordinatorKey) {
-    this.transactionCoordinatorKey = transactionCoordinatorKey;
-    return this;
-  }
-
-  public void unsetTransactionCoordinatorKey() {
-    this.transactionCoordinatorKey = null;
-  }
-
-  /** Returns true if field transactionCoordinatorKey is set (has been assigned a value) and false otherwise */
-  public boolean isSetTransactionCoordinatorKey() {
-    return this.transactionCoordinatorKey != null;
-  }
-
-  public void setTransactionCoordinatorKeyIsSet(boolean value) {
-    if (!value) {
-      this.transactionCoordinatorKey = null;
+  public void addToDV(long elem) {
+    if (this.DV == null) {
+      this.DV = new ArrayList<Long>();
     }
+    this.DV.add(elem);
   }
 
-  public boolean isFirst_round_was_valid() {
-    return this.first_round_was_valid;
+  public List<Long> getDV() {
+    return this.DV;
   }
 
-  public Column setFirst_round_was_valid(boolean first_round_was_valid) {
-    this.first_round_was_valid = first_round_was_valid;
-    setFirst_round_was_validIsSet(true);
+  public Column setDV(List<Long> DV) {
+    this.DV = DV;
     return this;
   }
 
-  public void unsetFirst_round_was_valid() {
-    __isset_bit_vector.clear(__FIRST_ROUND_WAS_VALID_ISSET_ID);
+  public void unsetDV() {
+    this.DV = null;
   }
 
-  /** Returns true if field first_round_was_valid is set (has been assigned a value) and false otherwise */
-  public boolean isSetFirst_round_was_valid() {
-    return __isset_bit_vector.get(__FIRST_ROUND_WAS_VALID_ISSET_ID);
+  /** Returns true if field DV is set (has been assigned a value) and false otherwise */
+  public boolean isSetDV() {
+    return this.DV != null;
   }
 
-  public void setFirst_round_was_validIsSet(boolean value) {
-    __isset_bit_vector.set(__FIRST_ROUND_WAS_VALID_ISSET_ID, value);
+  public void setDVIsSet(boolean value) {
+    if (!value) {
+      this.DV = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -505,59 +339,19 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
       }
       break;
 
-    case TIMESTAMP:
+    case SOURCE_REPLICA:
       if (value == null) {
-        unsetTimestamp();
+        unsetSourceReplica();
       } else {
-        setTimestamp((Long)value);
+        setSourceReplica((Byte)value);
       }
       break;
 
-    case TTL:
+    case DV:
       if (value == null) {
-        unsetTtl();
+        unsetDV();
       } else {
-        setTtl((Integer)value);
-      }
-      break;
-
-    case DELETED_TIME:
-      if (value == null) {
-        unsetDeleted_time();
-      } else {
-        setDeleted_time((Long)value);
-      }
-      break;
-
-    case EARLIEST_VALID_TIME:
-      if (value == null) {
-        unsetEarliest_valid_time();
-      } else {
-        setEarliest_valid_time((Long)value);
-      }
-      break;
-
-    case LATEST_VALID_TIME:
-      if (value == null) {
-        unsetLatest_valid_time();
-      } else {
-        setLatest_valid_time((Long)value);
-      }
-      break;
-
-    case TRANSACTION_COORDINATOR_KEY:
-      if (value == null) {
-        unsetTransactionCoordinatorKey();
-      } else {
-        setTransactionCoordinatorKey((ByteBuffer)value);
-      }
-      break;
-
-    case FIRST_ROUND_WAS_VALID:
-      if (value == null) {
-        unsetFirst_round_was_valid();
-      } else {
-        setFirst_round_was_valid((Boolean)value);
+        setDV((List<Long>)value);
       }
       break;
 
@@ -572,26 +366,11 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
     case VALUE:
       return getValue();
 
-    case TIMESTAMP:
-      return Long.valueOf(getTimestamp());
+    case SOURCE_REPLICA:
+      return Byte.valueOf(getSourceReplica());
 
-    case TTL:
-      return Integer.valueOf(getTtl());
-
-    case DELETED_TIME:
-      return Long.valueOf(getDeleted_time());
-
-    case EARLIEST_VALID_TIME:
-      return Long.valueOf(getEarliest_valid_time());
-
-    case LATEST_VALID_TIME:
-      return Long.valueOf(getLatest_valid_time());
-
-    case TRANSACTION_COORDINATOR_KEY:
-      return getTransactionCoordinatorKey();
-
-    case FIRST_ROUND_WAS_VALID:
-      return Boolean.valueOf(isFirst_round_was_valid());
+    case DV:
+      return getDV();
 
     }
     throw new IllegalStateException();
@@ -608,20 +387,10 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
       return isSetName();
     case VALUE:
       return isSetValue();
-    case TIMESTAMP:
-      return isSetTimestamp();
-    case TTL:
-      return isSetTtl();
-    case DELETED_TIME:
-      return isSetDeleted_time();
-    case EARLIEST_VALID_TIME:
-      return isSetEarliest_valid_time();
-    case LATEST_VALID_TIME:
-      return isSetLatest_valid_time();
-    case TRANSACTION_COORDINATOR_KEY:
-      return isSetTransactionCoordinatorKey();
-    case FIRST_ROUND_WAS_VALID:
-      return isSetFirst_round_was_valid();
+    case SOURCE_REPLICA:
+      return isSetSourceReplica();
+    case DV:
+      return isSetDV();
     }
     throw new IllegalStateException();
   }
@@ -657,66 +426,21 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
         return false;
     }
 
-    boolean this_present_timestamp = true && this.isSetTimestamp();
-    boolean that_present_timestamp = true && that.isSetTimestamp();
-    if (this_present_timestamp || that_present_timestamp) {
-      if (!(this_present_timestamp && that_present_timestamp))
+    boolean this_present_sourceReplica = true && this.isSetSourceReplica();
+    boolean that_present_sourceReplica = true && that.isSetSourceReplica();
+    if (this_present_sourceReplica || that_present_sourceReplica) {
+      if (!(this_present_sourceReplica && that_present_sourceReplica))
         return false;
-      if (this.timestamp != that.timestamp)
-        return false;
-    }
-
-    boolean this_present_ttl = true && this.isSetTtl();
-    boolean that_present_ttl = true && that.isSetTtl();
-    if (this_present_ttl || that_present_ttl) {
-      if (!(this_present_ttl && that_present_ttl))
-        return false;
-      if (this.ttl != that.ttl)
+      if (this.sourceReplica != that.sourceReplica)
         return false;
     }
 
-    boolean this_present_deleted_time = true && this.isSetDeleted_time();
-    boolean that_present_deleted_time = true && that.isSetDeleted_time();
-    if (this_present_deleted_time || that_present_deleted_time) {
-      if (!(this_present_deleted_time && that_present_deleted_time))
+    boolean this_present_DV = true && this.isSetDV();
+    boolean that_present_DV = true && that.isSetDV();
+    if (this_present_DV || that_present_DV) {
+      if (!(this_present_DV && that_present_DV))
         return false;
-      if (this.deleted_time != that.deleted_time)
-        return false;
-    }
-
-    boolean this_present_earliest_valid_time = true && this.isSetEarliest_valid_time();
-    boolean that_present_earliest_valid_time = true && that.isSetEarliest_valid_time();
-    if (this_present_earliest_valid_time || that_present_earliest_valid_time) {
-      if (!(this_present_earliest_valid_time && that_present_earliest_valid_time))
-        return false;
-      if (this.earliest_valid_time != that.earliest_valid_time)
-        return false;
-    }
-
-    boolean this_present_latest_valid_time = true && this.isSetLatest_valid_time();
-    boolean that_present_latest_valid_time = true && that.isSetLatest_valid_time();
-    if (this_present_latest_valid_time || that_present_latest_valid_time) {
-      if (!(this_present_latest_valid_time && that_present_latest_valid_time))
-        return false;
-      if (this.latest_valid_time != that.latest_valid_time)
-        return false;
-    }
-
-    boolean this_present_transactionCoordinatorKey = true && this.isSetTransactionCoordinatorKey();
-    boolean that_present_transactionCoordinatorKey = true && that.isSetTransactionCoordinatorKey();
-    if (this_present_transactionCoordinatorKey || that_present_transactionCoordinatorKey) {
-      if (!(this_present_transactionCoordinatorKey && that_present_transactionCoordinatorKey))
-        return false;
-      if (!this.transactionCoordinatorKey.equals(that.transactionCoordinatorKey))
-        return false;
-    }
-
-    boolean this_present_first_round_was_valid = true && this.isSetFirst_round_was_valid();
-    boolean that_present_first_round_was_valid = true && that.isSetFirst_round_was_valid();
-    if (this_present_first_round_was_valid || that_present_first_round_was_valid) {
-      if (!(this_present_first_round_was_valid && that_present_first_round_was_valid))
-        return false;
-      if (this.first_round_was_valid != that.first_round_was_valid)
+      if (!this.DV.equals(that.DV))
         return false;
     }
 
@@ -737,40 +461,15 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
     if (present_value)
       builder.append(value);
 
-    boolean present_timestamp = true && (isSetTimestamp());
-    builder.append(present_timestamp);
-    if (present_timestamp)
-      builder.append(timestamp);
+    boolean present_sourceReplica = true && (isSetSourceReplica());
+    builder.append(present_sourceReplica);
+    if (present_sourceReplica)
+      builder.append(sourceReplica);
 
-    boolean present_ttl = true && (isSetTtl());
-    builder.append(present_ttl);
-    if (present_ttl)
-      builder.append(ttl);
-
-    boolean present_deleted_time = true && (isSetDeleted_time());
-    builder.append(present_deleted_time);
-    if (present_deleted_time)
-      builder.append(deleted_time);
-
-    boolean present_earliest_valid_time = true && (isSetEarliest_valid_time());
-    builder.append(present_earliest_valid_time);
-    if (present_earliest_valid_time)
-      builder.append(earliest_valid_time);
-
-    boolean present_latest_valid_time = true && (isSetLatest_valid_time());
-    builder.append(present_latest_valid_time);
-    if (present_latest_valid_time)
-      builder.append(latest_valid_time);
-
-    boolean present_transactionCoordinatorKey = true && (isSetTransactionCoordinatorKey());
-    builder.append(present_transactionCoordinatorKey);
-    if (present_transactionCoordinatorKey)
-      builder.append(transactionCoordinatorKey);
-
-    boolean present_first_round_was_valid = true && (isSetFirst_round_was_valid());
-    builder.append(present_first_round_was_valid);
-    if (present_first_round_was_valid)
-      builder.append(first_round_was_valid);
+    boolean present_DV = true && (isSetDV());
+    builder.append(present_DV);
+    if (present_DV)
+      builder.append(DV);
 
     return builder.toHashCode();
   }
@@ -803,72 +502,22 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
+    lastComparison = Boolean.valueOf(isSetSourceReplica()).compareTo(typedOther.isSetSourceReplica());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetSourceReplica()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sourceReplica, typedOther.sourceReplica);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetTtl()).compareTo(typedOther.isSetTtl());
+    lastComparison = Boolean.valueOf(isSetDV()).compareTo(typedOther.isSetDV());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTtl()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ttl, typedOther.ttl);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetDeleted_time()).compareTo(typedOther.isSetDeleted_time());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetDeleted_time()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.deleted_time, typedOther.deleted_time);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetEarliest_valid_time()).compareTo(typedOther.isSetEarliest_valid_time());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetEarliest_valid_time()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.earliest_valid_time, typedOther.earliest_valid_time);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetLatest_valid_time()).compareTo(typedOther.isSetLatest_valid_time());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetLatest_valid_time()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.latest_valid_time, typedOther.latest_valid_time);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetTransactionCoordinatorKey()).compareTo(typedOther.isSetTransactionCoordinatorKey());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetTransactionCoordinatorKey()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionCoordinatorKey, typedOther.transactionCoordinatorKey);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetFirst_round_was_valid()).compareTo(typedOther.isSetFirst_round_was_valid());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetFirst_round_was_valid()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.first_round_was_valid, typedOther.first_round_was_valid);
+    if (isSetDV()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.DV, typedOther.DV);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -904,57 +553,27 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 3: // TIMESTAMP
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.timestamp = iprot.readI64();
-            setTimestampIsSet(true);
+        case 3: // SOURCE_REPLICA
+          if (field.type == org.apache.thrift.protocol.TType.BYTE) {
+            this.sourceReplica = iprot.readByte();
+            setSourceReplicaIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // TTL
-          if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.ttl = iprot.readI32();
-            setTtlIsSet(true);
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 5: // DELETED_TIME
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.deleted_time = iprot.readI64();
-            setDeleted_timeIsSet(true);
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 6: // EARLIEST_VALID_TIME
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.earliest_valid_time = iprot.readI64();
-            setEarliest_valid_timeIsSet(true);
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 7: // LATEST_VALID_TIME
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.latest_valid_time = iprot.readI64();
-            setLatest_valid_timeIsSet(true);
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 8: // TRANSACTION_COORDINATOR_KEY
-          if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.transactionCoordinatorKey = iprot.readBinary();
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 9: // FIRST_ROUND_WAS_VALID
-          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
-            this.first_round_was_valid = iprot.readBool();
-            setFirst_round_was_validIsSet(true);
+        case 4: // DV
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
+            {
+              org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+              this.DV = new ArrayList<Long>(_list0.size);
+              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+              {
+                long _elem2; // required
+                _elem2 = iprot.readI64();
+                this.DV.add(_elem2);
+              }
+              iprot.readListEnd();
+            }
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -986,42 +605,24 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
         oprot.writeFieldEnd();
       }
     }
-    if (isSetTimestamp()) {
-      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-      oprot.writeI64(this.timestamp);
+    if (isSetSourceReplica()) {
+      oprot.writeFieldBegin(SOURCE_REPLICA_FIELD_DESC);
+      oprot.writeByte(this.sourceReplica);
       oprot.writeFieldEnd();
     }
-    if (isSetTtl()) {
-      oprot.writeFieldBegin(TTL_FIELD_DESC);
-      oprot.writeI32(this.ttl);
-      oprot.writeFieldEnd();
-    }
-    if (isSetDeleted_time()) {
-      oprot.writeFieldBegin(DELETED_TIME_FIELD_DESC);
-      oprot.writeI64(this.deleted_time);
-      oprot.writeFieldEnd();
-    }
-    if (isSetEarliest_valid_time()) {
-      oprot.writeFieldBegin(EARLIEST_VALID_TIME_FIELD_DESC);
-      oprot.writeI64(this.earliest_valid_time);
-      oprot.writeFieldEnd();
-    }
-    if (isSetLatest_valid_time()) {
-      oprot.writeFieldBegin(LATEST_VALID_TIME_FIELD_DESC);
-      oprot.writeI64(this.latest_valid_time);
-      oprot.writeFieldEnd();
-    }
-    if (this.transactionCoordinatorKey != null) {
-      if (isSetTransactionCoordinatorKey()) {
-        oprot.writeFieldBegin(TRANSACTION_COORDINATOR_KEY_FIELD_DESC);
-        oprot.writeBinary(this.transactionCoordinatorKey);
+    if (this.DV != null) {
+      if (isSetDV()) {
+        oprot.writeFieldBegin(DV_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, this.DV.size()));
+          for (long _iter3 : this.DV)
+          {
+            oprot.writeI64(_iter3);
+          }
+          oprot.writeListEnd();
+        }
         oprot.writeFieldEnd();
       }
-    }
-    if (isSetFirst_round_was_valid()) {
-      oprot.writeFieldBegin(FIRST_ROUND_WAS_VALID_FIELD_DESC);
-      oprot.writeBool(this.first_round_was_valid);
-      oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -1049,50 +650,20 @@ public class Column implements org.apache.thrift.TBase<Column, Column._Fields>, 
       }
       first = false;
     }
-    if (isSetTimestamp()) {
+    if (isSetSourceReplica()) {
       if (!first) sb.append(", ");
-      sb.append("timestamp:");
-      sb.append(this.timestamp);
+      sb.append("sourceReplica:");
+      sb.append(this.sourceReplica);
       first = false;
     }
-    if (isSetTtl()) {
+    if (isSetDV()) {
       if (!first) sb.append(", ");
-      sb.append("ttl:");
-      sb.append(this.ttl);
-      first = false;
-    }
-    if (isSetDeleted_time()) {
-      if (!first) sb.append(", ");
-      sb.append("deleted_time:");
-      sb.append(this.deleted_time);
-      first = false;
-    }
-    if (isSetEarliest_valid_time()) {
-      if (!first) sb.append(", ");
-      sb.append("earliest_valid_time:");
-      sb.append(this.earliest_valid_time);
-      first = false;
-    }
-    if (isSetLatest_valid_time()) {
-      if (!first) sb.append(", ");
-      sb.append("latest_valid_time:");
-      sb.append(this.latest_valid_time);
-      first = false;
-    }
-    if (isSetTransactionCoordinatorKey()) {
-      if (!first) sb.append(", ");
-      sb.append("transactionCoordinatorKey:");
-      if (this.transactionCoordinatorKey == null) {
+      sb.append("DV:");
+      if (this.DV == null) {
         sb.append("null");
       } else {
-        org.apache.thrift.TBaseHelper.toString(this.transactionCoordinatorKey, sb);
+        sb.append(this.DV);
       }
-      first = false;
-    }
-    if (isSetFirst_round_was_valid()) {
-      if (!first) sb.append(", ");
-      sb.append("first_round_was_valid:");
-      sb.append(this.first_round_was_valid);
       first = false;
     }
     sb.append(")");

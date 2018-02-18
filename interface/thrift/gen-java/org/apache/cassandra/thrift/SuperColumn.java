@@ -474,14 +474,14 @@ public class SuperColumn implements org.apache.thrift.TBase<SuperColumn, SuperCo
         case 2: // COLUMNS
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-              this.columns = new ArrayList<Column>(_list0.size);
-              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+              org.apache.thrift.protocol.TList _list4 = iprot.readListBegin();
+              this.columns = new ArrayList<Column>(_list4.size);
+              for (int _i5 = 0; _i5 < _list4.size; ++_i5)
               {
-                Column _elem2; // required
-                _elem2 = new Column();
-                _elem2.read(iprot);
-                this.columns.add(_elem2);
+                Column _elem6; // required
+                _elem6 = new Column();
+                _elem6.read(iprot);
+                this.columns.add(_elem6);
               }
               iprot.readListEnd();
             }
@@ -521,9 +521,9 @@ public class SuperColumn implements org.apache.thrift.TBase<SuperColumn, SuperCo
       oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.columns.size()));
-        for (Column _iter3 : this.columns)
+        for (Column _iter7 : this.columns)
         {
-          _iter3.write(oprot);
+          _iter7.write(oprot);
         }
         oprot.writeListEnd();
       }

@@ -91,6 +91,14 @@ public class ColumnSerializer implements IColumnSerializer
                 } else {
                     dos.writeInt(0);
                 }
+                dos.writeByte(col.sourceReplica);
+                if(col.DV != null) {
+                    dos.writeByte(col.DV.length);
+                    for(int i = 0; i < col.DV.length; ++i)
+                        dos.writeLong(col.DV[i]);
+                } else
+                    dos.writeByte(0);
+
             }
         }
         catch (IOException e)
@@ -223,6 +231,14 @@ public class ColumnSerializer implements IColumnSerializer
                 ByteBufferUtil.readWithLength(dis);
             }
 
+            byte sourceReplica = dis.readByte();
+            byte numDCs = dis.readByte();
+            long[] DV = null;
+            if(numDCs > 0) {
+                DV = new long[numDCs];
+                for(int i = 0; i < numDCs; ++i)
+                    DV[i] = dis.readLong();
+            }
 
             return (b & COUNTER_UPDATE_MASK) != 0
                     ? new CounterUpdateColumn(name, value, ts, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey)
@@ -230,7 +246,7 @@ public class ColumnSerializer implements IColumnSerializer
                         ? new DeletedColumn(name, value, ts, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey)
                         : ((b & PENDING_TRANSACTION_MASK) != 0)
                             ? new PendingTransactionColumn(name, value, ts, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey)
-                            : new Column(name, value, ts, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey);
+                            : new Column(name, value, ts, lastAccessTime, previousVersionLastAccessTime, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey, sourceReplica, DV);
         }
     }
 

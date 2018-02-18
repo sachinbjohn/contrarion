@@ -17,7 +17,7 @@ public class SendTxnTSVerbHandler implements IVerbHandler {
             SendTxnTS msg = null;
             try {
                 msg = SendTxnTS.fromBytes(message.getMessageBody(), message.getVersion());
-                ROTCohort.addTimestamp(msg.getTransactionId(), msg.getLts());
+                ROTCohort.addTV(msg.getTransactionId(), msg.getTV());
             } catch (IOException e) {
                 logger.error("Error decoding SendTxnMessage");
             }

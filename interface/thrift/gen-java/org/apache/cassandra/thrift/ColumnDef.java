@@ -650,15 +650,15 @@ public class ColumnDef implements org.apache.thrift.TBase<ColumnDef, ColumnDef._
         case 5: // INDEX_OPTIONS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map46 = iprot.readMapBegin();
-              this.index_options = new HashMap<String,String>(2*_map46.size);
-              for (int _i47 = 0; _i47 < _map46.size; ++_i47)
+              org.apache.thrift.protocol.TMap _map50 = iprot.readMapBegin();
+              this.index_options = new HashMap<String,String>(2*_map50.size);
+              for (int _i51 = 0; _i51 < _map50.size; ++_i51)
               {
-                String _key48; // required
-                String _val49; // required
-                _key48 = iprot.readString();
-                _val49 = iprot.readString();
-                this.index_options.put(_key48, _val49);
+                String _key52; // required
+                String _val53; // required
+                _key52 = iprot.readString();
+                _val53 = iprot.readString();
+                this.index_options.put(_key52, _val53);
               }
               iprot.readMapEnd();
             }
@@ -710,10 +710,10 @@ public class ColumnDef implements org.apache.thrift.TBase<ColumnDef, ColumnDef._
         oprot.writeFieldBegin(INDEX_OPTIONS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.index_options.size()));
-          for (Map.Entry<String, String> _iter50 : this.index_options.entrySet())
+          for (Map.Entry<String, String> _iter54 : this.index_options.entrySet())
           {
-            oprot.writeString(_iter50.getKey());
-            oprot.writeString(_iter50.getValue());
+            oprot.writeString(_iter54.getKey());
+            oprot.writeString(_iter54.getValue());
           }
           oprot.writeMapEnd();
         }

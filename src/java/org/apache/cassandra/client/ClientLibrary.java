@@ -20,6 +20,7 @@ import org.apache.cassandra.thrift.Cassandra.AsyncClient.multiget_slice_by_time_
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.multiget_slice_call;
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.rot_cohort_call;
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.rot_coordinator_call;
+import org.apache.cassandra.thrift.Cassandra.AsyncClient.put_call;
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.set_keyspace_call;
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.transactional_batch_mutate_cohort_call;
 import org.apache.cassandra.thrift.Cassandra.AsyncClient.transactional_batch_mutate_coordinator_call;
@@ -50,11 +51,13 @@ public class ClientLibrary {
     private final HashMap<InetAddress, Cassandra.Client> addressToClient = new HashMap<InetAddress, Cassandra.Client>();
     private final HashMap<InetAddress, Cassandra.AsyncClient> addressToAsyncClient = new HashMap<InetAddress, Cassandra.AsyncClient>();
 
-    private final ClientContext clientContext = new ClientContext();
+    private final ClientContext clientContext;
     private final ConsistencyLevel consistencyLevel;
     private final IPartitioner partitioner;
     private final RingCache ringCache;
 
+    private byte numDCs;
+    private byte dcIndex;
     private final Random randomizer = new Random();
 
     /* trackers by khiem
@@ -67,13 +70,16 @@ public class ClientLibrary {
     */
 
 
-    public ClientLibrary(Map<String, Integer> localServerIPAndPorts, String keyspace, ConsistencyLevel consistencyLevel)
+    public ClientLibrary(Map<String, Integer> localServerIPAndPorts, String keyspace, ConsistencyLevel consistencyLevel, byte numDCs, byte dcindex)
     throws Exception
     {
         // if (logger.isTraceEnabled()) {
         //     logger.trace("ClientLibrary(localServerIPAndPorts = {}, keyspace = {}, consistencyLevel = {})", new Object[]{localServerIPAndPorts, keyspace, consistencyLevel});
         //}
 
+        this.numDCs = numDCs;
+        this.dcIndex = dcindex;
+        clientContext = new ClientContext(numDCs);
         for (Entry<String, Integer> ipAndPort : localServerIPAndPorts.entrySet()) {
             String ip = ipAndPort.getKey();
             Integer port = ipAndPort.getValue();
@@ -215,50 +221,6 @@ public class ClientLibrary {
         return result.value;
     }
 
-    private void substituteValidFirstRoundResults(MultigetSliceResult result, Map<ByteBuffer, List<ColumnOrSuperColumn>> firstRoundResults)
-    {
-        //Look for any results with 'first_round_was_valid' set and then
-        //substitute in the first round results for them
-        for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> keyAndCoscList : result.value.entrySet()) {
-            ByteBuffer key = keyAndCoscList.getKey();
-            List<ColumnOrSuperColumn> coscList = keyAndCoscList.getValue();
-
-            int coscListIndex = -1;
-            for (ColumnOrSuperColumn cosc : coscList) {
-                coscListIndex++;
-
-                if (cosc.isSetColumn()) {
-                    if (cosc.column.isSetFirst_round_was_valid() && cosc.column.first_round_was_valid) {
-                        Column firstRoundColumn = firstRoundResults.get(key).get(coscListIndex).column;
-                        assert ByteBufferUtil.bytesToHex(cosc.column.name).equals(ByteBufferUtil.bytesToHex(firstRoundColumn.name))
-                            : "First and second round column names dont match" + ByteBufferUtil.bytesToHex(cosc.column.name)
-                            + "!=" +  ByteBufferUtil.bytesToHex(firstRoundColumn.name);
-                        cosc.column = firstRoundColumn;
-                    }
-                } else if (cosc.isSetCounter_column() || cosc.isSetCounter_super_column()) {
-                    //WL TODO Add this logic
-                    assert false : "Not yet handled";
-                } else {
-                    assert cosc.isSetSuper_column();
-
-                    int superColumnListIndex = -1;
-                    for (Column column : cosc.super_column.columns) {
-                        superColumnListIndex++;
-
-                        if (column.isSetFirst_round_was_valid() && column.first_round_was_valid) {
-                            Column firstRoundColumn = firstRoundResults.get(key).get(coscListIndex).super_column.getColumns().get(superColumnListIndex);
-                            assert column.name == firstRoundColumn.name : "First and second round column names dont match" + column.name + "!=" +  firstRoundColumn.name;
-
-                            // Update the LVT of the firstRoundColumn to reflect its full validity interval
-                            firstRoundColumn.latest_valid_time = column.latest_valid_time;
-                            column = firstRoundColumn;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
 
     public interface CopsTestingConcurrentWriteHook
     {
@@ -291,8 +253,7 @@ public class ClientLibrary {
         List<ByteBuffer> coordinatorKeys = null;
         List<ByteBuffer> cohortLocatorKeys = new LinkedList<>();
 
-         long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
-         long lts = LamportClock.getCurrentTime();
+         long tranId = clientContext.genXactId(); // snow, new way for generating tranId
 
         int asyncClientIndex = 0;
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
@@ -311,8 +272,9 @@ public class ClientLibrary {
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
         Queue<BlockingQueueCallback<rot_cohort_call>> cohortCallbacks = new LinkedList<BlockingQueueCallback<rot_cohort_call>>();
 
+        List<Long> dvc = clientContext.DV;
         //Send Coordinator Request
-        coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, lts, coordinatorCallback);
+        coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, tranId, cohortLocatorKeys, dvc, coordinatorCallback);
 
         //Send Cohort Requests
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
@@ -322,7 +284,7 @@ public class ClientLibrary {
             BlockingQueueCallback<rot_cohort_call> callback = new BlockingQueueCallback<rot_cohort_call>();
             cohortCallbacks.add(callback);
 
-            asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, lts, callback);
+            asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, tranId, dvc, callback);
         }
 
         Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
@@ -332,6 +294,7 @@ public class ClientLibrary {
         for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : coordinatorResult.value.entrySet()) {
             ByteBuffer key = entry.getKey();
             List<ColumnOrSuperColumn> coscList = entry.getValue();
+            clientContext.advanceDV(coordinatorResult.dv);
             keyToResult.put(key, coscList);
         }
 
@@ -342,10 +305,10 @@ public class ClientLibrary {
             for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
+                // VersionVector.updateClientVV(result.dv); // Cohort DV value is null
                 keyToResult.put(key, coscList);
             }
         }
-        LamportClock.setLocalTime(coordinatorResult.lts);
         return keyToResult;
     }
 
@@ -353,163 +316,13 @@ public class ClientLibrary {
     public Map<ByteBuffer, List<ColumnOrSuperColumn>> forced_2round_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("forced_2round_multiget_slice(allKeys = {}, column_parent = {}, predicate = {})", new Object[]{printKeys(allKeys), column_parent, predicate});
-        //}
-        //Split up into one request for each server in the local cluster
-        Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToFirstRoundKeys = partitionByAsyncClients(allKeys);
-
-        //Send Round 1 Requests
-        long lts = LamportClock.sendTranId();
-        Queue<BlockingQueueCallback<multiget_slice_call>> firstRoundCallbacks = new LinkedList<BlockingQueueCallback<multiget_slice_call>>();
-        for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToFirstRoundKeys.entrySet()) {
-            Cassandra.AsyncClient asyncClient = entry.getKey();
-            List<ByteBuffer> keysForThisClient = entry.getValue();
-
-            BlockingQueueCallback<multiget_slice_call> callback = new BlockingQueueCallback<multiget_slice_call>();
-            firstRoundCallbacks.add(callback);
-
-            //if (logger.isTraceEnabled()) { logger.trace("round 1: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-            asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, lts, callback);
-        }
-
-        //Gather responses, track both max_evt and min_lvt
-        long overallMaxEvt = Long.MIN_VALUE;
-        long overallMinLvt = Long.MAX_VALUE;
-
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        NavigableMap<Long, List<ByteBuffer>> lvtToKeys = new TreeMap<Long, List<ByteBuffer>>();
-        for (BlockingQueueCallback<multiget_slice_call> callback : firstRoundCallbacks) {
-
-            MultigetSliceResult result = callback.getResponseNoInterruption().getResult();
-            LamportClock.updateTime(result.lts);
-
-            for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
-                ByteBuffer key = entry.getKey();
-                List<ColumnOrSuperColumn> coscList = entry.getValue();
-                keyToResult.put(key, coscList);
-
-                //find the evt and lvt for the entire row
-                EvtAndLvt evtAndLvt = ColumnOrSuperColumnHelper.extractEvtAndLvt(coscList);
-                if (!lvtToKeys.containsKey(evtAndLvt.getLatestValidTime())) {
-                    lvtToKeys.put(evtAndLvt.getLatestValidTime(), new LinkedList<ByteBuffer>());
-                }
-                lvtToKeys.get(evtAndLvt.getLatestValidTime()).add(key);
-                //if (logger.isTraceEnabled()) { logger.trace("round 1 response for " + printKey(key) + " evt: " + evtAndLvt.getEarliestValidTime() + " lvt: " + evtAndLvt.getLatestValidTime()); }
-
-                overallMaxEvt = Math.max(overallMaxEvt, evtAndLvt.getEarliestValidTime());
-                overallMinLvt = Math.min(overallMinLvt, evtAndLvt.getLatestValidTime());
-            }
-        }
-        //if (logger.isTraceEnabled()) { logger.trace("Min LVT:" + overallMinLvt + "  Max EVT: " + overallMaxEvt); }
-
-        //Always Execute 2nd round for micro-benchmarking
-        if (true) {
-            //get the smallest lvt > maxEvt
-            long chosenTime = lvtToKeys.navigableKeySet().higher(overallMaxEvt);
-
-            List<ByteBuffer> secondRoundKeys = new LinkedList<ByteBuffer>();
-            secondRoundKeys.addAll(allKeys);
-
-            //Send Round 2 Requests
-            Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToSecondRoundKeys = partitionByAsyncClients(secondRoundKeys);
-            Queue<BlockingQueueCallback<multiget_slice_by_time_call>> secondRoundCallbacks = new LinkedList<BlockingQueueCallback<multiget_slice_by_time_call>>();
-            for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToSecondRoundKeys.entrySet()) {
-                Cassandra.AsyncClient asyncClient = entry.getKey();
-                List<ByteBuffer> keysForThisClient = entry.getValue();
-
-                BlockingQueueCallback<multiget_slice_by_time_call> callback = new BlockingQueueCallback<multiget_slice_by_time_call>();
-                secondRoundCallbacks.add(callback);
-
-                //if (logger.isTraceEnabled()) { logger.trace("round 2: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-
-                asyncClient.multiget_slice_by_time(keysForThisClient, column_parent, predicate, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
-            }
-
-            //Gather second round responses
-            for (BlockingQueueCallback<multiget_slice_by_time_call> callback : secondRoundCallbacks) {
-                MultigetSliceResult result = callback.getResponseNoInterruption().getResult();
-                LamportClock.updateTime(result.lts);
-
-                substituteValidFirstRoundResults(result, keyToResult);
-
-                //if (logger.isTraceEnabled()) { logger.trace("round 2 responses for " + printKeys(result.getValue().keySet())); }
-
-                keyToResult.putAll(result.getValue());
-            }
-        }
-
-        //Add dependencies on anything returned and removed deleted columns
-        for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToResult.entrySet()) {
-            ByteBuffer key = entry.getKey();
-            List<ColumnOrSuperColumn> coscList = entry.getValue();
-
-            for (Iterator<ColumnOrSuperColumn> cosc_it = coscList.iterator(); cosc_it.hasNext(); ) {
-                ColumnOrSuperColumn cosc = cosc_it.next();
-                try {
-                    clientContext.addDep(key, cosc);
-                } catch (NotFoundException nfe) {
-                    //remove deleted results, it's okay for all result to be removed
-                    cosc_it.remove();
-                }
-            }
-        }
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("forced_2round_multiget_slice result = {}", keyToResult);
-        //}
-        return keyToResult;
+        throw new UnsupportedOperationException();
     }
 
     public Map<ByteBuffer, List<ColumnOrSuperColumn>> multiget_slice(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-	//logger.trace("multiget_slice(keys = {}, column_parent = {}, predicate = {})", new Object[]{printKeys(keys), column_parent, predicate});
-	//}
-
-        //Split up into one request for each server in the local cluster
-        Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKeys = partitionByAsyncClients(keys);
-
-        //Send Requests
-        long lts = LamportClock.sendTranId();
-        Queue<BlockingQueueCallback<multiget_slice_call>> callbacks = new LinkedList<BlockingQueueCallback<multiget_slice_call>>();
-        for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
-            Cassandra.AsyncClient asyncClient = entry.getKey();
-            List<ByteBuffer> keysForThisClient = entry.getValue();
-
-            BlockingQueueCallback<multiget_slice_call> callback = new BlockingQueueCallback<multiget_slice_call>();
-            callbacks.add(callback);
-
-            asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, lts, callback);
-        }
-
-        //Gather responses
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> combinedResults = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        for (BlockingQueueCallback<multiget_slice_call> callback : callbacks) {
-            MultigetSliceResult result = callback.getResponseNoInterruption().getResult();
-            LamportClock.updateTime(result.lts);
-
-            //Add dependencies on anything returned and removed deleted columns
-            for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
-                ByteBuffer key = entry.getKey();
-                List<ColumnOrSuperColumn> coscList = entry.getValue();
-
-                for (Iterator<ColumnOrSuperColumn> cosc_it = coscList.iterator(); cosc_it.hasNext(); ) {
-                    ColumnOrSuperColumn cosc = cosc_it.next();
-                    try {
-                        clientContext.addDep(key, cosc);
-                    } catch (NotFoundException nfe) {
-                        //remove deleted results, it's okay for all result to be removed
-                        cosc_it.remove();
-                    }
-                }
-            }
-            combinedResults.putAll(result.value);
-        }
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("multiget_slice result = {}", combinedResults);
-        //}
-        return combinedResults;
+       throw new UnsupportedOperationException();
     }
 
     public  ColumnOrSuperColumn get(ByteBuffer key, ColumnPath column_path)
@@ -849,213 +662,7 @@ public class ClientLibrary {
     public List<KeySlice> transactional_get_range_slices(ColumnParent column_parent, SlicePredicate predicate, KeyRange range)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("transactional_get_range_slices(column_parent = {}, predicate = {}, range = {})", new Object[]{column_parent, predicate, range});
-        //}
-
-        //turn the KeyRange into AbstractBounds that are easier to reason about
-        AbstractBounds<Token> requestedRange;
-        if (range.start_key == null)
-        {
-            Token.TokenFactory tokenFactory = partitioner.getTokenFactory();
-            Token left = tokenFactory.fromString(range.start_token);
-            Token right = tokenFactory.fromString(range.end_token);
-            requestedRange = new Bounds<Token>(left, right, partitioner);
-        }
-        else
-        {
-            AbstractBounds<RowPosition> rowPositionBounds = new Bounds<RowPosition>(RowPosition.forKey(range.start_key, partitioner), RowPosition.forKey(range.end_key, partitioner));
-            requestedRange = rowPositionBounds.toTokenBounds();
-        }
-
-        //Split up into one request for each server in the local cluster
-        Map<Cassandra.AsyncClient, List<Range<Token>>> asyncClientToRanges = new HashMap<Cassandra.AsyncClient, List<Range<Token>>>();
-        for (Entry<Range<Token>, InetAddress> entry : ringCache.getRangeMap().entries()) {
-            Range<Token> serverRange = entry.getKey();
-            InetAddress addr = entry.getValue();
-
-            Cassandra.AsyncClient asyncClient = addressToAsyncClient.get(addr);
-            if (asyncClient == null) {
-                //this addr is not in the local datacenter
-                continue;
-            }
-
-            // We want to restrict the range we ask for from each server to be
-            // the intersection of its range and the requested range
-            serverRange = intersect(serverRange, requestedRange);
-            if (serverRange == null) {
-                //no intersection, so nothing to request from this server
-                continue;
-            }
-
-            if (!asyncClientToRanges.containsKey(asyncClient)) {
-                asyncClientToRanges.put(asyncClient, new ArrayList<Range<Token>>());
-            }
-            asyncClientToRanges.get(asyncClient).add(serverRange);
-        }
-
-        //Need to merge the adjacent ranges into a single keyRange to request from each local server
-        Map<Cassandra.AsyncClient, KeyRange> asyncClientToKeyRange = new HashMap<Cassandra.AsyncClient, KeyRange>();
-        for (Entry<Cassandra.AsyncClient, List<Range<Token>>> entry : asyncClientToRanges.entrySet()) {
-            Cassandra.AsyncClient asyncClient = entry.getKey();
-            List<Range<Token>> rangeList = entry.getValue();
-
-            List<AbstractBounds<Token>> normalizedBounds = AbstractBounds.normalize(rangeList);
-            assert normalizedBounds.size() == 1 : "All parts of a server ranges should be adjacent : " + normalizedBounds;
-            AbstractBounds<Token<String>> serverRange = new Bounds<Token<String>>(normalizedBounds.get(0).left, normalizedBounds.get(0).right, partitioner);
-
-            //WL TODO: Should be a more elegant way to extract tokens
-            String leftToken = serverRange.left.toString();
-            String rightToken = serverRange.right.toString();
-            //Remove brackets from tokens (they only show up when we have the ByteOrderPartitioner I think)
-            if (leftToken.indexOf("[") != -1) {
-                leftToken = leftToken.substring(leftToken.indexOf("[") + 1, leftToken.indexOf("]"));
-                rightToken = rightToken.substring(rightToken.indexOf("[") + 1, rightToken.indexOf("]"));
-            }
-
-            KeyRange rangeForThisClient = new KeyRange();
-            rangeForThisClient.setStart_token(leftToken);
-            rangeForThisClient.setEnd_token(rightToken);
-
-            asyncClientToKeyRange.put(asyncClient, rangeForThisClient);
-        }
-
-        Queue<BlockingQueueCallback<get_range_slices_call>> firstRoundCallbacks = new LinkedList<BlockingQueueCallback<get_range_slices_call>>();
-        for (Entry<Cassandra.AsyncClient, KeyRange> entry : asyncClientToKeyRange.entrySet()) {
-            Cassandra.AsyncClient asyncClient = entry.getKey();
-            KeyRange rangeForThisClient = entry.getValue();
-
-            BlockingQueueCallback<get_range_slices_call> callback = new BlockingQueueCallback<get_range_slices_call>();
-            firstRoundCallbacks.add(callback);
-
-            asyncClient.get_range_slices(column_parent, predicate, rangeForThisClient, consistencyLevel, LamportClock.sendTimestamp(), callback);
-        }
-
-        //Gather responses, track both max_evt and min_lvt
-        long overallMaxEvt = Long.MIN_VALUE;
-        long overallMinLvt = Long.MAX_VALUE;
-
-        //keyToColumns should be in sorted order, clients (at least some of my testing code) assumes this
-        SortedMap<ByteBuffer, List<ColumnOrSuperColumn>> keyToColumns = new TreeMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        Map<ByteBuffer, Set<Dep>> keyToDeps = new HashMap<ByteBuffer, Set<Dep>>();
-
-        //WL TODO Add support for doing queries to secondary indices
-
-        NavigableMap<Long, List<ByteBuffer>> lvtToKeys = new TreeMap<Long, List<ByteBuffer>>();
-        for (BlockingQueueCallback<get_range_slices_call> callback : firstRoundCallbacks) {
-            GetRangeSlicesResult result = callback.getResponseNoInterruption().getResult();
-            LamportClock.updateTime(result.lts);
-
-            for (KeySlice keySlice : result.value) {
-                ByteBuffer key = keySlice.key;
-                List<ColumnOrSuperColumn> coscList = keySlice.columns;
-
-                //find the evt and lvt for the entire row
-                EvtAndLvt evtAndLvt = ColumnOrSuperColumnHelper.extractEvtAndLvt(coscList);
-                if (!lvtToKeys.containsKey(evtAndLvt.getLatestValidTime())) {
-                    lvtToKeys.put(evtAndLvt.getLatestValidTime(), new LinkedList<ByteBuffer>());
-                }
-                lvtToKeys.get(evtAndLvt.getLatestValidTime()).add(key);
-                //if (logger.isTraceEnabled()) { logger.trace("round 1 response for " + printKey(key) + " evt: " + evtAndLvt.getEarliestValidTime() + " lvt: " + evtAndLvt.getLatestValidTime()); }
-
-                overallMaxEvt = Math.max(overallMaxEvt, evtAndLvt.getEarliestValidTime());
-                overallMinLvt = Math.min(overallMinLvt, evtAndLvt.getLatestValidTime());
-
-
-                ClientContext tmpContext = new ClientContext();
-                for (Iterator<ColumnOrSuperColumn> cosc_it = coscList.iterator(); cosc_it.hasNext(); ) {
-                    ColumnOrSuperColumn cosc = cosc_it.next();
-                    try {
-                        tmpContext.addDep(key, cosc);
-                    } catch (NotFoundException nfe) {
-                        //remove deleted results, it's okay for all result to be removed
-                        cosc_it.remove();
-                    }
-                }
-                keyToColumns.put(key, coscList);
-                keyToDeps.put(key, tmpContext.getDeps());
-            }
-        }
-        //if (logger.isTraceEnabled()) { logger.trace("Min LVT:" + overallMinLvt + "  Max EVT: " + overallMaxEvt); }
-
-        //Execute 2nd round if necessary
-        if (overallMinLvt < overallMaxEvt) {
-            //get the smallest lvt > maxEvt
-            long chosenTime = lvtToKeys.navigableKeySet().higher(overallMaxEvt);
-
-            List<ByteBuffer> secondRoundKeys = new LinkedList<ByteBuffer>();
-            for (List<ByteBuffer> keyList : lvtToKeys.headMap(chosenTime).values()) {
-                secondRoundKeys.addAll(keyList);
-            }
-
-            //Really do need to remove results for get_range_slices_by_time
-            //invalid all results for second round keys (sanity check, not strictly necessary)
-            for (ByteBuffer key : secondRoundKeys) {
-                keyToColumns.remove(key);
-                keyToDeps.remove(key);
-            }
-
-            Set<ByteBuffer> allKnownKeys = keyToColumns.keySet();
-            Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKnownKeys = partitionByAsyncClients(allKnownKeys);
-
-            Queue<BlockingQueueCallback<get_range_slices_by_time_call>> secondRoundCallbacks = new LinkedList<BlockingQueueCallback<get_range_slices_by_time_call>>();
-            for (Entry<Cassandra.AsyncClient, KeyRange> entry : asyncClientToKeyRange.entrySet()) {
-                Cassandra.AsyncClient asyncClient = entry.getKey();
-                KeyRange rangeForThisClient = entry.getValue();
-
-                BlockingQueueCallback<get_range_slices_by_time_call> callback = new BlockingQueueCallback<get_range_slices_by_time_call>();
-                secondRoundCallbacks.add(callback);
-
-                List<ByteBuffer> knownKeys = asyncClientToKnownKeys.get(asyncClient);
-                if (knownKeys == null) {
-                    //knownKeys can't be null for thrift encoding
-                    knownKeys = new LinkedList<ByteBuffer>();
-                }
-                asyncClient.get_range_slices_by_time(column_parent, predicate, rangeForThisClient, knownKeys, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
-            }
-
-            for (BlockingQueueCallback<get_range_slices_by_time_call> callback : secondRoundCallbacks) {
-                GetRangeSlicesResult result = callback.getResponseNoInterruption().getResult();
-                LamportClock.updateTime(result.lts);
-
-                for (KeySlice keySlice : result.value) {
-                    ByteBuffer key = keySlice.key;
-                    List<ColumnOrSuperColumn> coscList = keySlice.columns;
-
-                    ClientContext tmpContext = new ClientContext();
-                    for (Iterator<ColumnOrSuperColumn> cosc_it = coscList.iterator(); cosc_it.hasNext(); ) {
-                        ColumnOrSuperColumn cosc = cosc_it.next();
-                        try {
-                            tmpContext.addDep(key, cosc);
-                        } catch (NotFoundException nfe) {
-                            //remove deleted results, it's okay for all result to be removed
-                            cosc_it.remove();
-                        }
-                    }
-                    keyToColumns.put(key, coscList);
-                    keyToDeps.put(key, tmpContext.getDeps());
-                }
-            }
-        }
-
-        //Add dependencies from counts we return
-        for (Set<Dep> deps : keyToDeps.values()) {
-            clientContext.addDeps(deps);
-        }
-
-        List<KeySlice> combinedResults = new ArrayList<KeySlice>();
-        for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToColumns.entrySet()) {
-            ByteBuffer key = entry.getKey();
-            List<ColumnOrSuperColumn> coscList = entry.getValue();
-
-            combinedResults.add(new KeySlice(key, coscList));
-        }
-
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("transactional_get_range_slices result = {}", combinedResults);
-        //}
-
-        return combinedResults;
+       throw new UnsupportedOperationException();
     }
 
 
@@ -1069,71 +676,26 @@ public class ClientLibrary {
     public void insert(ByteBuffer key, ColumnParent column_parent, Column column)
     throws InvalidRequestException, UnavailableException, TimedOutException, TException
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("insert(key = {}, column_parent = {}, column = {})", new Object[]{printKey(key),column_parent, column});
-        //}
-
-        //Set the timestamp (version) to 0 so the accepting datacenter sets it
-        column.timestamp = 0;
-        WriteResult result = findClient(key).insert(key, column_parent, column, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp());
-        LamportClock.updateTime(result.lts);
-        clientContext.clearDeps();
-        clientContext.addDep(new Dep(key, result.version));
+       throw new UnsupportedOperationException();
     }
 
+    public void put(ByteBuffer key, String columnFamily, Mutation mutation) throws Exception {
+        if (mutation.isSetColumn_or_supercolumn())
+            ColumnOrSuperColumnHelper.updateTimestamp(mutation.column_or_supercolumn, 0);
+        else {
+            assert mutation.isSetDeletion();
+            mutation.deletion.timestamp = 0L;
+        }
+        Cassandra.AsyncClient asyncClient = findAsyncClient(key);
+        BlockingQueueCallback<put_call> callback = new BlockingQueueCallback<>();
+        asyncClient.put(key, columnFamily, mutation, consistencyLevel, VersionVector.toList(), callback);
+        long lts  = callback.getResponseNoInterruption().getResult();
+        clientContext.advanceDV(dcIndex, lts);
+    }
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-        //}
-
-        //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
-        // 0 out all timestamps
-        for (Map<String, List<Mutation>> cfToMutations : mutation_map.values()) {
-            for (List<Mutation> mutations : cfToMutations.values()) {
-                for (Mutation mutation : mutations) {
-                    if (mutation.isSetColumn_or_supercolumn()) {
-                        ColumnOrSuperColumnHelper.updateTimestamp(mutation.column_or_supercolumn, 0);
-                    } else {
-                        assert mutation.isSetDeletion();
-                        mutation.deletion.timestamp = 0L;
-                    }
-                }
-            }
-        }
-        //split it into a set of batch_mutations, one for each server in the cluster
-        Map<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>> asyncClientToMutations = new HashMap<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>>();
-        for (Entry<ByteBuffer, Map<String,List<Mutation>>> entry : mutation_map.entrySet()) {
-            ByteBuffer key = entry.getKey();
-            Map<String,List<Mutation>> mutations = entry.getValue();
-
-            Cassandra.AsyncClient asyncClient = findAsyncClient(key);
-            if (!asyncClientToMutations.containsKey(asyncClient)) {
-                asyncClientToMutations.put(asyncClient, new HashMap<ByteBuffer,Map<String,List<Mutation>>>());
-            }
-            asyncClientToMutations.get(asyncClient).put(key, mutations);
-        }
-
-
-        //We need to split up based key because even if keys are colocated on the same server here,
-        //we can't guarantee they'll be colocated on the same server in other datacenters
-        Queue<BlockingQueueCallback<batch_mutate_call>> callbacks = new LinkedList<BlockingQueueCallback<batch_mutate_call>>();
-        for (Entry<Cassandra.AsyncClient, Map<ByteBuffer,Map<String,List<Mutation>>>> entry : asyncClientToMutations.entrySet()) {
-            Cassandra.AsyncClient asyncClient = entry.getKey();
-            Map<ByteBuffer,Map<String,List<Mutation>>> mutations = entry.getValue();
-
-            BlockingQueueCallback<batch_mutate_call> callback = new BlockingQueueCallback<batch_mutate_call>();
-            callbacks.add(callback);
-            //SBJ: empty deps
-            asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp(), callback);
-        }
-
-        //SBJ: Single callback anyways
-        for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
-            BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-            LamportClock.updateTime(result.lts);
-        }
+        throw new UnsupportedOperationException();
 
     }
     public void transactional_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
