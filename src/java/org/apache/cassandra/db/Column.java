@@ -501,32 +501,38 @@ prevVersion = null;
         // Special Cases
         //TODO: Understand this HACK, added to avoid an occasional error during compaction, delete to make it reappear
         if (previousColumn.earliestValidTime == null) {
+            logger.error("prevCol.EVT == null, {}", new Object[]{previousColumn});
             return this;
         }
 
         //if either is a PendingTransactionColumn we keep both around
         if (this instanceof PendingTransactionColumn || previousColumn instanceof PendingTransactionColumn) {
             addPreviousVersion(previousColumn);
+            logger.error("Pending Transaction, prev = {}, cur = {}", new Object[]{previousColumn, this});
             return this;
         }
 
         if (previousColumn.earliestValidTime > this.earliestValidTime) {
             //previousColumn was just written, and was never visible, so we don't need to save it (this can happen during replication)
-
+            logger.error("previousColumn.EVT > this.EVT, prev = {}, cur={}", new Object[]{previousColumn, this});
             //TODO: I'm uneasy this isn't true ...
             //assert previousColumn.lastAccessTime == null : previousColumn.lastAccessTime + " from " + previousColumn;
-
             return this;
         }
 	
 	//HL
 //	addPreviousVersion(previousColumn);
 
-	if (previousColumn.lastAccessTimeOfAPreviousVersion == null ||
-	    previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000000) {
+        if (previousColumn.lastAccessTimeOfAPreviousVersion == null ||
+                previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000000) {
             //need to keep the older version for potential get_by_time
             addPreviousVersion(previousColumn);
-//            logger.debug("Saving an old version:" + previousColumn);
+            logger.error("Saving an old version:" + previousColumn);
+        } else {
+            logger.error("NOT saving an old version:" + previousColumn +
+                    " because pC.lATOAPV = " + previousColumn.lastAccessTimeOfAPreviousVersion +
+                    " vs " + (System.currentTimeMillis() - 5000000) +
+                    " pC.pVs.size() = " + (previousColumn.previousVersions != null ? previousColumn.previousVersions.size() : "null"));
         }
 
 /*
@@ -546,6 +552,16 @@ prevVersion = null;
 		previousColumn.lastAccessTimeOfAPreviousVersion <= System.currentTimeMillis() - DatabaseDescriptor.getGetTransactionTimeoutInMs();
         }
 */
+        StringBuilder str = new StringBuilder();
+        str.append("After update : this = "+value+"@"+DV+"    ");
+        if(previousVersions != null) {
+            for(IColumn pcol: previousVersions){
+                Column c = (Column)pcol;
+                str.append("PrevVersion = "+c.value+"@"+c.DV+"   ");
+            }
+        } else
+            str.append("NULL");
+        logger.error(str.toString());
         return this;
     }
 

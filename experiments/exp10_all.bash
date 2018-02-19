@@ -94,6 +94,7 @@ gather_results() {
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
             rsync -az $client:${exp_output_dir}/* ${client_dir} & #shared output dir
             rsync -az $client:${root_dir}/tools/stress/stress.log ${log_dir}/client_${dc}_${cli_index}.log &
+            ssh $client -o StrictHostKeyChecking=no "rm -f ${root_dir}/tools/stress/stress.log"
         done
         wait
     done
@@ -178,7 +179,6 @@ internal_populate_cluster() {
                     mkdir -p ${exp_output_dir}; \
                     $stress_killer; sleep 1; \
                     cd ${root_dir}/tools/stress; \
-                    rm -f stress.log*; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
                     --columns=$max_columns \
