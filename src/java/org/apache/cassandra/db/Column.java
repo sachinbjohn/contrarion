@@ -454,8 +454,7 @@ public class Column implements IColumn
         }
     }
 
-    private void addPreviousVersion(Column previousColumn)
-    {
+    private void addPreviousVersion(Column previousColumn) {
         //WL TODO: Add just a minimal "OldColumn" here?
 
         synchronized (this) {
@@ -477,15 +476,15 @@ public class Column implements IColumn
                 synchronized (this.previousVersions) {
                     this.previousVersions.add(previousColumn);
                 }
-                    //TODO: could special case to reduce synchronization
-                    synchronized (previousColumn) {
-                        if (previousColumn.previousVersions != null) {
-                            previousColumn.removeOldPreviousVersions();
-                            synchronized (this.previousVersions) {
-                                this.previousVersions.addAll(previousColumn.previousVersions);
-                            }
-                            // previousColumn.previousVersions = null;
+                //TODO: could special case to reduce synchronization
+                synchronized (previousColumn) {
+                    if (previousColumn.previousVersions != null) {
+                        previousColumn.removeOldPreviousVersions();
+                        synchronized (this.previousVersions) {
+                            this.previousVersions.addAll(previousColumn.previousVersions);
                         }
+                        // previousColumn.previousVersions = null;
+
                     }
                 }
             }
