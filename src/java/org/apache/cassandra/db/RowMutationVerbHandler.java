@@ -51,8 +51,8 @@ public class RowMutationVerbHandler implements IVerbHandler
             long ut = rm.extractTimestamp();
             VersionVector.updateVV(sourceDC, ut);
 
-            Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
-            logger_.error("Replicate k={} v={} t={}@{}", new Object[]{ByteBufferUtil.string(rm.key_),ByteBufferUtil.string(col.value), ut, col.DV});
+            // Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
+            // logger_.error("Replicate k={} v={} t={}@{}", new Object[]{ByteBufferUtil.string(rm.key_),ByteBufferUtil.string(col.value), ut, col.DV});
 
             if (logger_.isDebugEnabled())
               logger_.debug("Deserialized " + rm);

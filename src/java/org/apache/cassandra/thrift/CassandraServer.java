@@ -549,7 +549,7 @@ public class CassandraServer implements Cassandra.Iface
         DV[dc] = ut;
         VersionVector.updateVV(dc, ut);
         state().hasColumnFamilyAccess(cfName, Permission.WRITE);
-        try {logger.error("Put k={} v={} t={}", new Object[]{ByteBufferUtil.string(key),ByteBufferUtil.string(mutation.column_or_supercolumn.column.value), DV});} catch(Exception ex) {}
+        // try {logger.error("Put k={} v={} t={}", new Object[]{ByteBufferUtil.string(key),ByteBufferUtil.string(mutation.column_or_supercolumn.column.value), DV});} catch(Exception ex) {}
         CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
         ThriftValidation.validateKey(metadata, key);
 
