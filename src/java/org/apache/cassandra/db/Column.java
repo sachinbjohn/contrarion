@@ -465,7 +465,7 @@ prevVersion = null;
                     } else {
                         previousColumn.removeOldPreviousVersions();
                         this.previousVersions = previousColumn.previousVersions;
-                        previousColumn.previousVersions = null;
+                        // previousColumn.previousVersions = null;
                     }
                 }
                 this.previousVersions.add(previousColumn);
@@ -476,7 +476,7 @@ prevVersion = null;
                     if (previousColumn.previousVersions != null) {
                         previousColumn.removeOldPreviousVersions();
                         this.previousVersions.addAll(previousColumn.previousVersions);
-                        previousColumn.previousVersions = null;
+                        // previousColumn.previousVersions = null;
                     }
                 }
             }
