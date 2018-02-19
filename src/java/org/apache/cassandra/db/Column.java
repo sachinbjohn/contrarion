@@ -133,6 +133,7 @@ public class Column implements IColumn
         if (previousVersions != null) {
             this.previousVersions = new TreeSet<IColumn>(new EVTComparator());
             this.previousVersions.addAll(previousVersions);
+            logger.error("New TreeSet "+ previousVersions.hashCode() + " called from "+Arrays.toString(Thread.currentThread().getStackTrace()));
         } else {
             this.previousVersions = null;
         }
@@ -463,6 +464,7 @@ public class Column implements IColumn
                 synchronized (previousColumn) {
                     if (previousColumn.previousVersions == null) {
                         this.previousVersions = new TreeSet<IColumn>(new EVTComparator());
+                        logger.error("New TreeSet "+ previousVersions.hashCode() + " called from "+Arrays.toString(Thread.currentThread().getStackTrace()));
                     } else {
                         previousColumn.removeOldPreviousVersions();
                         this.previousVersions = previousColumn.previousVersions;

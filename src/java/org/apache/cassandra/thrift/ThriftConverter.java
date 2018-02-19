@@ -405,10 +405,13 @@ public class ThriftConverter
 
                String val = null;
                try {val = ByteBufferUtil.string(column.value()); } catch (Exception ex) {}
-               tss.append("  Existing Versions = " + val + ":"+column.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
+               tss.append("  Existing Versions = ");
                if (column.previousVersions() != null) {
                    synchronized (column.previousVersions()) {
+                       int i = 0;
                        for (IColumn oldColumn : column.previousVersions()) {
+                           if(++i == 5)
+                               break;
                            val = null;
                            try {
                                val = ByteBufferUtil.string(oldColumn.value());
@@ -416,6 +419,7 @@ public class ThriftConverter
                            }
                            tss.append("," + val + ":" + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
                        }
+                       tss.append(".....  size = " + column.previousVersions().size() + " hash = "+ column.hashCode());
                    }
                } else
                    tss.append(", NULL");
