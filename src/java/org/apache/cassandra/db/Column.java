@@ -417,7 +417,7 @@ public class Column implements IColumn
             }
 
 	    //HL: User our own safty timer
-            long safeTime = System.currentTimeMillis() - 5000;
+            long safeTime = System.currentTimeMillis() - 50000;
             //long safeTime = System.currentTimeMillis() - DatabaseDescriptor.getGetTransactionTimeoutInMs();
 
 	    //HL: seems previousVersions list from head to tail is most recent value to least recent value
@@ -530,7 +530,7 @@ public class Column implements IColumn
 //	addPreviousVersion(previousColumn);
 
         if (previousColumn.lastAccessTimeOfAPreviousVersion == null ||
-                previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000) {
+                previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 50000) {
             //need to keep the older version for potential get_by_time
             addPreviousVersion(previousColumn);
         }
