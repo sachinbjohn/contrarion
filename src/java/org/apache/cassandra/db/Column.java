@@ -417,7 +417,7 @@ public class Column implements IColumn
             }
 
 	    //HL: User our own safty timer
-            long safeTime = System.currentTimeMillis() - 5000000;
+            long safeTime = System.currentTimeMillis() - 5000;
             //long safeTime = System.currentTimeMillis() - DatabaseDescriptor.getGetTransactionTimeoutInMs();
 
 	    //HL: seems previousVersions list from head to tail is most recent value to least recent value
@@ -510,20 +510,17 @@ public class Column implements IColumn
         // Special Cases
         //TODO: Understand this HACK, added to avoid an occasional error during compaction, delete to make it reappear
         if (previousColumn.earliestValidTime == null) {
-            logger.error("prevCol.EVT == null, {}", new Object[]{previousColumn});
             return this;
         }
 
         //if either is a PendingTransactionColumn we keep both around
         if (this instanceof PendingTransactionColumn || previousColumn instanceof PendingTransactionColumn) {
             addPreviousVersion(previousColumn);
-            logger.error("Pending Transaction, prev = {}, cur = {}", new Object[]{previousColumn, this});
             return this;
         }
 
         if (previousColumn.earliestValidTime > this.earliestValidTime) {
             //previousColumn was just written, and was never visible, so we don't need to save it (this can happen during replication)
-            logger.error("previousColumn.EVT > this.EVT, prev = {}, cur={}", new Object[]{previousColumn, this});
             //TODO: I'm uneasy this isn't true ...
             //assert previousColumn.lastAccessTime == null : previousColumn.lastAccessTime + " from " + previousColumn;
             return this;
@@ -533,16 +530,9 @@ public class Column implements IColumn
 //	addPreviousVersion(previousColumn);
 
         if (previousColumn.lastAccessTimeOfAPreviousVersion == null ||
-                previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000000) {
+                previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000) {
             //need to keep the older version for potential get_by_time
             addPreviousVersion(previousColumn);
-            logger.error("Saving an old version:" + ByteBufferUtil.bytesToHex(previousColumn.value) + "@" + Arrays.toString(previousColumn.DV));
-            logger.error("Called from " + Arrays.toString(Thread.currentThread().getStackTrace()));
-        } else {
-            logger.error("NOT saving an old version:" + previousColumn +
-                    " because pC.lATOAPV = " + previousColumn.lastAccessTimeOfAPreviousVersion +
-                    " vs " + (System.currentTimeMillis() - 5000000) +
-                    " pC.pVs.size() = " + (previousColumn.previousVersions != null ? previousColumn.previousVersions.size() : "null"));
         }
 
 /*
@@ -562,28 +552,28 @@ public class Column implements IColumn
 		previousColumn.lastAccessTimeOfAPreviousVersion <= System.currentTimeMillis() - DatabaseDescriptor.getGetTransactionTimeoutInMs();
         }
 */
-        StringBuilder str = new StringBuilder();
-        try {
-            str.append("this = " + ByteBufferUtil.string(value) + "@" + Arrays.toString(DV) + "    ");
-            if (previousVersions != null) {
-                for (IColumn pcol : previousVersions) {
-                    Column c = (Column) pcol;
-                    str.append("PrevVersion = " + ByteBufferUtil.string(c.value) + "@" + Arrays.toString(c.DV) + "   ");
-                }
-            } else
-                str.append("NULL");
-        } catch (Exception ex) {
-            logger.error("Exception while logging", ex);
-            str.append("this = " + ByteBufferUtil.bytesToHex(value) + "@" + Arrays.toString(DV) + "    ");
-            if (previousVersions != null) {
-                for (IColumn pcol : previousVersions) {
-                    Column c = (Column) pcol;
-                    str.append("PrevVersion = " + ByteBufferUtil.bytesToHex(c.value) + "@" + Arrays.toString(c.DV) + "   ");
-                }
-            } else
-                str.append("NULL");
-        }
-        logger.error("After update: "+ str.toString());
+        // StringBuilder str = new StringBuilder();
+        // try {
+        //     str.append("this = " + ByteBufferUtil.string(value) + "@" + Arrays.toString(DV) + "    ");
+        //     if (previousVersions != null) {
+        //         for (IColumn pcol : previousVersions) {
+        //             Column c = (Column) pcol;
+        //             str.append("PrevVersion = " + ByteBufferUtil.string(c.value) + "@" + Arrays.toString(c.DV) + "   ");
+        //         }
+        //     } else
+        //         str.append("NULL");
+        // } catch (Exception ex) {
+        //     logger.error("Exception while logging", ex);
+        //     str.append("this = " + ByteBufferUtil.bytesToHex(value) + "@" + Arrays.toString(DV) + "    ");
+        //     if (previousVersions != null) {
+        //         for (IColumn pcol : previousVersions) {
+        //             Column c = (Column) pcol;
+        //             str.append("PrevVersion = " + ByteBufferUtil.bytesToHex(c.value) + "@" + Arrays.toString(c.DV) + "   ");
+        //         }
+        //     } else
+        //         str.append("NULL");
+        // }
+        // logger.error("After update: "+ str.toString());
         return this;
     }
 
