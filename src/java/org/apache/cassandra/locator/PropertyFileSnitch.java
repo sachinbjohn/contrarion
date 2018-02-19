@@ -57,7 +57,6 @@ public class PropertyFileSnitch extends AbstractNetworkTopologySnitch
 
     public PropertyFileSnitch() throws ConfigurationException
     {
-        logger.error("PropertyFileSnitch constructor");
         reloadConfiguration();
         try
         {
@@ -170,7 +169,7 @@ public class PropertyFileSnitch extends AbstractNetworkTopologySnitch
             }
         }
 
-        logger.error("loaded network topology {}", FBUtilities.toString(reloadedMap));
+        logger.debug("loaded network topology {}", FBUtilities.toString(reloadedMap));
         endpointMap = reloadedMap;
 
         ShortNodeId.updateShortNodeIds(reloadedMap);

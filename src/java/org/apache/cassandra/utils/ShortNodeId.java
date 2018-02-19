@@ -88,7 +88,7 @@ public class ShortNodeId {
         Set<InetAddress> nonLocalAddresses = new HashSet<InetAddress>();
         byte localDC = getLocalDC();
         if(first)
-            logger.error("I am node {} of DC {} with address {}", new Object[]{getNodeIdWithinDC(getLocalId()), getLocalDC(), DatabaseDescriptor.getListenAddress()});
+            logger.debug("I am node {} of DC {} with address {}", new Object[]{getNodeIdWithinDC(getLocalId()), getLocalDC(), DatabaseDescriptor.getListenAddress()});
         for (InetAddress addr : addrToId.keySet()) {
             if (getDC(addr) == localDC && !addr.equals(DatabaseDescriptor.getListenAddress())) {
                 nonLocalAddresses.add(addr);
@@ -96,7 +96,7 @@ public class ShortNodeId {
         }
         if(first)
             for(InetAddress add: nonLocalAddresses)
-                logger.error("Other nodes in this DC are node = {} dc={} add={}", new Object[]{getNodeIdWithinDC(getId(add)),getDC(add), add});
+                logger.debug("Other nodes in this DC are node = {} dc={} add={}", new Object[]{getNodeIdWithinDC(getId(add)),getDC(add), add});
         first = false;
         return nonLocalAddresses;
     }

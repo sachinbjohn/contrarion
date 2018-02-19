@@ -1,5 +1,6 @@
 package org.apache.cassandra.thrift;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -428,17 +429,17 @@ public class ThriftConverter
                        }
                    }
                }
-               // StringBuilder tss = new StringBuilder();
-               // tss.append("  ChosenTime = "+chosenTime);
-               // tss.append("  Now = "+System.currentTimeMillis());
-               // tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
-               // tss.append("  Existing Versions = "+column.earliestValidTime());
-               // if(column.previousVersions() !=  null) {
-               //     for(IColumn oldColumn: column.previousVersions()) {
-               //         tss.append(","+oldColumn.earliestValidTime());
-               //     }
-               // }
-               logger.error("No version found. ChosenTime = {}, Latest = {}, Now = {}, LC = {}", new Object[]{chosenTime, column.earliestValidTime(), LamportClock.now(), LamportClock.getCurrentTime()});
+               StringBuilder tss = new StringBuilder();
+               tss.append("  ChosenTime = "+ Arrays.toString(chosenTime));
+               tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
+               tss.append("  Existing Versions = "+column.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
+               if(column.previousVersions() !=  null) {
+                   for(IColumn oldColumn: column.previousVersions()) {
+                       tss.append(","+oldColumn.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+                   }
+               }
+               logger.error("No version found. " + tss.toString());
+               // logger.error("No version found. ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
 
                //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
                //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());

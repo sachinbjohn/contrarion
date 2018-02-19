@@ -314,7 +314,6 @@ public class DatabaseDescriptor
                 throw new ConfigurationException("Missing endpoint_snitch directive");
             }
             snitch = createEndpointSnitch(conf.endpoint_snitch);
-            logger.error("Snitch type = {}, Snitch class name = {}", new Object[]{conf.endpoint_snitch, snitch.getClass().getCanonicalName()});
             EndpointSnitchInfo.create();
 
             /* Request Scheduler setup */
