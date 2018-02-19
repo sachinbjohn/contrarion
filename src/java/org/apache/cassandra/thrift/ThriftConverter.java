@@ -433,13 +433,18 @@ public class ThriftConverter
                try{ tss.append("  Key = " + ByteBufferUtil.string(key));} catch (Exception ex) {}
                tss.append("  ChosenTime = "+ Arrays.toString(chosenTime));
                tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
-               tss.append("  Existing Versions = "+column.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
                synchronized (column) {
+                   String val = null;
+                   try {val = ByteBufferUtil.string(column.value()); } catch (Exception ex) {}
+                   tss.append("  Existing Versions = " + val + ":"+column.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
                    if (column.previousVersions() != null) {
                        for (IColumn oldColumn : column.previousVersions()) {
-                           tss.append("," + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+                           val = null;
+                           try {val = ByteBufferUtil.string(oldColumn.value()); } catch (Exception ex) {}
+                           tss.append("," + val + ":" + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
                        }
-                   }
+                   } else
+                       tss.append(", NULL");
                }
                logger.error("No version found. " + tss.toString());
                // logger.error("No version found. ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});

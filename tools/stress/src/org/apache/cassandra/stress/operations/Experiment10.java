@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import static com.google.common.base.Charsets.UTF_8;
+
+import org.apache.cassandra.utils.LamportClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class Experiment10 extends Operation {
@@ -174,7 +176,9 @@ public class Experiment10 extends Operation {
     public void write(ClientLibrary clientLibrary, int totalServers) throws IOException {
         if (value == null)
             value = generateValue();
-        Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(value).setTimestamp(FBUtilities.timestampMicros());
+        long time = LamportClock.now()/100;
+        ByteBuffer val = ByteBufferUtil.bytes(String.format("%0"+ session.getColumnSize()+"d", time));
+        Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(val).setTimestamp(FBUtilities.timestampMicros());
 
 
         int srvID = Stress.randomizer.nextInt(totalServers);

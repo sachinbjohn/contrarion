@@ -62,7 +62,9 @@ public class Inserter extends Operation
         //                         .setValue(values.get(i % values.size()))
         //                         .setTimestamp(FBUtilities.timestampMicros()));
         // }
-        Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(values.get(0)).setTimestamp(FBUtilities.timestampMicros());
+        long time = LamportClock.now()/100;
+        ByteBuffer val = ByteBufferUtil.bytes(String.format("%0"+ session.getColumnSize()+"d", time));
+        Column column = new Column(columnName(0, session.timeUUIDComparator)).setValue(val).setTimestamp(FBUtilities.timestampMicros());
         if (session.getColumnFamilyType() == ColumnFamilyType.Super)
         {
             // supers = [SuperColumn('S' + str(j), columns) for j in xrange(supers_per_key)]
