@@ -84,7 +84,7 @@ gather_results() {
         for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
             server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index + 1)) | tail -n 1)
             rsync -az $server:${root_dir}/cassandra_var/cassandra* ${log_dir} & #separate log directory for cassandra and algo
-            if [[ "$exp_name" == "COPS-SNOW" ]]; then
+            if [[ "$exp_name" == "cops" ]]; then
                 rsync -az $server:${root_dir}/cops.data ${log_dir}/cops_${dc}_${srv_index}.data
             fi
         done
