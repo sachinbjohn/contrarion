@@ -422,18 +422,20 @@ public class Column implements IColumn
 
 	    //HL: seems previousVersions list from head to tail is most recent value to least recent value
             //So we use descendingIterator to navigate from the tail.
-            Iterator<IColumn> prevVersionIt = this.previousVersions.iterator();
-            while (prevVersionIt.hasNext()) {
-                IColumn prevVersion = prevVersionIt.next();
-       //         logger.info("old version time = {}", prevVersion.lastAccessTime());
-       //         logger.info("safetime = {}", safeTime);
-       //         logger.info("earliest valid time = {}", prevVersion.earliestValidTime());
-                if (prevVersion.lastAccessTime() < safeTime) {
-                    prevVersionIt.remove();
-prevVersion = null;
-                } else {
-                    // lastAccessTimeOfAPreviousVersions are monotonically increasing so nothing else can be cleaned now
-                    return;
+            synchronized (this.previousVersions) {
+                Iterator<IColumn> prevVersionIt = this.previousVersions.iterator();
+                while (prevVersionIt.hasNext()) {
+                    IColumn prevVersion = prevVersionIt.next();
+                    //         logger.info("old version time = {}", prevVersion.lastAccessTime());
+                    //         logger.info("safetime = {}", safeTime);
+                    //         logger.info("earliest valid time = {}", prevVersion.earliestValidTime());
+                    if (prevVersion.lastAccessTime() < safeTime) {
+                        prevVersionIt.remove();
+                        prevVersion = null;
+                    } else {
+                        // lastAccessTimeOfAPreviousVersions are monotonically increasing so nothing else can be cleaned now
+                        return;
+                    }
                 }
             }
 /*
@@ -468,15 +470,22 @@ prevVersion = null;
                         // previousColumn.previousVersions = null;
                     }
                 }
-                this.previousVersions.add(previousColumn);
+                synchronized (this.previousVersions) {
+                    this.previousVersions.add(previousColumn);
+                }
             } else {
-                this.previousVersions.add(previousColumn);
-                //TODO: could special case to reduce synchronization
-                synchronized (previousColumn) {
-                    if (previousColumn.previousVersions != null) {
-                        previousColumn.removeOldPreviousVersions();
-                        this.previousVersions.addAll(previousColumn.previousVersions);
-                        // previousColumn.previousVersions = null;
+                synchronized (this.previousVersions) {
+                    this.previousVersions.add(previousColumn);
+                }
+                    //TODO: could special case to reduce synchronization
+                    synchronized (previousColumn) {
+                        if (previousColumn.previousVersions != null) {
+                            previousColumn.removeOldPreviousVersions();
+                            synchronized (this.previousVersions) {
+                                this.previousVersions.addAll(previousColumn.previousVersions);
+                            }
+                            // previousColumn.previousVersions = null;
+                        }
                     }
                 }
             }

@@ -398,55 +398,46 @@ public class ThriftConverter
 
            //assert chosenTime < LamportClock.getVersion() : "Client can't chose a logical time in the future";
 
-           if (logger.isTraceEnabled()) {
-               if (column.previousVersions() != null) {
-                   String previousVersions = new String();
-                   synchronized (column) {
-                       for (IColumn oldColumn : column.previousVersions()) {
-                           previousVersions += ", " + oldColumn.earliestValidTime() + "-";
-                       }
-                   }
-                   previousVersions = "{" + previousVersions.substring(2) + "}";
-                   logger.trace("picking chosenTime={} from previousVersons={}, current={}-", new Object[]{chosenTime, previousVersions, currentlyVisibleColumn.earliestValidTime()});
-               } else {
-                   logger.trace("picking chosenTime={} from previousVersons=[], current={}-", chosenTime, currentlyVisibleColumn.earliestValidTime());
-               }
-           }
            StringBuilder tss = new StringBuilder();
            try{ tss.append("  Key = " + ByteBufferUtil.string(key));} catch (Exception ex) {}
            tss.append("  ChosenTime = "+ Arrays.toString(chosenTime));
            tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
-           synchronized (column) {
+
                String val = null;
                try {val = ByteBufferUtil.string(column.value()); } catch (Exception ex) {}
                tss.append("  Existing Versions = " + val + ":"+column.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
                if (column.previousVersions() != null) {
-                   for (IColumn oldColumn : column.previousVersions()) {
-                       val = null;
-                       try {val = ByteBufferUtil.string(oldColumn.value()); } catch (Exception ex) {}
-                       tss.append("," + val + ":" + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+                   synchronized (column.previousVersions()) {
+                       for (IColumn oldColumn : column.previousVersions()) {
+                           val = null;
+                           try {
+                               val = ByteBufferUtil.string(oldColumn.value());
+                           } catch (Exception ex) {
+                           }
+                           tss.append("," + val + ":" + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+                       }
                    }
                } else
                    tss.append(", NULL");
-           }
+
 
            if (column.isVisible(chosenTime)) {
                Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) column, chosenTime, currentlyVisibleColumn);
                logger.error("Most recent visible. " +tss.toString());
                return new ChosenColumnResult(thriftifyIColumn(column), pendingTransactionIds);
            } else {
-               synchronized (column) {
                    if (column.previousVersions() != null) {
-                       for (IColumn oldColumn : column.previousVersions()) {
-                           // goes through column by most recent first
-                           if (oldColumn.isVisible(chosenTime)) {
-                               Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
-                               logger.error("Old version visible. " +tss.toString());
-                               return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
+                       synchronized (column.previousVersions()) {
+                           for (IColumn oldColumn : column.previousVersions()) {
+                               // goes through column by most recent first
+                               if (oldColumn.isVisible(chosenTime)) {
+                                   Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
+                                   logger.error("Old version visible. " + tss.toString());
+                                   return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
+                               }
                            }
                        }
                    }
-               }
 
                logger.error("No version found. " + tss.toString());
                // logger.error("No version found. ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
