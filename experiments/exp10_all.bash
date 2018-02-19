@@ -94,7 +94,12 @@ gather_results() {
             client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
             rsync -az $client:${exp_output_dir}/* ${client_dir} & #shared output dir
             rsync -az $client:${root_dir}/tools/stress/stress.log ${log_dir}/client_${dc}_${cli_index}.log &
-            ssh $client -o StrictHostKeyChecking=no "rm -f ${root_dir}/tools/stress/stress.log"
+        done
+        wait
+        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
+            client_dir=${exp_output_dir}/client${cli_index}
+            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
+            ssh $client -o StrictHostKeyChecking=no "rm -f ${root_dir}/tools/stress/stress.log" &
         done
         wait
     done

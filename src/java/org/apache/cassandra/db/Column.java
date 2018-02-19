@@ -19,6 +19,7 @@
 package org.apache.cassandra.db;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.*;
@@ -553,15 +554,18 @@ prevVersion = null;
         }
 */
         StringBuilder str = new StringBuilder();
-        str.append("After update : this = "+value+"@"+DV+"    ");
-        if(previousVersions != null) {
-            for(IColumn pcol: previousVersions){
-                Column c = (Column)pcol;
-                str.append("PrevVersion = "+c.value+"@"+c.DV+"   ");
-            }
-        } else
-            str.append("NULL");
-        logger.error(str.toString());
+        try {
+            str.append("this = " + ByteBufferUtil.string(value) + "@" + Arrays.toString(DV) + "    ");
+            if (previousVersions != null) {
+                for (IColumn pcol : previousVersions) {
+                    Column c = (Column) pcol;
+                    str.append("PrevVersion = " + ByteBufferUtil.string(c.value) + "@" + Arrays.toString(c.DV) + "   ");
+                }
+            } else
+                str.append("NULL");
+        } catch (Exception ex) {
+        }
+        logger.error("After update:", str.toString());
         return this;
     }
 

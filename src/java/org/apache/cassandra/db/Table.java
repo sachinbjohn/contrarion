@@ -347,7 +347,7 @@ public class Table
     public void apply(RowMutation mutation, boolean writeCommitLog, boolean updateIndexes) throws IOException
     {
         if (logger.isDebugEnabled())
-            logger.debug("applying mutation of row {}", ByteBufferUtil.bytesToHex(mutation.key()));
+            logger.debug("applying mutation of row {} with cfSize = {} updateIndex = {}", new Object[]{ByteBufferUtil.string(mutation.key()), mutation.getColumnFamilies().size(), updateIndexes});
 
         // write the mutation to the commitlog and memtables
         switchLock.readLock().lock();
@@ -445,6 +445,7 @@ public class Table
                 if (mutatedIndexedColumns == null)
                 {
                     cfs.apply(key, cf);
+                    logger.debug("MutatedIndexColumns null");
                     continue;
                 }
                 // else mutatedIndexedColumns != null
@@ -464,6 +465,8 @@ public class Table
                     cfs.indexManager.applyIndexUpdates(mutation.key(), cf, mutatedIndexedColumns, oldIndexedColumns);
                 }
             }
+        } catch(Exception ex) {
+            logger.error("Error while applying row mutation",ex);
         }
         finally
         {
