@@ -528,8 +528,8 @@ prevVersion = null;
                 previousColumn.lastAccessTimeOfAPreviousVersion > System.currentTimeMillis() - 5000000) {
             //need to keep the older version for potential get_by_time
             addPreviousVersion(previousColumn);
-            logger.error("Saving an old version:" + previousColumn.value);
-            logger.error("Called from {}",Thread.currentThread().getStackTrace());
+            logger.error("Saving an old version:" + ByteBufferUtil.bytesToHex(previousColumn.value) + "@" + Arrays.toString(previousColumn.DV));
+            logger.error("Called from " + Arrays.toString(Thread.currentThread().getStackTrace()));
         } else {
             logger.error("NOT saving an old version:" + previousColumn +
                     " because pC.lATOAPV = " + previousColumn.lastAccessTimeOfAPreviousVersion +
