@@ -417,23 +417,20 @@ public class Table
                 }
 
                 SortedSet<ByteBuffer> mutatedIndexedColumns = null;
-                if (updateIndexes)
-                {
-                    for (ByteBuffer column : cfs.indexManager.getIndexedColumns())
-                    {
-                        if (cf.getColumnNames().contains(column) || cf.isMarkedForDelete())
-                        {
+                if (updateIndexes) {
+                    logger.error("CF column names = {}, IndexedColumns = {}", new Object[]{cf.getColumnNames(), cfs.indexManager.getIndexedColumns()});
+                    for (ByteBuffer column : cfs.indexManager.getIndexedColumns()) {
+                        if (cf.getColumnNames().contains(column) || cf.isMarkedForDelete()) {
                             if (mutatedIndexedColumns == null)
                                 mutatedIndexedColumns = new TreeSet<ByteBuffer>();
                             mutatedIndexedColumns.add(column);
-                            if (logger.isDebugEnabled())
-                            {
+                            if (logger.isDebugEnabled()) {
                                 // can't actually use validator to print value here, because we overload value
                                 // for deletion timestamp as well (which may not be a well-formed value for the column type)
                                 ByteBuffer value = cf.getColumn(column) == null ? null : cf.getColumn(column).value(); // may be null on row-level deletion
                                 logger.debug(String.format("mutating indexed column %s value %s",
-                                                           cf.getComparator().getString(column),
-                                                           value == null ? "null" : ByteBufferUtil.bytesToHex(value)));
+                                        cf.getComparator().getString(column),
+                                        value == null ? "null" : ByteBufferUtil.bytesToHex(value)));
                             }
                         }
                     }
