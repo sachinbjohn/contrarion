@@ -28,10 +28,7 @@ import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageProxy;
-import org.apache.cassandra.utils.LamportClock;
-import org.apache.cassandra.utils.ShortNodeId;
-import org.apache.cassandra.utils.VersionUtil;
-import org.apache.cassandra.utils.VersionVector;
+import org.apache.cassandra.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +47,10 @@ public class RowMutationVerbHandler implements IVerbHandler
         try
         {
             RowMutation rm = RowMutation.fromBytes(message.getMessageBody(), message.getVersion());
+            Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
             long ut = rm.extractTimestamp();
             VersionVector.updateVV(sourceDC, ut);
+            logger_.error("Replicate {} {} @ {}", new Object[]{ByteBufferUtil.string(rm.key_), ut, col.DV});
             if (logger_.isDebugEnabled())
               logger_.debug("Deserialized " + rm);
 

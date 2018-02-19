@@ -379,13 +379,13 @@ public class ThriftConverter
     * @param chosenTime
     * @return thriftified version of the column valid at the chosenTime
     */
-   public static ChosenColumnResult selectChosenColumn(IColumn column, long[] chosenTime)
+   public static ChosenColumnResult selectChosenColumn(IColumn column, long[] chosenTime, ByteBuffer key)
    {
        if (column instanceof org.apache.cassandra.db.SuperColumn) {
            List<Column> chosenSubcolumns = new ArrayList<Column>();
            Set<Long> pendingTransactions = new HashSet<Long>();
            for (IColumn subcolumn : column.getSubColumns()) {
-               ChosenColumnResult ccr = selectChosenColumn(subcolumn, chosenTime);
+               ChosenColumnResult ccr = selectChosenColumn(subcolumn, chosenTime, null);
                chosenSubcolumns.add(ccr.cosc.column);
                if (ccr.transactionIds != null) {
                    pendingTransactions.addAll(ccr.transactionIds);
@@ -430,6 +430,7 @@ public class ThriftConverter
                    }
                }
                StringBuilder tss = new StringBuilder();
+               try{ tss.append("  Key = " + ByteBufferUtil.string(key));} catch (Exception ex) {}
                tss.append("  ChosenTime = "+ Arrays.toString(chosenTime));
                tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
                tss.append("  Existing Versions = "+column.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) column).DV));

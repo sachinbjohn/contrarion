@@ -58,7 +58,7 @@ public class ShortNodeId {
             numDCs = dcIndex;
             LamportClock.setLocalId(getLocalId());
         }
-        logger.error("NodeIDs updated numDC = {}, maxNodes = {}", new Object[]{numDCs, maxServInDC});
+        logger.debug("NodeIDs updated numDC = {}, maxNodes = {}", new Object[]{numDCs, maxServInDC});
         VersionVector.init(numDCs, maxServInDC);
     }
 

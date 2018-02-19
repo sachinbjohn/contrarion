@@ -347,7 +347,7 @@ public class CassandraServer implements Cassandra.Iface
 
             List<ColumnOrSuperColumn> chosenColumns = new ArrayList<ColumnOrSuperColumn>();
             for (IColumn column : columns) {
-                ChosenColumnResult ccr = ThriftConverter.selectChosenColumn(column, chosen_time);
+                ChosenColumnResult ccr = ThriftConverter.selectChosenColumn(column, chosen_time, key);
                 if (ccr.pendingTransaction) {
                     throw new IllegalStateException("Pending transaction");
                 } else {
@@ -358,7 +358,6 @@ public class CassandraServer implements Cassandra.Iface
             if (predicate.isSetSlice_range() && predicate.slice_range.reversed) {
                 Collections.reverse(chosenColumns);
             }
-
             keyToChosenColumns.put(key, chosenColumns);
         }
     }
@@ -550,7 +549,7 @@ public class CassandraServer implements Cassandra.Iface
         DV[dc] = ut;
         VersionVector.updateVV(dc, ut);
         state().hasColumnFamilyAccess(cfName, Permission.WRITE);
-
+        try {logger.error("Put {} {}", new Object[]{ByteBufferUtil.string(key), DV});} catch(Exception ex) {}
         CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
         ThriftValidation.validateKey(metadata, key);
 

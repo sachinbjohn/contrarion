@@ -98,14 +98,14 @@ public class ClientSyncer extends Operation {
                     if (size == 0)
                         missingKeys += ByteBufferUtil.string(kvs.getKey()) + " ";
                 }
-                success = (columnCount == session.stressCount);
+                success = (columnCount == session.stressCount * session.numDCs);
                 output.println("Number of clients ready = " + columnCount + "  Missing =" + missingKeys);
                 if (success)
                     break;
                 Thread.sleep(200);
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
-                logger.error("ClientSyncer write has error", e);
+                logger.error("ClientSyncer read has error", e);
             }
         }
 

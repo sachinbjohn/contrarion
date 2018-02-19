@@ -137,7 +137,11 @@ public class Experiment10 extends Operation {
                             bytesCount += ColumnOrSuperColumnHelper.findLength(cosc);
                         }
                     } catch (NullPointerException ex) {
-                        logger.error("Error for key " + ByteBufferUtil.string(entry.getKey()));
+                        Column col = result.get(0).column;
+                        if(col.isFirst_round_was_valid())
+                            logger.error("No version for key " + ByteBufferUtil.string(entry.getKey()) + " LVT was " + col.latest_valid_time);
+                        else
+                            logger.error("Error for key " + ByteBufferUtil.string(entry.getKey()));
                     }
                 }
 
