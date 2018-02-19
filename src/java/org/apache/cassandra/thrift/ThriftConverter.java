@@ -433,9 +433,11 @@ public class ThriftConverter
                tss.append("  ChosenTime = "+ Arrays.toString(chosenTime));
                tss.append("  LogicalTime = "+LamportClock.getCurrentTime());
                tss.append("  Existing Versions = "+column.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) column).DV));
-               if(column.previousVersions() !=  null) {
-                   for(IColumn oldColumn: column.previousVersions()) {
-                       tss.append(","+oldColumn.earliestValidTime()+"@"+ Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+               synchronized (column) {
+                   if (column.previousVersions() != null) {
+                       for (IColumn oldColumn : column.previousVersions()) {
+                           tss.append("," + oldColumn.earliestValidTime() + "@" + Arrays.toString(((org.apache.cassandra.db.Column) oldColumn).DV));
+                       }
                    }
                }
                logger.error("No version found. " + tss.toString());
