@@ -65,6 +65,8 @@ public class VersionVector {
         allVVs[nodeid] = vv;
     }
     public static void updateVV(byte DC, long ut) {
+        if(logger.isTraceEnabled())
+            logger.trace("Update id {} local VV {} to {}", new Object[]{DC, VV, ut});
         if(VV[DC] < ut)
             VV[DC] = ut;
     }

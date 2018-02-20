@@ -24,7 +24,7 @@ public class VersionGossip implements MessageProducer {
     }
 
     public VersionGossip(long[] VV) {
-        this.VV = VV;
+        this.VV = VV.clone();
     }
 
 
@@ -42,7 +42,7 @@ public class VersionGossip implements MessageProducer {
         @Override
         public void serialize(VersionGossip versionGossip, DataOutput dos, int version) throws IOException {
             for(int i = 0; i < ShortNodeId.numDCs; ++i) {
-                dos.writeLong(VersionVector.VV[i]);
+                dos.writeLong(versionGossip.VV[i]);
             }
         }
 
