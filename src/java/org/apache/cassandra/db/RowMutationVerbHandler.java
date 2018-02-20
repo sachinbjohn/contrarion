@@ -41,15 +41,10 @@ public class RowMutationVerbHandler implements IVerbHandler
     {
         //HL: When we receive a replicated mutation, record current version on this server used for
         //read by time later if needed
-        byte sourceDC =  ShortNodeId.getDC(message.getFrom());
-
 
         try
         {
             RowMutation rm = RowMutation.fromBytes(message.getMessageBody(), message.getVersion());
-
-            long ut = rm.extractTimestamp();
-            VersionVector.updateVV(sourceDC, ut);
 
             // Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
             // logger_.error("Replicate k={} v={} t={}@{}", new Object[]{ByteBufferUtil.string(rm.key_),ByteBufferUtil.string(col.value), ut, col.DV});
@@ -63,8 +58,6 @@ public class RowMutationVerbHandler implements IVerbHandler
             if (forwardBytes != null && message.getVersion() >= MessagingService.VERSION_11)
                 forwardToLocalNodes(message, forwardBytes);
 
-
-            assert sourceDC != ShortNodeId.getLocalDC() : "Do not expect replication mutations from the localDC (yet)";
             applyAndRespond(message, id, rm);
 
         }
