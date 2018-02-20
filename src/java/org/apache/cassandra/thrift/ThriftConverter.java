@@ -13,6 +13,8 @@ import org.apache.cassandra.db.transaction.BatchMutateTransactionUtil.CommitOrNo
 import org.apache.cassandra.db.transaction.PendingTransactionColumn;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.LamportClock;
+import org.apache.cassandra.utils.ShortNodeId;
+import org.apache.cassandra.utils.VersionVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -446,7 +448,13 @@ public class ThriftConverter
                // logger.error("No version found. " + tss.toString());
                String keyStr = null;
                try { keyStr = ByteBufferUtil.string(key); } catch(Exception ex) {}
-               logger.error("No version found. Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{keyStr, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
+               StringBuilder vv = new StringBuilder();
+               vv.append("NodeId = "+ ShortNodeId.getNodeIdWithinDC(ShortNodeId.getLocalId()));
+               for(int i = 0; i < VersionVector.allVVs.length; ++i) {
+                   long[] VV = VersionVector.allVVs[i];
+                   vv.append("  VV["+i+"] = "+ VV==null?"NULL":Arrays.toString(VV));
+               }
+               logger.error("No version found. Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}  {}", new Object[]{keyStr, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime(), vv.toString()});
 
                //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
                //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());
