@@ -29,6 +29,8 @@ public class VersionVector {
     public static long[] GSV = null;
 
     public static void init(int numDCs, int maxServInDC) {
+        if(VV != null) //Don't re-initialize.
+            return;
         VV = new long[numDCs];
         allVVs = new long[maxServInDC][];
         int servNo = ShortNodeId.getNodeIdWithinDC(ShortNodeId.getLocalId());
