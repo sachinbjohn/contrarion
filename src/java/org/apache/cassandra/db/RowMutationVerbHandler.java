@@ -46,7 +46,8 @@ public class RowMutationVerbHandler implements IVerbHandler
         {
             RowMutation rm = RowMutation.fromBytes(message.getMessageBody(), message.getVersion());
 
-            // Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
+            Column col = (Column) rm.modifications_.values().iterator().next().columns.iterator().next();
+            VersionVector.updateVV(col.sourceReplica, col.DV[col.sourceReplica]);
             // logger_.error("Replicate k={} v={} t={}@{}", new Object[]{ByteBufferUtil.string(rm.key_),ByteBufferUtil.string(col.value), ut, col.DV});
 
             if (logger_.isDebugEnabled())

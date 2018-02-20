@@ -389,7 +389,7 @@ public class Column implements IColumn
     {
         assert column instanceof Column;
         Column otherColumn = (Column) column;
-        VersionVector.updateVV(this.sourceReplica, this.DV[this.sourceReplica]);
+
         if (timestamp == otherColumn.timestamp()) {
             //can't have ties in COPS, timestamps are globally unique, so these must be the same column
             return this;

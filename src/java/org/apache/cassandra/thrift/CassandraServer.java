@@ -547,6 +547,7 @@ public class CassandraServer implements Cassandra.Iface
         long[] DV = VersionVector.GSV.clone();
         byte dc = ShortNodeId.getLocalDC();
         DV[dc] = ut;
+        VersionVector.updateVV(dc, ut);
         state().hasColumnFamilyAccess(cfName, Permission.WRITE);
         // try {logger.error("Put k={} v={} t={}", new Object[]{ByteBufferUtil.string(key),ByteBufferUtil.string(mutation.column_or_supercolumn.column.value), DV});} catch(Exception ex) {}
         CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, cfName);
