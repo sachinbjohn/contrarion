@@ -73,17 +73,18 @@ public class ColumnSerializer implements IColumnSerializer
                 dos.writeLong(col.lastAccessTimeOfAPreviousVersion != null ? col.lastAccessTimeOfAPreviousVersion : Long.MIN_VALUE);
                 dos.writeLong(col.earliestValidTime != null ? col.earliestValidTime : Long.MIN_VALUE);
                 dos.writeLong(col.latestValidTime != null ? col.latestValidTime : Long.MIN_VALUE);
-                if (col.previousVersions == null) {
-                    dos.writeInt(-1);
-                } else {
-                    dos.writeInt(col.previousVersions.size());
-                    synchronized (col) {
-                        if (col.previousVersions != null) {
+                synchronized (col) {
+                    if (col.previousVersions == null || col.notLatestVersion) { //SBJ: Do not serialize previous version if not latest
+                        dos.writeInt(-1);
+                    } else {
+                        synchronized (col.previousVersions) {
+                            dos.writeInt(col.previousVersions.size());
                             for (IColumn prevVersion : col.previousVersions) {
                                 serialize(prevVersion, dos);
                             }
                         }
                     }
+
                 }
                 if (col.transactionCoordinatorKey != null) {
                     dos.writeInt(col.transactionCoordinatorKey.remaining());

@@ -64,7 +64,7 @@ public class Column implements IColumn
 
     public long[] DV;
     public byte sourceReplica;
-
+    public boolean notLatestVersion;
     //protected final String constructionStackTrace;
 
     private final boolean sanityCheck = false;
@@ -118,6 +118,7 @@ public class Column implements IColumn
         assert value != null;
         assert name.remaining() <= IColumn.MAX_NAME_LENGTH;
 
+        this.notLatestVersion = false;
         this.name = name;
         this.value = value;
         this.timestamp = timestamp;
@@ -289,7 +290,8 @@ public class Column implements IColumn
          * + 1 byte + if set numDCs longs for DV
         */
         int size = DBConstants.shortSize + name.remaining() + 1 + DBConstants.tsSize + DBConstants.intSize + value.remaining() + 4*DBConstants.longSize + DBConstants.intSize;
-        if (previousVersions != null) {
+        //SBJ: Do not serialize previous version if not latest version
+        if (previousVersions != null && !notLatestVersion) {
             for (IColumn previousVersion : previousVersions) {
                 size += previousVersion.serializedSize();
             }
@@ -466,6 +468,8 @@ public class Column implements IColumn
                     } else {
                         previousColumn.removeOldPreviousVersions();
                         this.previousVersions = previousColumn.previousVersions;
+                        //SBJ: can't set this to null. Others may be looking at this. Instead set not latest version to prevent infinite version travels
+                        previousColumn.notLatestVersion = true;
                         // previousColumn.previousVersions = null;
                     }
                 }
@@ -483,6 +487,7 @@ public class Column implements IColumn
                         synchronized (this.previousVersions) {
                             this.previousVersions.addAll(previousColumn.previousVersions);
                         }
+                        previousColumn.notLatestVersion = true;
                         // previousColumn.previousVersions = null;
 
                     }
@@ -613,7 +618,8 @@ public class Column implements IColumn
     @Override
     public IColumn localCopy(ColumnFamilyStore cfs, Allocator allocator)
     {
-        return new Column(cfs.internOrCopy(name, allocator), allocator.clone(value), timestamp, lastAccessTime, lastAccessTimeOfAPreviousVersion, earliestValidTime, latestValidTime, previousVersions, transactionCoordinatorKey, sourceReplica, DV);
+        //No need to copy previous version is not latest
+        return new Column(cfs.internOrCopy(name, allocator), allocator.clone(value), timestamp, lastAccessTime, lastAccessTimeOfAPreviousVersion, earliestValidTime, latestValidTime, notLatestVersion?null:previousVersions, transactionCoordinatorKey, sourceReplica, DV);
     }
 
     @Override

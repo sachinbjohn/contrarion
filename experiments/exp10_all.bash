@@ -312,21 +312,21 @@ do
     for numT in 16 8 4 1 #4 8 12 16 24 32
     do
 
-        echo "Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        echo "Exp $((exp_num + 1)) :: Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${contr_root_dir}
         internal_populate_cluster ${contr_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion
         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
         ${kill_all_cmd}
         gather_results ${contr_root_dir} contrarion
 
-        echo "COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        echo "Exp $((exp_num + 1)) :: COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
         internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
         ${kill_all_cmd}
         gather_results ${cops_root_dir} cops
 
-        echo "Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        echo "Exp $((exp_num + 1)) :: Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${eiger_root_dir}
         internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger
         run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger

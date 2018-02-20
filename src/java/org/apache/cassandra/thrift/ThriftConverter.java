@@ -444,7 +444,9 @@ public class ThriftConverter
                    }
 
                // logger.error("No version found. " + tss.toString());
-               logger.error("No version found. Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{key, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
+               String keyStr = null;
+               try { keyStr = ByteBufferUtil.string(key); } catch(Exception ex) {}
+               logger.error("No version found. Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{keyStr, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
 
                //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
                //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());
