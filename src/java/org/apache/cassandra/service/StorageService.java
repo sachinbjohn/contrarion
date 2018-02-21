@@ -474,11 +474,12 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
             @Override
             public void runMayThrow() throws ExecutionException, InterruptedException, IOException
             {
-                String stat = StorageProxy.getStats();
+
                 //System.out.println("out "+stat);
                 //System.err.println("err "+stat);
                 //logger_.error(stat);
-                FileWriter writer = new FileWriter("cops.data", true);
+                String stat = "R1="+CassandraServer.r1+",  R2="+CassandraServer.r2+",  R3="+CassandraServer.r3+", R4="+CassandraServer.r4;
+                FileWriter writer = new FileWriter("contrarion.data", false);
                 writer.write(stat);
                 writer.close();
                 ThreadPoolExecutor mutationStage = StageManager.getStage(Stage.MUTATION);

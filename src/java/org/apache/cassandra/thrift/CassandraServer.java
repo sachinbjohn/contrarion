@@ -28,6 +28,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.zip.DataFormatException;
@@ -279,10 +280,14 @@ public class CassandraServer implements Cassandra.Iface
             throw new InvalidRequestException(ex.getLocalizedMessage());
         }
     }
-
+    public static AtomicInteger r1 = new AtomicInteger();
+    public static AtomicInteger r2 = new AtomicInteger();
+    public static AtomicInteger r3 = new AtomicInteger();
+    public static AtomicInteger r4 = new AtomicInteger();
     @Override
     public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
+        r1.getAndIncrement();
         try {
             String keyStr = "";
             if (logger.isTraceEnabled()) {
@@ -293,6 +298,7 @@ public class CassandraServer implements Cassandra.Iface
 
             //Wait until it receives timestamp from coordinator
             long[] chosenTime = ROTCohort.getTV(transactionId);
+            r2.getAndIncrement();
             int localDCid = ShortNodeId.getLocalDC();
             long lamport = LamportClock.updateLocalTime(chosenTime[localDCid]);
             VersionVector.updateGSVFromCoordinator(chosenTime);
@@ -303,6 +309,7 @@ public class CassandraServer implements Cassandra.Iface
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
+           r3.getAndIncrement();
             assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
             Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
             //select results for each key that were visible at the chosen_time
@@ -315,6 +322,7 @@ public class CassandraServer implements Cassandra.Iface
             // }
 
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, null); //SBJ No need to send TV from cohorts
+            r4.getAndIncrement();
             return result;
 
         } catch (Exception ex) {
