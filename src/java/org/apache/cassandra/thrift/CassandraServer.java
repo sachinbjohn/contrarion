@@ -230,7 +230,7 @@ public class CassandraServer implements Cassandra.Iface
             assert localEndpoints.size() == 1 : "Assumed for now";
             InetAddress localEndpoint = localEndpoints.get(0);
             try {
-                logger.error("Sending TV for id "+txnid+ " to "+localEndpoint);
+                // logger.error("Sending TV for id "+txnid+ " to "+localEndpoint);
                 Message msg = new SendTxnTS(txnid, tv).getMessage(Gossiper.instance.getVersion(localEndpoint));
                 MessagingService.instance().sendOneWay(msg, localEndpoint);
             } catch (IOException ex) {
