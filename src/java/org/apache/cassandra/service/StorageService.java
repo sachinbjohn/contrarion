@@ -478,10 +478,10 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
                 //System.out.println("out "+stat);
                 //System.err.println("err "+stat);
                 //logger_.error(stat);
-                String stat = "R1="+CassandraServer.r1+",  R2="+CassandraServer.r2+",  R3="+CassandraServer.r3+", R4="+CassandraServer.r4;
-                FileWriter writer = new FileWriter("contrarion.data", false);
-                writer.write(stat);
-                writer.close();
+                // String stat = "R1="+CassandraServer.r1+",  R2="+CassandraServer.r2+",  R3="+CassandraServer.r3+", R4="+CassandraServer.r4;
+                // FileWriter writer = new FileWriter("contrarion.data", false);
+                // writer.write(stat);
+                // writer.close();
                 ThreadPoolExecutor mutationStage = StageManager.getStage(Stage.MUTATION);
                 if (mutationStage.isShutdown())
                     return; // drained already
