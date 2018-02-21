@@ -412,9 +412,10 @@ public class StressAction extends Thread
                     ClientLibrary library = client.getClientLibrary();
 
                     for (int i = 0; i < items; i++) {
-                        if (stop)
+                        if (stop) {
+                            logger.error("Time 1 = "+library.time1+"  Time 2 = "+library.time2);
                             break;
-
+                        }
                         try {
                             operations.take().run(library); // running job
                         } catch(Exception e) {
