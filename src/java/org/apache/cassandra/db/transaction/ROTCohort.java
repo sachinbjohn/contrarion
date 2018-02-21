@@ -10,6 +10,7 @@ public class ROTCohort {
     private static Logger logger = LoggerFactory.getLogger(ROTCohort.class);
     public static ConcurrentHashMap<Long, ROT_Timestamp> map = new ConcurrentHashMap<>();
     public static void addTV(long id, long[] tv) {
+        logger.error("Recvd TV for id " + id + " at " + System.currentTimeMillis());
         if(map.contains(id)) {
             ROT_Timestamp idts = map.get(id);
             idts.tv = tv;
@@ -34,9 +35,11 @@ public class ROTCohort {
             ROT_Timestamp idts = map.putIfAbsent(id, new_idts);
             if(idts == null)
                 idts = new_idts;
+            long now1 = System.currentTimeMillis();
             boolean success = idts.cv.await(10, TimeUnit.SECONDS);
+            long now2 = System.currentTimeMillis();
             if(!success)
-                throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id);
+                throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id+". From = "+now1+" To = "+now2);
             map.remove(id);
             return idts.tv;
         }
