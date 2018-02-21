@@ -41,10 +41,6 @@ public class ClientContext {
         }
     }
 
-    public long genXactId() throws  Exception {
-        return LamportClock.sendTranId(++xactIdGen);
-    }
-
     public final static int NOT_YET_SUPPORTED = -1;
 
     public HashSet<Dep> getDeps() {

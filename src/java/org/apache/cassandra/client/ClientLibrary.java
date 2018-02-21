@@ -252,9 +252,8 @@ public class ClientLibrary {
         return transactional_multiget_slice(allKeys, column_parent, predicate, null, null);
     }
 
-     public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate, CopsTestingConcurrentWriteHook afterFirstReadWriteHook, CopsTestingConcurrentWriteHook afterFirstRoundWriteHook)
-     throws Exception
-     {
+    public Map<ByteBuffer, List<ColumnOrSuperColumn>> transactional_multiget_slice(List<ByteBuffer> allKeys, ColumnParent column_parent, SlicePredicate predicate, CopsTestingConcurrentWriteHook afterFirstReadWriteHook, CopsTestingConcurrentWriteHook afterFirstRoundWriteHook)
+            throws Exception {
         Map<Cassandra.AsyncClient, List<ByteBuffer>> asyncClientToKeys = partitionByAsyncClients(allKeys);
 
         int coordinatorIndex = (int) (Math.random() * asyncClientToKeys.size());
@@ -262,7 +261,7 @@ public class ClientLibrary {
         List<ByteBuffer> coordinatorKeys = null;
         List<ByteBuffer> cohortLocatorKeys = new LinkedList<>();
 
-         long tranId = clientContext.genXactId(); // snow, new way for generating tranId
+        long tranId = LamportClock.sendTranId(); // snow, new way for generating tranId
 
         int asyncClientIndex = 0;
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
@@ -275,7 +274,7 @@ public class ClientLibrary {
             }
             asyncClientIndex++;
         }
-         asyncClientToKeys.remove(coordinator);
+        asyncClientToKeys.remove(coordinator);
 
 
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
