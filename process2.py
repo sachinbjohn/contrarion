@@ -7,7 +7,7 @@ from sets import Set
 
 from collections import defaultdict
 file = sys.argv[1]
-nclients=31
+nclients=15
 nthreads=4
 ##  Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
 def mean(x):
@@ -19,7 +19,7 @@ def lsum(x):
 
 
 def filterfn(x):
-	return True# x['Key/Read'] == '4'  and x['ValSize'] != '128' and  x['Zipf'] == '0.99' and x['WriteFrac'] == '0.05'
+	return x['Expt'] != 'COPS-SNOW' # x['Key/Read'] == '4'  and x['ValSize'] != '128' and  x['Zipf'] == '0.99' and x['WriteFrac'] == '0.05'
 def keyfn(x):
 	return int(x['Threads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
 	
