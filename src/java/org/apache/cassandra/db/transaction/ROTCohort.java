@@ -1,6 +1,9 @@
 package org.apache.cassandra.db.transaction;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class ROTCohort {
@@ -20,7 +23,7 @@ public class ROTCohort {
             idts.cv.signal();
         }
     }
-    public static long[] getTV(long id) throws InterruptedException {
+    public static long[] getTV(long id) throws InterruptedException, TimeoutException {
         if(map.contains(id)) {
             ROT_Timestamp idts = map.get(id);
             idts.cv.await();
@@ -31,7 +34,9 @@ public class ROTCohort {
             ROT_Timestamp idts = map.putIfAbsent(id, new_idts);
             if(idts == null)
                 idts = new_idts;
-            idts.cv.await();
+            boolean success = idts.cv.await(2, TimeUnit.SECONDS);
+            if(!success)
+                throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id);
             map.remove(id);
             return idts.tv;
         }
