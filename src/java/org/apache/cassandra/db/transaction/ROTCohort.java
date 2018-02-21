@@ -37,9 +37,10 @@ public class ROTCohort {
                 idts = new_idts;
             long now1 = System.currentTimeMillis();
             boolean success = idts.cv.await(10, TimeUnit.SECONDS);
+            long TenSecsToMS = TimeUnit.SECONDS.convert(10, TimeUnit.MILLISECONDS);
             long now2 = System.currentTimeMillis();
             if(!success)
-                throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id+". From = "+now1+" To = "+now2);
+                throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id + ". From = " + now1 + " To = " + now2 + " Diff =" + (now2 - now1)+ "10s = "+TenSecsToMS);
             map.remove(id);
             return idts.tv;
         }
