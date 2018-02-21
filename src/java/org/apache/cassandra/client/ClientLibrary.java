@@ -58,7 +58,7 @@ public class ClientLibrary {
 
     private byte numDCs;
     private byte dcIndex;
-    public long time1, time2, now1;
+
     private final Random randomizer = new Random();
 
     /* trackers by khiem
@@ -80,7 +80,7 @@ public class ClientLibrary {
 
         this.numDCs = numDCs;
         this.dcIndex = dcindex;
-        time1 = time2 = now1 = 0;
+
         clientContext = new ClientContext(numDCs);
         for (Entry<String, Integer> ipAndPort : localServerIPAndPorts.entrySet()) {
             String ip = ipAndPort.getKey();
@@ -129,24 +129,6 @@ public class ClientLibrary {
         } catch (CharacterCodingException e) {
             return "????=" + ByteBufferUtil.bytesToHex(key);
         }
-    }
-    public void logTime1(long n1) {
-        if(now1 != 0)
-            time1 += (n1-now1);
-        now1 = n1;
-    }
-    public void logTime2(long n2) {
-        time2 += (n2 - now1);
-    }
-    private String printKeys(Collection<ByteBuffer> keys) {
-        StringBuilder sb = new StringBuilder("{");
-        for (ByteBuffer key : keys) {
-            sb.append(printKey(key));
-            sb.append(", ");
-        }
-        sb.delete(sb.length()-2, sb.length());
-        sb.append("}");
-        return sb.toString();
     }
 
     private Cassandra.AsyncClient findAsyncClient(ByteBuffer key)

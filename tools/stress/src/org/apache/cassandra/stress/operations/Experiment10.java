@@ -86,8 +86,6 @@ public class Experiment10 extends Operation {
 
     @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
-        long now1 = System.currentTimeMillis();
-        clientLibrary.logTime1(now1);
         //do all random tosses here
         while(zipfGen == null); // wait until initialization is over
         double target_p_w = session.getWrite_fraction();
@@ -116,8 +114,6 @@ public class Experiment10 extends Operation {
         int bytesCount = 0;
         Map<ByteBuffer, List<ColumnOrSuperColumn>> results;
 
-        long now2 = System.currentTimeMillis();
-        clientLibrary.logTime2(now2);
         long startNano = System.nanoTime();
 
         boolean success = false;

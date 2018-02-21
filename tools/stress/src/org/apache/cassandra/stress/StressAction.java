@@ -413,7 +413,6 @@ public class StressAction extends Thread
 
                     for (int i = 0; i < items; i++) {
                         if (stop) {
-                            logger.error("Time 1 = "+library.time1+"  Time 2 = "+library.time2);
                             break;
                         }
                         try {

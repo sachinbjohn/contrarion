@@ -34,7 +34,7 @@ public class ROTCohort {
             ROT_Timestamp idts = map.putIfAbsent(id, new_idts);
             if(idts == null)
                 idts = new_idts;
-            boolean success = idts.cv.await(1, TimeUnit.SECONDS);
+            boolean success = idts.cv.await(2, TimeUnit.SECONDS);
             if(!success)
                 throw new TimeoutException("Cohort timed out waiting for coordinator for transaction " + id);
             map.remove(id);
