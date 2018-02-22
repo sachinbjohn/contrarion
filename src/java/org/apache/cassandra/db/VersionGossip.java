@@ -8,7 +8,6 @@ import org.apache.cassandra.net.MessageProducer;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.ShortNodeId;
-import org.apache.cassandra.utils.VersionVector;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -17,14 +16,14 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class VersionGossip implements MessageProducer {
-    private final long[] VV;
+    private final long[] GSV;
     public static VersionGossipSerializer serializer_ = new VersionGossipSerializer();
-    public long[] getVV() {
-        return VV;
+    public long[] getGSV() {
+        return GSV;
     }
 
-    public VersionGossip(long[] VV) {
-        this.VV = VV.clone();
+    public VersionGossip(long[] GSV) {
+        this.GSV = GSV.clone();
     }
 
 
@@ -42,7 +41,7 @@ public class VersionGossip implements MessageProducer {
         @Override
         public void serialize(VersionGossip versionGossip, DataOutput dos, int version) throws IOException {
             for(int i = 0; i < ShortNodeId.numDCs; ++i) {
-                dos.writeLong(versionGossip.VV[i]);
+                dos.writeLong(versionGossip.GSV[i]);
             }
         }
 

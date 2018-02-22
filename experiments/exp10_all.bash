@@ -308,7 +308,7 @@ do
     write_frac=`echo $allparams | cut -d: -f2`
     keys_per_read=`echo $allparams | cut -d: -f3`
     zipf_c=`echo $allparams | cut -d: -f4`
-    for numT in 16 8 4 1 #4 8 12 16 24 32
+    for numT in 32 24 16 8 4 1 #4 8 12 16 24 32
     do
 
         echo "Exp $((exp_num + 1)) :: Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress

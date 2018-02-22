@@ -25,6 +25,7 @@ public class ShortNodeId {
     private static Map<InetAddress, Short> addrToId = new HashMap<InetAddress, Short>();
     public static byte numDCs = 0;
     public static int maxServInDC = 0;
+    public static InetAddress left = null, right = null;
     public static void updateShortNodeIds(Map<InetAddress, String[]> addrToDcAndRack) {
         first = true;
         synchronized (addrToId) {
@@ -57,6 +58,16 @@ public class ShortNodeId {
             }
             numDCs = dcIndex;
             LamportClock.setLocalId(getLocalId());
+        }
+        int selfId = getNodeIdWithinDC(getLocalId());
+        int leftId = selfId * 2 + 1;
+        int rightId = selfId * 2 + 2;
+        for(Map.Entry<InetAddress, Short> entry : addrToId.entrySet()) {
+            int localId = getNodeIdWithinDC(entry.getValue());
+            if(localId == leftId)
+                left = entry.getKey();
+            else if(localId == rightId)
+                right = entry.getKey();
         }
         logger.debug("NodeIDs updated numDC = {}, maxNodes = {}", new Object[]{numDCs, maxServInDC});
         VersionVector.init(numDCs, maxServInDC);
