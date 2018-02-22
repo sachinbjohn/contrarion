@@ -114,16 +114,10 @@ public class LamportClock {
         if (ipStr.indexOf('.') < 0) {
             return 0L;
         }
-        String ip = "";
-        int index = 0;
-        for (String str : ipStr.split("\\.")) {
-            // we only use the last 16 bits of ip to identify each node
-            if (++index <= 2)
-                continue;
-            ip = ip + str;
-        }
-        return Long.parseLong(ip);
-
+        String[] strs = ipStr.split("\\.");
+        //Using last 16 bits of ip address
+        long l16bits = ((Integer.parseInt(strs[2]) << 8 ) + Integer.parseInt(strs[3]));
+        return l16bits;
     }
 
     public static synchronized long sendTranId() throws Exception {
