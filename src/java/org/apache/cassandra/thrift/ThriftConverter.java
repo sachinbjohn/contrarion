@@ -432,18 +432,19 @@ public class ThriftConverter
                // logger.error("Most recent visible. " +tss.toString());
                return new ChosenColumnResult(thriftifyIColumn(column), pendingTransactionIds);
            } else {
-                   if (column.previousVersions() != null) {
-                       synchronized (column.previousVersions()) {
-                           for (IColumn oldColumn : column.previousVersions()) {
-                               // goes through column by most recent first
-                               if (oldColumn.isVisible(chosenTime)) {
-                                   Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
-                                   // logger.error("Old version visible. " + tss.toString());
-                                   return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
-                               }
+               SortedSet<IColumn> prevVersions = column.previousVersions();
+               if (prevVersions != null) {
+                   synchronized (prevVersions) {
+                       for (IColumn oldColumn : prevVersions) {
+                           // goes through column by most recent first
+                           if (oldColumn.isVisible(chosenTime)) {
+                               Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
+                               // logger.error("Old version visible. " + tss.toString());
+                               return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
                            }
                        }
                    }
+               }
 
                // logger.error("No version found. " + tss.toString());
                String keyStr = null;

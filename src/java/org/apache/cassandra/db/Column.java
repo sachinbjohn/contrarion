@@ -133,7 +133,9 @@ public class Column implements IColumn
         this.latestValidTime = latestValidTime;
         if (previousVersions != null) {
             this.previousVersions = new TreeSet<IColumn>(new EVTComparator());
-            this.previousVersions.addAll(previousVersions);
+            synchronized (previousVersions) {
+                this.previousVersions.addAll(previousVersions);
+            }
         } else {
             this.previousVersions = null;
         }
@@ -483,13 +485,14 @@ public class Column implements IColumn
                 //TODO: could special case to reduce synchronization
                 synchronized (previousColumn) {
                     if (previousColumn.previousVersions != null) {
-                        previousColumn.removeOldPreviousVersions();
-                        synchronized (this.previousVersions) {
-                            this.previousVersions.addAll(previousColumn.previousVersions);
+                        synchronized (previousColumn.previousVersions) {
+                            previousColumn.removeOldPreviousVersions();
+                            synchronized (this.previousVersions) {
+                                this.previousVersions.addAll(previousColumn.previousVersions);
+                            }
+                            previousColumn.notLatestVersion = true;
+                            // previousColumn.previousVersions = null;
                         }
-                        previousColumn.notLatestVersion = true;
-                        // previousColumn.previousVersions = null;
-
                     }
                 }
             }
