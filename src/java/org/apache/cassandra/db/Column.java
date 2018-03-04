@@ -294,8 +294,10 @@ public class Column implements IColumn
         int size = DBConstants.shortSize + name.remaining() + 1 + DBConstants.tsSize + DBConstants.intSize + value.remaining() + 4*DBConstants.longSize + DBConstants.intSize;
         //SBJ: Do not serialize previous version if not latest version
         if (previousVersions != null && !notLatestVersion) {
-            for (IColumn previousVersion : previousVersions) {
-                size += previousVersion.serializedSize();
+            synchronized (previousVersions) {
+                for (IColumn previousVersion : previousVersions) {
+                    size += previousVersion.serializedSize();
+                }
             }
         }
         size += DBConstants.intSize + ((transactionCoordinatorKey == null) ? 0 : DBConstants.intSize + transactionCoordinatorKey.remaining());
@@ -621,7 +623,7 @@ public class Column implements IColumn
     @Override
     public IColumn localCopy(ColumnFamilyStore cfs, Allocator allocator)
     {
-        //No need to copy previous version is not latest
+        //No need to copy previous version if not latest
         return new Column(cfs.internOrCopy(name, allocator), allocator.clone(value), timestamp, lastAccessTime, lastAccessTimeOfAPreviousVersion, earliestValidTime, latestValidTime, notLatestVersion?null:previousVersions, transactionCoordinatorKey, sourceReplica, DV);
     }
 

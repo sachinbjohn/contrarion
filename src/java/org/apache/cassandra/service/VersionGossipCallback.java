@@ -9,28 +9,31 @@ import org.apache.cassandra.utils.ShortNodeId;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class VersionGossipCallback implements IAsyncCallback {
     long[][]VVs;
-    int responses, expectedResponses;
+    int expectedResponses;
+    AtomicInteger responses;
     ICompletable completable;
     public VersionGossipCallback(long[][] VVs, ICompletable completable) {
         this.VVs = VVs;
-        this.expectedResponses = VVs.length;
-        responses = 1; //local vv already included
+        this.expectedResponses = VVs.length - 1;
+        responses =  new AtomicInteger();  //0 is already filled with local
         this.completable = completable;
     }
     @Override
     public void response(Message msg) {
         try {
             long[] vv = new long[ShortNodeId.numDCs];
-            VVs[responses++] = vv;
             ByteArrayInputStream inputByteStream = new ByteArrayInputStream(msg.getMessageBody());
             DataInputStream dis = new DataInputStream(inputByteStream);
             for (int i = 0; i < ShortNodeId.numDCs; ++i) {
                 vv[i] = dis.readLong();
             }
-            if(responses == expectedResponses)
+            int i = responses.incrementAndGet(); //0 is already filled with local
+            VVs[i] = vv;
+            if (i == expectedResponses)
                 completable.complete();
 
         } catch (IOException ex) {
