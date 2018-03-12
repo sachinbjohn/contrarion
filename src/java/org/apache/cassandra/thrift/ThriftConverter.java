@@ -433,11 +433,13 @@ public class ThriftConverter
                return new ChosenColumnResult(thriftifyIColumn(column), pendingTransactionIds);
            } else {
                SortedSet<IColumn> prevVersions = column.previousVersions();
+               int count = 0;
                if (prevVersions != null) {
                    synchronized (prevVersions) {
                        for (IColumn oldColumn : prevVersions) {
+                           count++;
                            // goes through column by most recent first
-                           if (oldColumn.isVisible(chosenTime)) {
+                           if (oldColumn.isVisible(chosenTime) || count > 10) {
                                Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
                                // logger.error("Old version visible. " + tss.toString());
                                return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
