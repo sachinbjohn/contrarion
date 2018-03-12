@@ -7,8 +7,33 @@ from sets import Set
 
 from collections import defaultdict
 file = sys.argv[1]
-nclients=15
-nthreads=4
+if len(sys.argv) > 2:
+	group = sys.argv[2]
+	idx = int(sys.argv[3])
+else :
+	group = 'default'
+	idx = 0
+
+wf_values = ['0.05', '0.001', '0.01', '0.1', '0.3']
+kpr_values = ['4', '2', '8', '16']
+val_values = ['128', '8', '512']
+zipf_values = ['0.99', '0.0', '0.8']
+customfilterfn = {
+	'default': lambda x: True,
+	'wf' : lambda x:  x['WriteFrac'] == wf_values[idx],
+	'kpr': lambda x:  x['Key/Read'] == kpr_values[idx],
+	'zipf' : lambda x: x['Zipf'] == zipf_values[idx],
+	'val' : lambda x : x['ValSize'] == val_values[idx],
+	'base' : lambda x : x['Key/Read'] == kpr_values[0]  and x['ValSize'] == val_values[0] and  x['Zipf'] == zipf_values[0] and  x['WriteFrac'] == wf_values[0]
+}
+customSeriesColNum = {
+	'wf' : 4,
+	'kpr': 3,
+	'zipf' : 5,
+	'val' : 2
+}
+nclients=48
+nthreads=6
 ##  Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
 def mean(x):
 	assert len(x)==nclients,(len(x))
@@ -19,7 +44,7 @@ def lsum(x):
 
 
 def filterfn(x):
-	return x['Expt'] != 'COPS-SNOW' # x['Key/Read'] == '4'  and x['ValSize'] != '128' and  x['Zipf'] == '0.99' and x['WriteFrac'] == '0.05'
+	return  customfilterfn['base'](x) or customfilterfn[group](x) 
 def keyfn(x):
 	return int(x['Threads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
 	
@@ -27,6 +52,8 @@ aggfns=[lsum, mean, mean, mean, mean]
 valcols=('Throughput','Ravg', 'R50', 'R90', 'R99')
 allkeycols=('Threads','Expt','ValSize','Key/Read','WriteFrac','Zipf')
 seriesColNum=[1]
+if(group != 'default'):
+	seriesColNum.append(customSeriesColNum[group])
 
 assert(len(aggfns) == len(valcols))
 
@@ -53,6 +80,8 @@ def plotFig(data,title,filesuffix):
 	 # fig_size[0] = 20
 	fig_size[1] = 3
 	fig,p=plt.subplots()
+	
+	plt.yscale('log')
 	for x,y,l in data:
 		assert len(x)==nthreads,(len(x))
 		assert len(y)==nthreads,(len(x))
@@ -62,7 +91,6 @@ def plotFig(data,title,filesuffix):
 
 	# fig_size={}
 	
-	
 	plt.xlabel("Throughput (ops/s)")
 	plt.ylabel("Latency (us)")
 	plt.legend()
@@ -70,7 +98,7 @@ def plotFig(data,title,filesuffix):
 	fig.tight_layout()
 
 	plt.rcParams["figure.figsize"] = fig_size
-	plt.savefig(file[:-4]+"-"+filesuffix+".png")
+	plt.savefig(file[:-4]+"__"+group+str(idx)+"__"+filesuffix+".png")
 	plt.clf()
 
 data = list(csv.DictReader(open(file, 'r')))
