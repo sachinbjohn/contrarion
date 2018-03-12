@@ -439,7 +439,7 @@ public class ThriftConverter
                        for (IColumn oldColumn : prevVersions) {
                            count++;
                            // goes through column by most recent first
-                           if (oldColumn.isVisible(chosenTime) || count > 10) {
+                           if (oldColumn.isVisible(chosenTime)) {
                                Set<Long> pendingTransactionIds = new HashSet<Long>(); //findAndUpdatePendingTransactions((org.apache.cassandra.db.Column) oldColumn, chosenTime, currentlyVisibleColumn);
                                // logger.error("Old version visible. " + tss.toString());
                                return new ChosenColumnResult(thriftifyIColumn(oldColumn), pendingTransactionIds);
@@ -457,7 +457,7 @@ public class ThriftConverter
                //     long[] VV = VersionVector.allVVs[i];
                //     vv.append("  VV["+i+"] = "+ (VV==null?"NULL":Arrays.toString(VV)));
                // }
-               logger.error("No version found. Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{keyStr, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
+               logger.error("No version found. Count = {} Key= {} ChosenTime = {}, LatestEVT = {}, LatestDV = {},  LC = {}", new Object[]{count, keyStr, chosenTime, column.earliestValidTime(), ((org.apache.cassandra.db.Column) column).DV, LamportClock.getCurrentTime()});
 
                //SBJ: Returning latest column. Incorrect, but performance wise, should be same.
                //  return new ChosenColumnResult(thriftifyIColumn(column), new HashSet<Long>());
