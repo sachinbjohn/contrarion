@@ -247,7 +247,7 @@ run_exp10() {
     local root_dir=${10}
     local exp_name=${11}
     local cli_output_dir="$output_dir/${exp_name}/trial${trial}/"
-    local data_file_name=$1_$num_dcs_$2_$3_$4_$5_$6_$7_$8+$9+data
+    local data_file_name=$1_${num_dcs}_$2_$3_$4_$5_$6_$7_$8+$9+data
     for dc in $(seq 0 $((num_dcs - 1))); do
         local local_servers_csv=$(echo ${servers_by_dc[$dc]} | sed 's/ /,/g')
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
@@ -292,7 +292,7 @@ process_exp10() {
     local keys_per_read=$4
     local write_frac=$5
     local zipf_const=$6
-    local data_file_name=$1_$num_dcs_$2_$3_$4_$5_$6
+    local data_file_name=$1_${num_dcs}_$2_$3_$4_$5_$6
     find $output_dir -name "${data_file_name}_*.stderr" | xargs -n1  grep -E 'COPS|Eiger|Contrarion' >> "${output_dir}/${data_file_name}.csv"
 }
 
