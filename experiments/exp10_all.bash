@@ -236,7 +236,7 @@ run_exp10() {
     exp_num=$((exp_num + 1))
     #external vars :: output_dir, servers by dc, num servers, num clients per dc, clients by dc, strategy properties
     local keys_per_serv=$1
-    local num_serv=$2
+    local num_serv_dc=$2
     local column_size=$3
     local keys_per_read=$4
     local write_frac=$5
@@ -247,7 +247,7 @@ run_exp10() {
     local root_dir=${10}
     local exp_name=${11}
     local cli_output_dir="$output_dir/${exp_name}/trial${trial}/"
-    local data_file_name=$1_$2_$3_$4_$5_$6_$7_$8+$9+data
+    local data_file_name=$1_$num_dcs_$2_$3_$4_$5_$6_$7_$8+$9+data
     for dc in $(seq 0 $((num_dcs - 1))); do
         local local_servers_csv=$(echo ${servers_by_dc[$dc]} | sed 's/ /,/g')
         for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
@@ -263,7 +263,7 @@ run_exp10() {
             --replication-strategy=NetworkTopologyStrategy \
             --strategy-properties=$strategy_properties \
             --keys-per-server=$keys_per_serv \
-            --num-servers=$num_servers \
+            --num-servers-per-dc=$num_serv_dc \
             --stress-index=$cli_index \
             --stress-count=$num_clients_per_dc \
             --num-dcs=$num_dcs \
@@ -274,6 +274,7 @@ run_exp10() {
             --write-fraction=$write_frac \
             --threads=$num_threads \
             --zipfian-constant=$zipf_const \
+            --use-per-node-zipf \
             --expt-duration=$exp_time \
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr" \
@@ -291,14 +292,14 @@ process_exp10() {
     local keys_per_read=$4
     local write_frac=$5
     local zipf_const=$6
-    local data_file_name=$1_$2_$3_$4_$5_$6
+    local data_file_name=$1_$num_dcs_$2_$3_$4_$5_$6
     find $output_dir -name "${data_file_name}_*.stderr" | xargs -n1  grep -E 'COPS|Eiger|Contrarion' >> "${output_dir}/${data_file_name}.csv"
 }
 
 
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
-total_keys=$((keys_per_server*num_servers))
+total_keys=$((keys_per_server*num_servers_per_dc))
 run_time=50   #Timeout is set to 5minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
@@ -314,25 +315,25 @@ do
         echo "Exp $((exp_num + 1)) :: Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${contr_root_dir}
         internal_populate_cluster ${contr_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion
-        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
+        run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
         ${kill_all_cmd}
         gather_results ${contr_root_dir} contrarion
 
         echo "Exp $((exp_num + 1)) :: COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
         internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
-        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
+        run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
         ${kill_all_cmd}
         gather_results ${cops_root_dir} cops
 
         echo "Exp $((exp_num + 1)) :: Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${eiger_root_dir}
         internal_populate_cluster ${eiger_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 eiger
-        run_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
+        run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${eiger_root_dir} eiger
         ${kill_all_cmd}
         gather_results ${eiger_root_dir} eiger
     done
-    process_exp10 ${keys_per_server} ${num_servers} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
+    process_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
 done
 
 if [ $# -ge 2 ]; then
