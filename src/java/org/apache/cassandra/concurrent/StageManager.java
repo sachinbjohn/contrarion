@@ -54,8 +54,6 @@ public class StageManager
         stages.put(Stage.MIGRATION, new JMXEnabledThreadPoolExecutor(Stage.MIGRATION));
         stages.put(Stage.MISC, new JMXEnabledThreadPoolExecutor(Stage.MISC));
         stages.put(Stage.READ_REPAIR, multiThreadedStage(Stage.READ_REPAIR, Runtime.getRuntime().availableProcessors()));
-        stages.put(Stage.FETCHID, multiThreadedConfigurableStage(Stage.FETCHID, Runtime.getRuntime().availableProcessors()));
-        stages.put(Stage.SENDTXNTS, multiThreadedConfigurableStage(Stage.SENDTXNTS, Runtime.getRuntime().availableProcessors()));
         stages.put(Stage.VERSION_GOSSIP, new JMXEnabledThreadPoolExecutor(Stage.VERSION_GOSSIP));
     }
 

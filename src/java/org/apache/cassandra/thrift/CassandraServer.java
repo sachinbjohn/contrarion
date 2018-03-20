@@ -224,23 +224,9 @@ public class CassandraServer implements Cassandra.Iface
         return new GetSliceResult(result, LamportClock.sendTimestamp());
     }
 
-    private void sendTxnTs(String keyspace, List<ByteBuffer> remoteKeys, long txnid, long[] tv) {
-        for (ByteBuffer key : remoteKeys) {
-            List<InetAddress> localEndpoints = StorageService.instance.getLocalLiveNaturalEndpoints(keyspace, key);
-            assert localEndpoints.size() == 1 : "Assumed for now";
-            InetAddress localEndpoint = localEndpoints.get(0);
-            try {
-                // logger.error("Sending TV for id "+txnid+ " to "+localEndpoint);
-                Message msg = new SendTxnTS(txnid, tv).getMessage(Gossiper.instance.getVersion(localEndpoint));
-                MessagingService.instance().sendOneWay(msg, localEndpoint);
-            } catch (IOException ex) {
-                throw new IOError(ex);
-            }
-        }
-    }
 
     @Override
-    public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<ByteBuffer> remoteKeys, List<Long> dvc)
+    public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
             VersionVector.updateGSVFromClient(dvc);
@@ -253,11 +239,11 @@ public class CassandraServer implements Cassandra.Iface
                 String keyStr = "";
                 for (ByteBuffer key : keys)
                     keyStr += ByteBufferUtil.string(key) + ";";
-                logger.trace("Transaction {} :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{transactionId, keys.size(), keyStr, localTime, chosenTime});
+                logger.trace("Transaction :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{ keys.size(), keyStr, localTime, chosenTime});
             }
 
             String keyspace = state().getKeyspace();
-            sendTxnTs(keyspace, remoteKeys, transactionId, chosenTime); //send txn vector to cohorts
+
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
             ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
@@ -283,7 +269,7 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<Long> dvc)
+    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level                   , List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
 
         try {
@@ -291,7 +277,7 @@ public class CassandraServer implements Cassandra.Iface
             if (logger.isTraceEnabled()) {
                 for (ByteBuffer key : keys)
                     keyStr += ByteBufferUtil.string(key) + ";";
-                logger.trace("Transaction {} ::  cohort size={}  key={} lts={}", new Object[]{transactionId, keys.size(), keyStr, dvc});
+                logger.trace("Transaction  ::  cohort size={}  key={} lts={}", new Object[]{keys.size(), keyStr, dvc});
             }
 
             state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
@@ -301,13 +287,14 @@ public class CassandraServer implements Cassandra.Iface
 
 
             //Wait until it receives timestamp from coordinator
-            long[] chosenTime = ROTCohort.getTV(transactionId);
+            long[] chosenTime = new long[ShortNodeId.numDCs];
+            int i = 0;
+            for(Long ts : dvc) {
+                chosenTime[i++] = ts;
+            }
             int localDCid = ShortNodeId.getLocalDC();
             long lamport = LamportClock.updateLocalTime(chosenTime[localDCid]);
-            VersionVector.updateGSVFromCoordinator(chosenTime);
-            if (logger.isTraceEnabled()) {
-                logger.trace("Transaction {} ::  cohort chosen time ={}", new Object[]{transactionId, chosenTime});
-            }
+            VersionVector.updateGSVFromClient(dvc);
 
             //select results for each key that were visible at the chosen_time
             Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();

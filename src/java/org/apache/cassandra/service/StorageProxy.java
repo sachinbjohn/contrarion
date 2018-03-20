@@ -1405,17 +1405,5 @@ public class StorageProxy implements StorageProxyMBean
         DatabaseDescriptor.setRpcTimeout(timeoutInMillis);
     }
 
-    /** Will mark this operation as pending, and then send out a check for each dependency
-     *
-     * @param keyspace also known as a "table"
-     * @param locatorKey key associated with the blocked operation
-     * @param timestamp uniquely identifies the blocked operation
-     * @param deps the dependencies we want to check
-     * @param completable object with a compete callback to be executed after all dep checks return
-     */
-    public static void checkDependencies(String keyspace, ByteBuffer locatorKey, long timestamp, Set<Dependency> deps, ICompletable completable, long chosenTime)
-    {
-      throw new UnsupportedOperationException();
-        //DepCheckCallback will gather the responses and then complete the blocked action
-    }
+
 }

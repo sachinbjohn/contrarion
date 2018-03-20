@@ -250,7 +250,7 @@ public class BatchMutateTransactionCoordinator implements MessageProducer
         BatchMutateTransactionUtil.registerCoordinatorKey(coordinator_key, transaction_id);
 
         state = CoordinatorState.WAIT_FOR_DEPS_AND_NOTIFICATIONS;
-        StorageProxy.checkDependencies(keyspace, coordinatorKey, timestamp, deps, new TransactionDepCheckCompletable(), chosenTime);
+        // StorageProxy.checkDependencies(keyspace, coordinatorKey, timestamp, deps, new TransactionDepCheckCompletable(), chosenTime);
         checkQueuedNotifications();
     }
 

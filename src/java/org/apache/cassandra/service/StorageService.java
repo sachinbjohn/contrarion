@@ -113,13 +113,9 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         UNUSED_1,
         UNUSED_2,
         UNUSED_3,
-        DEPENDENCY_CHECK,
         TRANSACTION_MESSAGE,
         TRANSACTION_COORDINATOR,
         TRANSACTION_COHORT,
-        //FAKE_DEPENDENCY_CHECK,   //HL: for fake dep_check of local writes
-        FETCH_TXNIDS,        // use this instead of fake depcheck
-        SEND_TXN_TS,
         VERSION_GOSSIP
         ;
         // remember to add new verbs at the end, since we serialize by ordinal
@@ -154,13 +150,10 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         put(Verb.UNUSED_1, Stage.INTERNAL_RESPONSE);
         put(Verb.UNUSED_2, Stage.INTERNAL_RESPONSE);
         put(Verb.UNUSED_3, Stage.INTERNAL_RESPONSE);
-        put(Verb.DEPENDENCY_CHECK, Stage.MISC); //Perhaps should be on Replicate_on_write, or it's own stage
         put(Verb.TRANSACTION_MESSAGE, Stage.MUTATION); //TODO: Should have its own stage
         put(Verb.TRANSACTION_COORDINATOR, Stage.MUTATION); //TODO: Should have its own stage
         put(Verb.TRANSACTION_COHORT, Stage.MUTATION); //TODO: Should have its own stage
         //put(Verb.FAKE_DEPENDENCY_CHECK, Stage.MISC);  //HL
-        put(Verb.FETCH_TXNIDS, Stage.FETCHID); //HL
-        put(Verb.SEND_TXN_TS, Stage.SENDTXNTS); //SBJ
         put(Verb.VERSION_GOSSIP, Stage.VERSION_GOSSIP);
     }};
 
@@ -299,15 +292,15 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         MessagingService.instance().registerVerbHandlers(Verb.TRUNCATE, new TruncateVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.SCHEMA_CHECK, new SchemaCheckVerbHandler());
 
-        MessagingService.instance().registerVerbHandlers(Verb.DEPENDENCY_CHECK, new DependencyCheckVerbHandler());
+
         MessagingService.instance().registerVerbHandlers(Verb.TRANSACTION_MESSAGE, new TransactionMessageVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.TRANSACTION_COORDINATOR, new TransactionCoordinatorVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.TRANSACTION_COHORT, new TransactionCohortVerbHandler());
 
         //HL: register new fake dep_check handler
         //MessagingService.instance().registerVerbHandlers(Verb.FAKE_DEPENDENCY_CHECK, new FakeDependencyCheckVerbHandler());
-        MessagingService.instance().registerVerbHandlers(Verb.FETCH_TXNIDS, new FetchTxnIdsVerbHandler());
-        MessagingService.instance().registerVerbHandlers(Verb.SEND_TXN_TS, new SendTxnTSVerbHandler());
+
+
         MessagingService.instance().registerVerbHandlers(Verb.VERSION_GOSSIP, new VersionGossipVerbHandler());
 
         // spin up the streaming service so it is available for jmx tools.

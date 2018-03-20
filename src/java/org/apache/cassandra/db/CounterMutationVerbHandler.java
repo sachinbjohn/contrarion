@@ -57,11 +57,8 @@ public class CounterMutationVerbHandler implements IVerbHandler
 
             //Check Dependencies
             assert VersionUtil.extractDatacenter(cm.extractTimestamp()) != ShortNodeId.getLocalDC() : "Do not expect replication mutations from the localDC (yet)";
-            if (cm.getDependencies().size() > 0) {
-                StorageProxy.checkDependencies(cm.getTable(), cm.key(), cm.extractTimestamp(), cm.getDependencies(), new CounterMutationCompletion(message, id, cm), chosenTime);
-            } else {
-                applyAndRespond(message, id, cm);
-            }
+            applyAndRespond(message, id, cm);
+
         }
         catch (IOException e)
         {
