@@ -18,6 +18,7 @@ client_config=${nservers}_clients_in_vicci
 cops_root_dir="$HOME/COPS-SNOW"
 eiger_root_dir="$HOME/eiger"
 contr_root_dir="$HOME/contrarion"
+contr2_root_dir="$HOME/contrarion2"
 
 
 exp_dir="${cops_root_dir}/experiments"  #shared with other algos
@@ -318,6 +319,14 @@ do
         run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
         ${kill_all_cmd}
         gather_results ${contr_root_dir} contrarion
+
+
+        echo "Exp $((exp_num + 1)) :: Contrarion2 trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
+        internal_cluster_start_cmd ${contr2_root_dir}
+        internal_populate_cluster ${contr2_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion2
+        run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${numT} ${run_time} ${trial} ${contr2_root_dir} contrarion2
+        ${kill_all_cmd}
+        gather_results ${contr2_root_dir} contrarion2
 
         echo "Exp $((exp_num + 1)) :: COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numT=$numT started at $(date)" >> ~/progress
         internal_cluster_start_cmd ${cops_root_dir}
