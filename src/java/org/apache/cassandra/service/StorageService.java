@@ -116,6 +116,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         TRANSACTION_MESSAGE,
         TRANSACTION_COORDINATOR,
         TRANSACTION_COHORT,
+        SEND_TXN_TS,
         VERSION_GOSSIP
         ;
         // remember to add new verbs at the end, since we serialize by ordinal
@@ -154,6 +155,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         put(Verb.TRANSACTION_COORDINATOR, Stage.MUTATION); //TODO: Should have its own stage
         put(Verb.TRANSACTION_COHORT, Stage.MUTATION); //TODO: Should have its own stage
         //put(Verb.FAKE_DEPENDENCY_CHECK, Stage.MISC);  //HL
+        put(Verb.SEND_TXN_TS, Stage.SENDTXNTS); //SBJ
         put(Verb.VERSION_GOSSIP, Stage.VERSION_GOSSIP);
     }};
 
@@ -300,7 +302,7 @@ public class StorageService implements IEndpointStateChangeSubscriber, StorageSe
         //HL: register new fake dep_check handler
         //MessagingService.instance().registerVerbHandlers(Verb.FAKE_DEPENDENCY_CHECK, new FakeDependencyCheckVerbHandler());
 
-
+        MessagingService.instance().registerVerbHandlers(Verb.SEND_TXN_TS, new SendTxnTSVerbHandler());
         MessagingService.instance().registerVerbHandlers(Verb.VERSION_GOSSIP, new VersionGossipVerbHandler());
 
         // spin up the streaming service so it is available for jmx tools.

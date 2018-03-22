@@ -34,6 +34,7 @@ public enum Stage
     INTERNAL_RESPONSE,
     READ_REPAIR,
     REPLICATE_ON_WRITE,
+    SENDTXNTS,
     VERSION_GOSSIP;
 
     public String getJmxType()
@@ -53,6 +54,7 @@ public enum Stage
             case REQUEST_RESPONSE:
             case REPLICATE_ON_WRITE:
             case READ_REPAIR:
+            case SENDTXNTS:
                 return "request";
             default:
                 throw new AssertionError("Unknown stage " + this);

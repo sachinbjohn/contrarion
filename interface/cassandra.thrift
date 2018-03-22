@@ -627,14 +627,17 @@ service Cassandra {
                 2:required ColumnParent column_parent,
                 3:required SlicePredicate predicate,
                 4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-                5: VectorClock dvc)
+                5:required i64 transactionId,
+                6:required list<binary> remoteKeys,
+                7: VectorClock dvc)
      throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
   MultigetSliceResult rot_cohort(1: required list<binary> keys,
                   2:required ColumnParent column_parent,
                   3:required SlicePredicate predicate,
                   4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-                  5: VectorClock dvc)
+                  5:required i64 transactionId,
+                  6: VectorClock dvc)       //HL: add transaction id into Thrift arguments
     throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
     LamportTimestamp put(1:required binary key,
