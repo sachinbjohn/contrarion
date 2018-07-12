@@ -272,6 +272,7 @@ public class CassandraServer implements Cassandra.Iface
             // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
             //     logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             // }
+            chosenTime[localDCid] = LamportClock.getCurrentTime();
             List<Long> chosenTimeAsList = LongStream.of(chosenTime).boxed().collect(Collectors.toList());
             MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTimeAsList);
             return result;
