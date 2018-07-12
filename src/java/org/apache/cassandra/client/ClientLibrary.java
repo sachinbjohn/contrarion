@@ -240,18 +240,15 @@ public class ClientLibrary {
 
         int coordinatorIndex = (int) (Math.random() * asyncClientToKeys.size());
         Cassandra.AsyncClient coordinator = null;
-        List<ByteBuffer> coordinatorKeys = null;
-
 
         int asyncClientIndex = 0;
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             if (asyncClientIndex == coordinatorIndex) {
                 coordinator = entry.getKey();
-                coordinatorKeys = entry.getValue();
+                break;
             }
             asyncClientIndex++;
         }
-        asyncClientToKeys.remove(coordinator);
 
 
         BlockingQueueCallback<rot_coordinator_call> coordinatorCallback = new BlockingQueueCallback<>();
@@ -259,17 +256,13 @@ public class ClientLibrary {
 
         List<Long> dvc = clientContext.DV;
         //Send Coordinator Request
-        coordinator.rot_coordinator(coordinatorKeys, column_parent, predicate, consistencyLevel, dvc, coordinatorCallback);
-
-
-
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
+        coordinator.rot_coordinator(dvc, coordinatorCallback);
 
         //Coordinator Response
-        MultigetSliceResult coordinatorResult = coordinatorCallback.getResponseNoInterruption().getResult();
-        clientContext.advanceDV(coordinatorResult.dv);
+        List<Long> transactionVector = coordinatorCallback.getResponseNoInterruption().getResult();
+        clientContext.advanceDV(transactionVector);
 
-        //Send Cohort Requests
+        //Send Cohort Requests (Coordinator is also cohort)
         for (Entry<Cassandra.AsyncClient, List<ByteBuffer>> entry : asyncClientToKeys.entrySet()) {
             Cassandra.AsyncClient asyncClient = entry.getKey();
             List<ByteBuffer> keysForThisClient = entry.getValue();
@@ -280,22 +273,14 @@ public class ClientLibrary {
             asyncClient.rot_cohort(keysForThisClient, column_parent, predicate, consistencyLevel, dvc, callback);
         }
 
-        //Process coordinator results
-        for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : coordinatorResult.value.entrySet()) {
-            ByteBuffer key = entry.getKey();
-            List<ColumnOrSuperColumn> coscList = entry.getValue();
-
-            keyToResult.put(key, coscList);
-        }
-
+        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToResult = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
         //Cohort Response
         for (BlockingQueueCallback<rot_cohort_call> callback : cohortCallbacks) {
             MultigetSliceResult result = callback.getResponseNoInterruption().getResult();
-
+            clientContext.advanceDV(dcIndex, result.ts);
             for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();
-
                 keyToResult.put(key, coscList);
             }
         }

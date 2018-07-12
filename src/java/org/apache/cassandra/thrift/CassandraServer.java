@@ -225,8 +225,9 @@ public class CassandraServer implements Cassandra.Iface
     }
 
 
+    //Handle only timestamp related stuff here.. A cohort request will handle the read
     @Override
-    public MultigetSliceResult rot_coordinator(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, List<Long> dvc)
+    public List<Long> rot_coordinator(List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
         try {
             VersionVector.updateGSVFromClient(dvc);
@@ -234,33 +235,8 @@ public class CassandraServer implements Cassandra.Iface
             long localTime = LamportClock.updateLocalTime(dvc.get(localDCid));
             VersionVector.GSV[localDCid] = localTime;
             long[] chosenTime = VersionVector.GSV.clone();
-
-            if(logger.isTraceEnabled()) {
-                String keyStr = "";
-                for (ByteBuffer key : keys)
-                    keyStr += ByteBufferUtil.string(key) + ";";
-                logger.trace("Transaction :: coordinator size={} key={} lts = {} chosenTime = {}", new Object[]{ keys.size(), keyStr, localTime, chosenTime});
-            }
-
-            String keyspace = state().getKeyspace();
-
-
-            state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-            ISliceMap iSliceMap = multigetSliceInternal(keyspace, keys, column_parent, predicate, consistency_level, false);
-            assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
-            Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
-            //select results for each key that were visible at the chosen_time
-            Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-            Set<Long> pendingTransactionIds = new HashSet<Long>();  //SBJ: Dummy
-            //pendingTransactions for now is always null -- we don't consider WOT for now
-            selectChosenResults(keyToColumnFamily, predicate, chosenTime, keyToChosenColumns);
-
-            // for(Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : keyToChosenColumns.entrySet()) {
-            //     logger.error("ROT Coordinator lts = {} chosenTime = {} now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(), ByteBufferUtil.string(entry.getKey()), entry.getValue()});
-            // }
             List<Long> chosenTimeAsList = LongStream.of(chosenTime).boxed().collect(Collectors.toList());
-            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, chosenTimeAsList);
-            return result;
+            return chosenTimeAsList;
 
         } catch (Exception ex) {
             logger.error("ROT coordinator has error", ex);
@@ -286,7 +262,6 @@ public class CassandraServer implements Cassandra.Iface
             Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
 
 
-            //Wait until it receives timestamp from coordinator
             long[] chosenTime = new long[ShortNodeId.numDCs];
             int i = 0;
             for(Long ts : dvc) {
@@ -305,7 +280,7 @@ public class CassandraServer implements Cassandra.Iface
             //     logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             // }
 
-            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, null); //SBJ No need to send TV from cohorts
+            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, LamportClock.getCurrentTime()); //SBJ: Send timestamp after read to client
             return result;
 
         } catch (Exception ex) {

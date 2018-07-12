@@ -537,7 +537,7 @@ struct GetCountResult {
 }
 struct MultigetSliceResult {
     1: map<binary,list<ColumnOrSuperColumn>> value,
-    2: VectorClock dv,
+    2: LamportTimestamp ts,
 }
 struct CountWithMetadata {
     1: i32 count,
@@ -623,11 +623,7 @@ service Cassandra {
                 99: LamportTimestamp lts)
       throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
-  MultigetSliceResult rot_coordinator(1: required list<binary> keys,
-                2:required ColumnParent column_parent,
-                3:required SlicePredicate predicate,
-                4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,
-                5: VectorClock dvc)
+  VectorClock rot_coordinator(1: required VectorClock dvc)
      throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
   MultigetSliceResult rot_cohort(1: required list<binary> keys,

@@ -46,15 +46,15 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MultigetSliceResult");
 
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.MAP, (short)1);
-  private static final org.apache.thrift.protocol.TField DV_FIELD_DESC = new org.apache.thrift.protocol.TField("dv", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField TS_FIELD_DESC = new org.apache.thrift.protocol.TField("ts", org.apache.thrift.protocol.TType.I64, (short)2);
 
   public Map<ByteBuffer,List<ColumnOrSuperColumn>> value; // required
-  public List<Long> dv; // required
+  public long ts; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     VALUE((short)1, "value"),
-    DV((short)2, "dv");
+    TS((short)2, "ts");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -71,8 +71,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
       switch(fieldId) {
         case 1: // VALUE
           return VALUE;
-        case 2: // DV
-          return DV;
+        case 2: // TS
+          return TS;
         default:
           return null;
       }
@@ -113,6 +113,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
   }
 
   // isset id assignments
+  private static final int __TS_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -122,8 +124,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true), 
             new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
                 new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnOrSuperColumn.class)))));
-    tmpMap.put(_Fields.DV, new org.apache.thrift.meta_data.FieldMetaData("dv", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST        , "VectorClock")));
+    tmpMap.put(_Fields.TS, new org.apache.thrift.meta_data.FieldMetaData("ts", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64        , "LamportTimestamp")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MultigetSliceResult.class, metaDataMap);
   }
@@ -133,17 +135,20 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
 
   public MultigetSliceResult(
     Map<ByteBuffer,List<ColumnOrSuperColumn>> value,
-    List<Long> dv)
+    long ts)
   {
     this();
     this.value = value;
-    this.dv = dv;
+    this.ts = ts;
+    setTsIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public MultigetSliceResult(MultigetSliceResult other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetValue()) {
       Map<ByteBuffer,List<ColumnOrSuperColumn>> __this__value = new HashMap<ByteBuffer,List<ColumnOrSuperColumn>>();
       for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> other_element : other.value.entrySet()) {
@@ -163,9 +168,7 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
       }
       this.value = __this__value;
     }
-    if (other.isSetDv()) {
-      this.dv = other.dv;
-    }
+    this.ts = other.ts;
   }
 
   public MultigetSliceResult deepCopy() {
@@ -175,7 +178,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
   @Override
   public void clear() {
     this.value = null;
-    this.dv = null;
+    setTsIsSet(false);
+    this.ts = 0;
   }
 
   public int getValueSize() {
@@ -213,43 +217,27 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
     }
   }
 
-  public int getDvSize() {
-    return (this.dv == null) ? 0 : this.dv.size();
+  public long getTs() {
+    return this.ts;
   }
 
-  public java.util.Iterator<Long> getDvIterator() {
-    return (this.dv == null) ? null : this.dv.iterator();
-  }
-
-  public void addToDv(long elem) {
-    if (this.dv == null) {
-      this.dv = new ArrayList<Long>();
-    }
-    this.dv.add(elem);
-  }
-
-  public List<Long> getDv() {
-    return this.dv;
-  }
-
-  public MultigetSliceResult setDv(List<Long> dv) {
-    this.dv = dv;
+  public MultigetSliceResult setTs(long ts) {
+    this.ts = ts;
+    setTsIsSet(true);
     return this;
   }
 
-  public void unsetDv() {
-    this.dv = null;
+  public void unsetTs() {
+    __isset_bit_vector.clear(__TS_ISSET_ID);
   }
 
-  /** Returns true if field dv is set (has been assigned a value) and false otherwise */
-  public boolean isSetDv() {
-    return this.dv != null;
+  /** Returns true if field ts is set (has been assigned a value) and false otherwise */
+  public boolean isSetTs() {
+    return __isset_bit_vector.get(__TS_ISSET_ID);
   }
 
-  public void setDvIsSet(boolean value) {
-    if (!value) {
-      this.dv = null;
-    }
+  public void setTsIsSet(boolean value) {
+    __isset_bit_vector.set(__TS_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -262,11 +250,11 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
       }
       break;
 
-    case DV:
+    case TS:
       if (value == null) {
-        unsetDv();
+        unsetTs();
       } else {
-        setDv((List<Long>)value);
+        setTs((Long)value);
       }
       break;
 
@@ -278,8 +266,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
     case VALUE:
       return getValue();
 
-    case DV:
-      return getDv();
+    case TS:
+      return Long.valueOf(getTs());
 
     }
     throw new IllegalStateException();
@@ -294,8 +282,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
     switch (field) {
     case VALUE:
       return isSetValue();
-    case DV:
-      return isSetDv();
+    case TS:
+      return isSetTs();
     }
     throw new IllegalStateException();
   }
@@ -322,12 +310,12 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
         return false;
     }
 
-    boolean this_present_dv = true && this.isSetDv();
-    boolean that_present_dv = true && that.isSetDv();
-    if (this_present_dv || that_present_dv) {
-      if (!(this_present_dv && that_present_dv))
+    boolean this_present_ts = true;
+    boolean that_present_ts = true;
+    if (this_present_ts || that_present_ts) {
+      if (!(this_present_ts && that_present_ts))
         return false;
-      if (!this.dv.equals(that.dv))
+      if (this.ts != that.ts)
         return false;
     }
 
@@ -343,10 +331,10 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
     if (present_value)
       builder.append(value);
 
-    boolean present_dv = true && (isSetDv());
-    builder.append(present_dv);
-    if (present_dv)
-      builder.append(dv);
+    boolean present_ts = true;
+    builder.append(present_ts);
+    if (present_ts)
+      builder.append(ts);
 
     return builder.toHashCode();
   }
@@ -369,12 +357,12 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetDv()).compareTo(typedOther.isSetDv());
+    lastComparison = Boolean.valueOf(isSetTs()).compareTo(typedOther.isSetTs());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetDv()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dv, typedOther.dv);
+    if (isSetTs()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ts, typedOther.ts);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -426,19 +414,10 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 2: // DV
-          if (field.type == org.apache.thrift.protocol.TType.LIST) {
-            {
-              org.apache.thrift.protocol.TList _list111 = iprot.readListBegin();
-              this.dv = new ArrayList<Long>(_list111.size);
-              for (int _i112 = 0; _i112 < _list111.size; ++_i112)
-              {
-                long _elem113; // required
-                _elem113 = iprot.readI64();
-                this.dv.add(_elem113);
-              }
-              iprot.readListEnd();
-            }
+        case 2: // TS
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
+            this.ts = iprot.readI64();
+            setTsIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -462,14 +441,14 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
       oprot.writeFieldBegin(VALUE_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.value.size()));
-        for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> _iter114 : this.value.entrySet())
+        for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> _iter111 : this.value.entrySet())
         {
-          oprot.writeBinary(_iter114.getKey());
+          oprot.writeBinary(_iter111.getKey());
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, _iter114.getValue().size()));
-            for (ColumnOrSuperColumn _iter115 : _iter114.getValue())
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, _iter111.getValue().size()));
+            for (ColumnOrSuperColumn _iter112 : _iter111.getValue())
             {
-              _iter115.write(oprot);
+              _iter112.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -478,18 +457,9 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
       }
       oprot.writeFieldEnd();
     }
-    if (this.dv != null) {
-      oprot.writeFieldBegin(DV_FIELD_DESC);
-      {
-        oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, this.dv.size()));
-        for (long _iter116 : this.dv)
-        {
-          oprot.writeI64(_iter116);
-        }
-        oprot.writeListEnd();
-      }
-      oprot.writeFieldEnd();
-    }
+    oprot.writeFieldBegin(TS_FIELD_DESC);
+    oprot.writeI64(this.ts);
+    oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -507,12 +477,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("dv:");
-    if (this.dv == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.dv);
-    }
+    sb.append("ts:");
+    sb.append(this.ts);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -532,6 +498,8 @@ public class MultigetSliceResult implements org.apache.thrift.TBase<MultigetSlic
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
