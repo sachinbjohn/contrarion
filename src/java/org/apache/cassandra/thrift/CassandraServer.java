@@ -283,7 +283,7 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public MultigetSliceResult rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<Long> dvc)
+    public MultigetSliceResultCohort rot_cohort(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long transactionId, List<Long> dvc)
             throws InvalidRequestException, UnavailableException, TimedOutException {
 
         try {
@@ -318,7 +318,7 @@ public class CassandraServer implements Cassandra.Iface
             //     logger.error("ROT Cohort lts = {} chosenTime = {}  now = {} logicalTime = {} Key = {} COSC = {}", new Object[]{lts, chosenTime, System.currentTimeMillis(), LamportClock.getCurrentTime(),  ByteBufferUtil.string(entry.getKey()), entry.getValue()});
             // }
 
-            MultigetSliceResult result = new MultigetSliceResult(keyToChosenColumns, null); //SBJ No need to send TV from cohorts
+            MultigetSliceResultCohort result = new MultigetSliceResultCohort(keyToChosenColumns, LamportClock.getCurrentTime()); //SBJ Need to current timestamp after read
             return result;
 
         } catch (Exception ex) {

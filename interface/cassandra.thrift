@@ -539,6 +539,10 @@ struct MultigetSliceResult {
     1: map<binary,list<ColumnOrSuperColumn>> value,
     2: VectorClock dv,
 }
+struct MultigetSliceResultCohort {
+    1: map<binary,list<ColumnOrSuperColumn>> value,
+    2: LamportTimestamp ts,
+}
 struct CountWithMetadata {
     1: i32 count,
     2: i64 earliest_valid_time,
@@ -632,7 +636,7 @@ service Cassandra {
                 7: VectorClock dvc)
      throws (1:InvalidRequestException ire, 2:UnavailableException ue, 3:TimedOutException te),
 
-  MultigetSliceResult rot_cohort(1: required list<binary> keys,
+  MultigetSliceResultCohort rot_cohort(1: required list<binary> keys,
                   2:required ColumnParent column_parent,
                   3:required SlicePredicate predicate,
                   4:required ConsistencyLevel consistency_level=ConsistencyLevel.ONE,

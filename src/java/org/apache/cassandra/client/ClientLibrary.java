@@ -290,8 +290,8 @@ public class ClientLibrary {
 
         //Cohort Response
         for (BlockingQueueCallback<rot_cohort_call> callback : cohortCallbacks) {
-            MultigetSliceResult result = callback.getResponseNoInterruption().getResult();
-
+            MultigetSliceResultCohort result = callback.getResponseNoInterruption().getResult();
+            clientContext.advanceDV(dcIndex, result.ts);
             for (Entry<ByteBuffer, List<ColumnOrSuperColumn>> entry : result.value.entrySet()) {
                 ByteBuffer key = entry.getKey();
                 List<ColumnOrSuperColumn> coscList = entry.getValue();

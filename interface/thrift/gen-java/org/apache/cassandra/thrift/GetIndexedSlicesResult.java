@@ -377,14 +377,14 @@ public class GetIndexedSlicesResult implements org.apache.thrift.TBase<GetIndexe
         case 1: // VALUE
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list130 = iprot.readListBegin();
-              this.value = new ArrayList<KeySlice>(_list130.size);
-              for (int _i131 = 0; _i131 < _list130.size; ++_i131)
+              org.apache.thrift.protocol.TList _list139 = iprot.readListBegin();
+              this.value = new ArrayList<KeySlice>(_list139.size);
+              for (int _i140 = 0; _i140 < _list139.size; ++_i140)
               {
-                KeySlice _elem132; // required
-                _elem132 = new KeySlice();
-                _elem132.read(iprot);
-                this.value.add(_elem132);
+                KeySlice _elem141; // required
+                _elem141 = new KeySlice();
+                _elem141.read(iprot);
+                this.value.add(_elem141);
               }
               iprot.readListEnd();
             }
@@ -419,9 +419,9 @@ public class GetIndexedSlicesResult implements org.apache.thrift.TBase<GetIndexe
       oprot.writeFieldBegin(VALUE_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.value.size()));
-        for (KeySlice _iter133 : this.value)
+        for (KeySlice _iter142 : this.value)
         {
-          _iter133.write(oprot);
+          _iter142.write(oprot);
         }
         oprot.writeListEnd();
       }
