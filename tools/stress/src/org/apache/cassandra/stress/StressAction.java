@@ -313,7 +313,7 @@ public class StressAction extends Thread
         outputs.add(String.valueOf(client.getKeys_per_read()));
         outputs.add(String.valueOf(client.getWrite_fraction()));
         outputs.add(String.valueOf(client.getZipfianConstant()));
-        outputs.add(String.valueOf(client.stressCount))
+        outputs.add(String.valueOf(client.stressCount));
         outputs.add(String.valueOf(client.getThreads()));
         outputs.add("Client"+client.dcIndex+":"+client.stressIndex);
 
