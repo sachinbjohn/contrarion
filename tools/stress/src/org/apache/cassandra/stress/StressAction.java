@@ -88,7 +88,11 @@ public class StressAction extends Thread
  output.println("pre-genrating keys is done!!!"); 
        }
 
-        int threadCount = client.getThreads();
+        int totalThreadsCountPerDC = client.getThreads();
+        int threadCount = totalThreadsCountPerDC/client.stressCount;
+        int remainingThreads = totalThreadsCountPerDC % client.stressCount;
+        if(client.stressIndex < remainingThreads) //if there are n threads remaining, we assign them to clients 0,1,..n.1
+            threadCount += 1;
         Consumer[] consumers = new Consumer[threadCount];
 
         int itemsPerThread = client.getKeysPerThread();
