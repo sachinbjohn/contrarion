@@ -307,26 +307,27 @@ run_all() {
     local num_active_clients=$5
     local numT=$6
 
-    #echo "Exp $((exp_num + 1)) :: Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
-    #internal_cluster_start_cmd ${contr_root_dir}
-    #internal_populate_cluster ${contr_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion
-    #run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
-    #${kill_all_cmd}
-    #gather_results ${contr_root_dir} contrarion
+    echo "Exp $((exp_num + 1)) :: Contrarion trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
+    internal_cluster_start_cmd ${contr_root_dir}
+    internal_populate_cluster ${contr_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion
+    run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${contr_root_dir} contrarion
+    ${kill_all_cmd}
+    gather_results ${contr_root_dir} contrarion
 
-#    echo "Exp $((exp_num + 1)) :: Contrarion2 trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
- #   internal_cluster_start_cmd ${contr2_root_dir}
-  #  internal_populate_cluster ${contr2_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion2
-   # run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${contr2_root_dir} contrarion2
-    #${kill_all_cmd}
-    #gather_results ${contr2_root_dir} contrarion2
 
-    #echo "Exp $((exp_num + 1)) :: COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
-    #internal_cluster_start_cmd ${cops_root_dir}
-    #internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
-    #run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
-    #${kill_all_cmd}
-    #gather_results ${cops_root_dir} cops
+    echo "Exp $((exp_num + 1)) :: Contrarion2 trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac  numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
+    internal_cluster_start_cmd ${contr2_root_dir}
+    internal_populate_cluster ${contr2_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 contrarion2
+    run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${contr2_root_dir} contrarion2
+    ${kill_all_cmd}
+    gather_results ${contr2_root_dir} contrarion2
+
+    echo "Exp $((exp_num + 1)) :: COPS trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
+    internal_cluster_start_cmd ${cops_root_dir}
+    internal_populate_cluster ${cops_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops
+    run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
+    ${kill_all_cmd}
+    gather_results ${cops_root_dir} cops
 
     echo "Exp $((exp_num + 1)) :: Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
     internal_cluster_start_cmd ${eiger_root_dir}
@@ -347,14 +348,14 @@ do
     write_frac=`echo $allparams | cut -d: -f2`
     keys_per_read=`echo $allparams | cut -d: -f3`
     zipf_c=`echo $allparams | cut -d: -f4`
-    num_active_clients=${num_clients_per_dc}
-    for numTotalThreads in 224 #1 2 4 8 14 28 56 112 224
+    for numTotalThreads in 1 8 14 56 112
     do
-        if [ $numTotalThreads -lt $num_clients_per_dc ]; then
+       if [ $numTotalThreads -lt $num_clients_per_dc ]; then
             num_active_clients=$numTotalThreads
-        fi
-        run_all ${value_size} ${write_frac} ${keys_per_read} ${zipf_c} ${num_active_clients} ${numTotalThreads}  
-	 
+       else
+	    num_active_clients=${num_clients_per_dc}
+       fi
+       run_all ${value_size} ${write_frac} ${keys_per_read} ${zipf_c} ${num_active_clients} ${numTotalThreads} 
     done
     process_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
 done
