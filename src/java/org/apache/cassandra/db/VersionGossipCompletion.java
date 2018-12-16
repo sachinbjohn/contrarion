@@ -1,4 +1,4 @@
-package org.apache.cassandra.db;
+package  org.apache.cassandra.db;
 
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.net.ICompletable;
@@ -10,8 +10,14 @@ import org.apache.cassandra.utils.VersionVector;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.security.provider.SHA;
+
 public class VersionGossipCompletion implements ICompletable {
-    long[][] VVs;
+    private static Logger logger = LoggerFactory.getLogger(VersionGossipCompletion.class);
+
+    volatile long[][] VVs;
     Message msgFromParent;
     String id;
     public VersionGossipCompletion(long[][] v, Message m, String id) {
@@ -29,7 +35,7 @@ public class VersionGossipCompletion implements ICompletable {
                 for (int i = 0; i < ShortNodeId.numDCs; ++i) {
                     long min = VVs[0][i];
                     for (int node = 1; node < VVs.length; ++node) {
-                        if (VVs[node][i] < min)
+			 if (VVs[node][i] < min)
                             min = VVs[node][i];
                     }
                     dob.writeLong(min);
@@ -40,7 +46,7 @@ public class VersionGossipCompletion implements ICompletable {
                 for (int i = 0; i < ShortNodeId.numDCs; ++i) {
                     long min = VVs[0][i];
                     for (int node = 1; node < VVs.length; ++node) {
-                        if (VVs[node][i] < min)
+			if (VVs[node][i] < min)
                             min = VVs[node][i];
                     }
                     VersionVector.GSV[i] = min;
