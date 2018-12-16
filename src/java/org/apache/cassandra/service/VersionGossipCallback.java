@@ -12,14 +12,15 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class VersionGossipCallback implements IAsyncCallback {
-    long[][]VVs;
+    volatile long[][]VVs;
     int expectedResponses;
-    AtomicInteger responses;
+    AtomicInteger responses,finished;
     ICompletable completable;
     public VersionGossipCallback(long[][] VVs, ICompletable completable) {
         this.VVs = VVs;
         this.expectedResponses = VVs.length - 1;
         responses =  new AtomicInteger();  //0 is already filled with local
+	finished = new AtomicInteger();
         this.completable = completable;
     }
     @Override
@@ -31,9 +32,10 @@ public class VersionGossipCallback implements IAsyncCallback {
             for (int i = 0; i < ShortNodeId.numDCs; ++i) {
                 vv[i] = dis.readLong();
             }
-            int i = responses.incrementAndGet(); //0 is already filled with local
-            VVs[i] = vv;
-            if (i == expectedResponses)
+            int pos = responses.incrementAndGet(); //0 is already filled with local
+            VVs[pos] = vv;
+	    int fin = finished.incrementAndGet();
+            if (fin == expectedResponses)
                 completable.complete();
 
         } catch (IOException ex) {
