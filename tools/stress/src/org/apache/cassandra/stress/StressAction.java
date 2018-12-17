@@ -93,6 +93,7 @@ public class StressAction extends Thread
         int remainingThreads = totalThreadsCountPerDC % client.stressCount;
         if(client.stressIndex < remainingThreads) //if there are n threads remaining, we assign them to clients 0,1,..n.1
             threadCount += 1;
+        client.localThreads = threadCount;
         Consumer[] consumers = new Consumer[threadCount];
 
         int itemsPerThread = client.getKeysPerThread();
@@ -307,7 +308,7 @@ public class StressAction extends Thread
         int nW = writelatencies.length; //aggregared writes
         long latency = client.latency.get();
 
-        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
+        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,NumClients,TotalThreads,LocalThreads,Client
         ArrayList<String> outputs = new ArrayList<>();
         outputs.add("Contrarion 1.5");
         outputs.add(String.valueOf(client.numDCs));
@@ -319,6 +320,7 @@ public class StressAction extends Thread
         outputs.add(String.valueOf(client.getZipfianConstant()));
         outputs.add(String.valueOf(client.stressCount));
         outputs.add(String.valueOf(client.getThreads()));
+        outputs.add(String.valueOf(client.localThreads));
         outputs.add("Client"+client.dcIndex+":"+client.stressIndex);
 
         //NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput
