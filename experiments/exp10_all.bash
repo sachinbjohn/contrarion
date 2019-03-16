@@ -243,7 +243,7 @@ run_exp10() {
     local write_frac=$5
     local zipf_const=$6
     local active_clients_per_dc=${7}
-    local num_threads=$8
+    local num_threads=$8  #this is total number of threads in the entire DC
     local exp_time=$9
     local trial=$10
     local root_dir=${11}
@@ -348,16 +348,14 @@ do
     write_frac=`echo $allparams | cut -d: -f2`
     keys_per_read=`echo $allparams | cut -d: -f3`
     zipf_c=`echo $allparams | cut -d: -f4`
-
-    numT=1
-    for num_active_clients in 1 5 10 15
+    for numTotalThreads in 1 8 14 56 112
     do
-        run_all ${value_size} ${write_frac} ${keys_per_read} ${zipf_c} ${num_active_clients} ${numT}
-    done
-    num_active_clients=num_clients_per_dc
-    for numT in 32 24 16 8 4 1 #4 8 12 16 24 32
-    do
-        run_all ${value_size} ${write_frac} ${keys_per_read} ${zipf_c} ${num_active_clients} ${numT}
+       if [ $numTotalThreads -lt $num_clients_per_dc ]; then
+            num_active_clients=$numTotalThreads
+       else
+	    num_active_clients=${num_clients_per_dc}
+       fi
+       run_all ${value_size} ${write_frac} ${keys_per_read} ${zipf_c} ${num_active_clients} ${numTotalThreads}
     done
     process_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c}
 done
