@@ -258,7 +258,7 @@ run_exp10() {
             ssh $client -o StrictHostKeyChecking=no "\
             mkdir -p $cli_output_dir; \
             cd ${root_dir}/tools/stress; \
-            timeout 5m bin/stress \
+            timeout 6m bin/stress \
             --progress-interval=1 \
             --nodes=$local_servers_csv \
             --operation=EXP10 \
@@ -339,7 +339,7 @@ run_all() {
 rm -f ~/progress
 keys_per_server=100000 #TODO increase to 1M
 total_keys=$((keys_per_server*num_servers_per_dc))
-run_time=50   #Timeout is set to 5minutes
+run_time=170   #Timeout is set to 6minutes
 
 for allparams in `cat ${cops_root_dir}/allparams.txt`
 do
