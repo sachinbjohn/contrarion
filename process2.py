@@ -32,25 +32,25 @@ customSeriesColNum = {
 	'zipf' : 5,
 	'val' : 2
 }
-nclients=48
-nthreads=6
-##  Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
+nclients=42
+nthreads=9
+## Expt,NumDCs,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,NumClients,TotalThreads,LocalThreads,Client,NumOps,NumKeys,NumColumns,NumBytes,NumReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#aggR,#aggW,Lsum,Lavg,P_R,AVG_RD,AVG_W,AVG_OP,Xput,Real Xput
 def mean(x):
-	assert len(x)==nclients,(len(x))
+	# assert len(x)==nclients,(len(x))
 	return sum(x)/len(x)
 def lsum(x):
-	assert len(x)==nclients,(len(x))
+	# assert len(x)==nclients,(len(x))
 	return sum(x)
 
 
 def filterfn(x):
 	return  customfilterfn['base'](x) or customfilterfn[group](x) 
 def keyfn(x):
-	return int(x['Threads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
+	return int(x['TotalThreads']),x['Expt'],int(x['ValSize']),int(x['Key/Read']),float(x['WriteFrac']),float(x['Zipf'])
 	
-aggfns=[lsum, mean, mean, mean, mean]
-valcols=('Throughput','Ravg', 'R50', 'R90', 'R99')
-allkeycols=('Threads','Expt','ValSize','Key/Read','WriteFrac','Zipf')
+aggfns=[lsum, mean, mean]
+valcols=('Throughput','Ravg', 'R99')
+allkeycols=('TotalThreads','Expt','ValSize','Key/Read','WriteFrac','Zipf')
 seriesColNum=[1]
 if(group != 'default'):
 	seriesColNum.append(customSeriesColNum[group])
@@ -83,8 +83,8 @@ def plotFig(data,title,filesuffix):
 	
 	plt.yscale('log')
 	for x,y,l in data:
-		assert len(x)==nthreads,(len(x))
-		assert len(y)==nthreads,(len(x))
+		#assert len(x)==nthreads,(len(x))
+		#assert len(y)==nthreads,(len(x))
 		c=('-o' if l.startswith("Eig") else '-x') if not l.startswith("Contr") else '-*'
 		p.plot(x, y, c,label=l)
 	# Get current size
