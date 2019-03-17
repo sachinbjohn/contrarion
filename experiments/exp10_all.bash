@@ -16,6 +16,7 @@ dcl_config=${nservers}_in_vicci
 client_config=${nservers}_clients_in_vicci
 
 cops_root_dir="$HOME/COPS-SNOW"
+cops2_root_dir="$HOME/COPS2-SNOW"
 eiger_root_dir="$HOME/eiger"
 contr_root_dir="$HOME/contrarion"
 contr2_root_dir="$HOME/contrarion2"
@@ -328,6 +329,13 @@ run_all() {
     run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${cops_root_dir} cops
     ${kill_all_cmd}
     gather_results ${cops_root_dir} cops
+
+    echo "Exp $((exp_num + 1)) :: COPS2 trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
+    internal_cluster_start_cmd ${cops2_root_dir}
+    internal_populate_cluster ${cops2_root_dir} INSERTCL ${total_keys} 1 ${value_size} 1 cops2
+    run_exp10 ${keys_per_server} ${num_servers_per_dc} ${value_size} ${keys_per_read} ${write_frac} ${zipf_c} ${num_active_clients} ${numT} ${run_time} ${trial} ${cops2_root_dir} cops2
+    ${kill_all_cmd}
+    gather_results ${cops2_root_dir} cops2
 
     echo "Exp $((exp_num + 1)) :: Eiger trial=$trial value_size=$value_size zipf=$zipf_c numKeys=$keys_per_read write_frac=$write_frac numClients = $num_active_clients numT=$numT started at $(date)" >> ~/progress
     internal_cluster_start_cmd ${eiger_root_dir}
